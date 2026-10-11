@@ -160,7 +160,9 @@ jobs:
             echo "::error::DuoFace must not replace DuoNavi"
             exit 1
           fi
-          cp "$DUOFACE" repo/debs/com.duoface.app_1.0.3-6_iphoneos-arm64.deb
+          python3 scripts/repack-duoface-rootless.py "$DUOFACE" repo/debs/com.duoface.app_1.0.3-7_iphoneos-arm64.deb
+          dpkg-deb --info repo/debs/com.duoface.app_1.0.3-7_iphoneos-arm64.deb
+          dpkg-deb --contents repo/debs/com.duoface.app_1.0.3-7_iphoneos-arm64.deb | grep -F 'var/jb/Applications/DuoFaceUI.app/'
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

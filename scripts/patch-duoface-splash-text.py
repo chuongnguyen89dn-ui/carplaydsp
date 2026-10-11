@@ -16,6 +16,7 @@ FILES = (
 
 def patch(root: pathlib.Path):
     report = []
+    pending = []
     for relative in FILES:
         path = root / relative
         if not path.is_file():
@@ -33,8 +34,11 @@ def patch(root: pathlib.Path):
             counts[needle.decode()] = count
         if len(modified) != len(original):
             raise AssertionError("Binary length changed")
-        path.write_bytes(modified)
+        pending.append((path, modified))
         report.append((relative, hashlib.sha256(original).hexdigest(), hashlib.sha256(modified).hexdigest(), counts))
+    # Complete all validation before writing any binary.
+    for path, modified in pending:
+        path.write_bytes(modified)
     for item in report:
         print("PATCHED", *item)
 

@@ -44,11 +44,11 @@ with tempfile.TemporaryDirectory() as tmp:
         script = postinst.read_text()
         script = script.replace("/var/jb/usr/libexec/cboptimize_helper", "/var/jb/usr/libexec/duoface_cboptimize_helper")
         script = script.replace("/usr/libexec/cboptimize_helper", "/var/jb/usr/libexec/duoface_cboptimize_helper")
-        # Never change permissions/ownership on files belonging to another package.
-        script = "\\n".join(line for line in script.splitlines()
-            if "OldABI.dylib" not in line and "Auto-configure OldABI permissions" not in line) + "\\n"
-        # Retain shell control-flow; remove empty OldABI if block separately.
-        script = script.replace('if [ -f /var/jb/usr/lib/ellekit/OldABI.dylib ]; then\\nfi\\n', '')
+        # Remove the complete OldABI permissions block, preserving shell syntax.
+        begin = script.find("# Auto-configure OldABI permissions")
+        end = script.find("# Set setuid root permissions", begin)
+        if begin != -1 and end != -1:
+            script = script[:begin] + script[end:]
         postinst.write_text(script)
     for original in (*private_helpers, "var/jb/usr/lib/ellekit/OldABI.dylib"):
         assert not (root / original).exists(), "Shared file remains: " + original

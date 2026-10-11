@@ -160,6 +160,8 @@ jobs:
             echo "::error::DuoFace must not replace DuoNavi"
             exit 1
           fi
+          # Publish only the newest DuoFace version; leave all other packages untouched.
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' -delete
           python3 scripts/repack-duoface-rootless.py "$DUOFACE" repo/debs/com.duoface.app_1.0.3-7_iphoneos-arm64.deb
           dpkg-deb --info repo/debs/com.duoface.app_1.0.3-7_iphoneos-arm64.deb
           dpkg-deb --contents repo/debs/com.duoface.app_1.0.3-7_iphoneos-arm64.deb | grep -F 'var/jb/Applications/DuoFaceUI.app/'

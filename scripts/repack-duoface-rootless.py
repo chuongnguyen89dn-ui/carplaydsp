@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory() as tmp:
             if new.exists():
                 raise RuntimeError("Conflicting rootless destination: " + str(new))
             shutil.move(str(old), str(new))
-    # Visual-only splash patch: validate both Mach-O binaries before touching either.\n    # Never change behavior, control frames, loading animation or DuoNavi.\n    subprocess.run([sys.executable, str(pathlib.Path(__file__).with_name("patch-duoface-splash-text.py")), str(root)], check=True)\n    # Shared DuoNavi/ElleKit paths must never be owned by DuoFace.
+    # Shared DuoNavi/ElleKit paths must never be owned by DuoFace.
     # Keep private copies of DuoFace helpers instead of overwriting DuoNavi.
     private_helpers = {
         "var/jb/usr/bin/cboptimize": "var/jb/usr/bin/duoface-cboptimize",

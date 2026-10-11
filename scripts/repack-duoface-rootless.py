@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repack DuoFace 1.0.3-6 as 1.0.3-8 with rootless payload paths.
+"""Repack DuoFace 1.0.3-6 as 1.0.3-9 with rootless payload paths.
 Preserve all original binaries, hooks and maintainer scripts. Never overwrite DuoNavi.
 """
 import hashlib
@@ -49,12 +49,25 @@ with tempfile.TemporaryDirectory() as tmp:
         end = script.find("# Set setuid root permissions", begin)
         if begin != -1 and end != -1:
             script = script[:begin] + script[end:]
+        # Ask Sileo for a SpringBoard restart only after successful dpkg configuration.
+        # The package manager owns the restart; never kill SpringBoard during unpack.
+        script = script.replace("exit 0", """if [ -n "${CYDIA:-}" ]; then
+    read -r finish_fd finish_ver <<EOF
+$CYDIA
+EOF
+    case "$finish_fd" in
+        [0-9]|[0-9][0-9]) case "$finish_ver" in
+            [1-9]*) echo 'finish:restart' >&$finish_fd ;;
+        esac ;;
+    esac
+fi
+exit 0""")
         postinst.write_text(script)
     for original in (*private_helpers, "var/jb/usr/lib/ellekit/OldABI.dylib"):
         assert not (root / original).exists(), "Shared file remains: " + original
     ctl = root / "DEBIAN" / "control"
     lines = ctl.read_text().splitlines()
-    lines = ["Version: 1.0.3-8" if x.startswith("Version: ") else x for x in lines]
+    lines = ["Version: 1.0.3-9" if x.startswith("Version: ") else x for x in lines]
     ctl.write_text("\n".join(lines) + "\n")
     assert (root / "var/jb/Applications/DuoFaceUI.app").is_dir()
     assert (root / "var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceDashboard.dylib").is_file()
@@ -63,7 +76,7 @@ with tempfile.TemporaryDirectory() as tmp:
     dst.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(["dpkg-deb", "--build", "--root-owner-group", str(root), str(dst)], check=True)
     assert subprocess.check_output(["dpkg-deb", "-f", str(dst), "Package"], text=True).strip() == "com.duoface.app"
-    assert subprocess.check_output(["dpkg-deb", "-f", str(dst), "Version"], text=True).strip() == "1.0.3-8"
+    assert subprocess.check_output(["dpkg-deb", "-f", str(dst), "Version"], text=True).strip() == "1.0.3-9"
     listing = subprocess.check_output(["dpkg-deb", "-c", str(dst)], text=True)
     assert "./var/jb/Applications/DuoFaceUI.app/" in listing
     assert "./Applications/" not in listing

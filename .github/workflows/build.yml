@@ -145,14 +145,14 @@ jobs:
           unzip -j /tmp/duodash-airaw.zip '*.deb' -d external
           cp external/*.deb repo/debs/
 
-          # DuoFace 1.0.3-11 integrated test: verified binary from DuoFace GitHub.
+          # DuoFace 1.0.3-12 visual test: verified binary from DuoFace GitHub.
           # Keep all unrelated CarPlay packages unchanged.
-          DUOFACE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/dist/main-export/com.duoface.app_1.0.3-11_integratedtest_iphoneos-arm64.deb'
-          DUOFACE_FILE='repo/debs/com.duoface.app_1.0.3-11_integratedtest_iphoneos-arm64.deb'
+          DUOFACE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/dist/visual-1.0.3-12/com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb'
+          DUOFACE_FILE='repo/debs/com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_URL" -o "$DUOFACE_FILE"
-          (cd repo/debs && printf '%s  %s\n' '100566ae52190f8b948c4acc2f4a9d4f10cfa155164efe457ad805a864ebedc7' 'com.duoface.app_1.0.3-11_integratedtest_iphoneos-arm64.deb' | shasum -a 256 -c -)
+          (cd repo/debs && printf '%s  %s\n' 'a4b1ed0ef049d3fd5af10f5a0067b7f5ed5890a2ed29e39d3060d4cfcd4feddd' 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' | shasum -a 256 -c -)
           test "$(dpkg-deb -f "$DUOFACE_FILE" Package)" = 'com.duoface.app'
-          test "$(dpkg-deb -f "$DUOFACE_FILE" Version)" = '1.0.3-11~integratedtest'
+          test "$(dpkg-deb -f "$DUOFACE_FILE" Version)" = '1.0.3-12~visualtest'
           test "$(dpkg-deb -f "$DUOFACE_FILE" Architecture)" = 'iphoneos-arm64'
           if dpkg-deb -f "$DUOFACE_FILE" | grep -Eiq '^(Conflicts|Replaces|Breaks):.*(duonavi|com\\.duonavi)'; then
             echo "::error::DuoFace must not replace DuoNavi"
@@ -160,7 +160,7 @@ jobs:
           fi
           dpkg-deb --contents "$DUOFACE_FILE" | grep -F 'DuoFaceVisualHook.dylib'
           # Publish only the new DuoFace package; remove any older DuoFace DEB.
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-11_integratedtest_iphoneos-arm64.deb' -delete
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

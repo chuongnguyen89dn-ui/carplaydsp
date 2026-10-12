@@ -145,26 +145,22 @@ jobs:
           unzip -j /tmp/duodash-airaw.zip '*.deb' -d external
           cp external/*.deb repo/debs/
 
-          # DuoFace: consume user-uploaded handoff archive; do not modify DuoDash binaries.
-          curl -fL --retry 3 \
-            'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/7b0f00320e3d9d8f2a7896bed562ef275f9a2540/DuoFace_FULL_HANDOFF_2026-10-11.zip' \
-            -o /tmp/duoface-handoff.zip
-          mkdir -p /tmp/duoface-source
-          unzip -j /tmp/duoface-handoff.zip 'files/DuoFace_1.0.3-6_FULL_PAYLOAD_ROOTLESS_UNVERIFIED.deb' -d /tmp/duoface-source
-          DUOFACE=/tmp/duoface-source/DuoFace_1.0.3-6_FULL_PAYLOAD_ROOTLESS_UNVERIFIED.deb
-          printf '%s  %s\n' '2120480166170c5f71b12a595bed7a5ab892fbd84038ef878eca8e8243062e9a' "$DUOFACE" | shasum -a 256 -c -
-          test "$(dpkg-deb -f "$DUOFACE" Package)" = 'com.duoface.app'
-          test "$(dpkg-deb -f "$DUOFACE" Architecture)" = 'iphoneos-arm64'
-          dpkg-deb --contents "$DUOFACE" >/dev/null
-          if dpkg-deb -f "$DUOFACE" | grep -Eiq '^(Conflicts|Replaces|Breaks):.*(duonavi|com\.duonavi)'; then
+          # DuoFace 1.0.3-11 integrated test: verified binary from DuoFace GitHub.
+          # Keep all unrelated CarPlay packages unchanged.
+          DUOFACE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/dist/main-export/com.duoface.app_1.0.3-11_integratedtest_iphoneos-arm64.deb'
+          DUOFACE_FILE='repo/debs/com.duoface.app_1.0.3-11_integratedtest_iphoneos-arm64.deb'
+          curl -fL --retry 3 "$DUOFACE_URL" -o "$DUOFACE_FILE"
+          (cd repo/debs && printf '%s  %s\n' '100566ae52190f8b948c4acc2f4a9d4f10cfa155164efe457ad805a864ebedc7' 'com.duoface.app_1.0.3-11_integratedtest_iphoneos-arm64.deb' | shasum -a 256 -c -)
+          test "$(dpkg-deb -f "$DUOFACE_FILE" Package)" = 'com.duoface.app'
+          test "$(dpkg-deb -f "$DUOFACE_FILE" Version)" = '1.0.3-11~integratedtest'
+          test "$(dpkg-deb -f "$DUOFACE_FILE" Architecture)" = 'iphoneos-arm64'
+          if dpkg-deb -f "$DUOFACE_FILE" | grep -Eiq '^(Conflicts|Replaces|Breaks):.*(duonavi|com\\.duonavi)'; then
             echo "::error::DuoFace must not replace DuoNavi"
             exit 1
           fi
-          # Publish only the newest DuoFace version; leave all other packages untouched.
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' -delete
-          python3 scripts/repack-duoface-rootless.py "$DUOFACE" repo/debs/com.duoface.app_1.0.3-9_iphoneos-arm64.deb
-          dpkg-deb --info repo/debs/com.duoface.app_1.0.3-9_iphoneos-arm64.deb
-          dpkg-deb --contents repo/debs/com.duoface.app_1.0.3-9_iphoneos-arm64.deb | grep -F 'var/jb/Applications/DuoFaceUI.app/'
+          dpkg-deb --contents "$DUOFACE_FILE" | grep -F 'DuoFaceVisualHook.dylib'
+          # Publish only the new DuoFace package; remove any older DuoFace DEB.
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-11_integratedtest_iphoneos-arm64.deb' -delete
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

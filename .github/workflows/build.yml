@@ -161,6 +161,23 @@ jobs:
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
+          # Sileo icon is APT metadata; iPhone app icons do not populate it.
+          curl -fL --retry 3 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/dist/visual-1.0.3-12/assets/duoface-icon.png' -o duoface-icon.png
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Packages')
+          blocks=p.read_text().split('\n\n')
+          updated=0
+          for i,block in enumerate(blocks):
+              if block.startswith('Package: com.duonavi.app\n') or '\nPackage: com.duonavi.app\n' in '\n'+block+'\n':
+                  lines=[line for line in block.splitlines() if not line.startswith('Icon: ')]
+                  lines.append('Icon: https://chuongnguyen89dn-ui.github.io/carplaydsp/duoface-icon.png')
+                  blocks[i]='\n'.join(lines)
+                  updated+=1
+          if updated!=1:
+              raise SystemExit(f'Expected exactly one DuoFace/DuoNavi entry, found {updated}')
+          p.write_text('\n\n'.join(blocks))
+          PY
           gzip -9c Packages > Packages.gz
 
           cat > Release <<'EOF'

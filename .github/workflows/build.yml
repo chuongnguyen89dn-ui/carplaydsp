@@ -150,16 +150,12 @@ jobs:
           DUOFACE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/dist/visual-1.0.3-12/com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb'
           DUOFACE_FILE='repo/debs/com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_URL" -o "$DUOFACE_FILE"
-          (cd repo/debs && printf '%s  %s\n' 'a4b1ed0ef049d3fd5af10f5a0067b7f5ed5890a2ed29e39d3060d4cfcd4feddd' 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' | shasum -a 256 -c -)
-          test "$(dpkg-deb -f "$DUOFACE_FILE" Package)" = 'com.duoface.app'
+          (cd repo/debs && printf '%s  %s\n' 'ed50ed8258762510974c763c15e9d59e082dea3474d618e9626141c8df9182e5' 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' | shasum -a 256 -c -)
+          test "$(dpkg-deb -f "$DUOFACE_FILE" Package)" = 'com.duonavi.app'
           test "$(dpkg-deb -f "$DUOFACE_FILE" Version)" = '1.0.3-12~visualtest'
           test "$(dpkg-deb -f "$DUOFACE_FILE" Architecture)" = 'iphoneos-arm64'
-          if dpkg-deb -f "$DUOFACE_FILE" | grep -Eiq '^(Conflicts|Replaces|Breaks):.*(duonavi|com\\.duonavi)'; then
-            echo "::error::DuoFace must not replace DuoNavi"
-            exit 1
-          fi
           dpkg-deb --contents "$DUOFACE_FILE" | grep -F 'DuoFaceVisualHook.dylib'
-          # Publish only the new DuoFace package; remove any older DuoFace DEB.
+          # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
           cd repo

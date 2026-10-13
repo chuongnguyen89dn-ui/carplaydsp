@@ -145,22 +145,18 @@ jobs:
           unzip -j /tmp/duodash-airaw.zip '*.deb' -d external
           cp external/*.deb repo/debs/
 
-          # Rebuild DuoFace 1.0.4 from verified upstream 1.0.4 and prior v12 package.
-          BASE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/dist/com.duonavi.app_1.0.4_iphoneos-arm64.deb'
-          V12_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/dist/visual-1.0.3-12/com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb'
-          SCRIPT_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/scripts/build_duoface_104_test.py'
-          curl -fL --retry 3 "$BASE_URL" -o /tmp/duonavi-104.deb
-          curl -fL --retry 3 "$V12_URL" -o /tmp/duoface-v12.deb
-          curl -fL --retry 3 "$SCRIPT_URL" -o /tmp/build_duoface_104_test.py
-          printf '%s  %s\n' 'f3f911de5db461d487ce91249aed1bb25d44f076e7ff5fb89e54b658569328dd' /tmp/duonavi-104.deb | shasum -a 256 -c -
-          printf '%s  %s\n' 'ed50ed8258762510974c763c15e9d59e082dea3474d618e9626141c8df9182e5' /tmp/duoface-v12.deb | shasum -a 256 -c -
-          DUOFACE_FILE='repo/debs/com.duonavi.app_1.0.4-1_duofacetest_iphoneos-arm64.deb'
-          python3 /tmp/build_duoface_104_test.py --base /tmp/duonavi-104.deb --v12 /tmp/duoface-v12.deb --output "$DUOFACE_FILE"
+          # DuoFace 1.0.3-12 visual test: verified binary from DuoFace GitHub.
+          # Keep all unrelated CarPlay packages unchanged.
+          DUOFACE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/dist/visual-1.0.3-12/com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb'
+          DUOFACE_FILE='repo/debs/com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb'
+          curl -fL --retry 3 "$DUOFACE_URL" -o "$DUOFACE_FILE"
+          (cd repo/debs && printf '%s  %s\n' 'ed50ed8258762510974c763c15e9d59e082dea3474d618e9626141c8df9182e5' 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' | shasum -a 256 -c -)
           test "$(dpkg-deb -f "$DUOFACE_FILE" Package)" = 'com.duonavi.app'
-          test "$(dpkg-deb -f "$DUOFACE_FILE" Version)" = '1.0.4-1~duofacetest'
+          test "$(dpkg-deb -f "$DUOFACE_FILE" Version)" = '1.0.3-12~visualtest'
           test "$(dpkg-deb -f "$DUOFACE_FILE" Architecture)" = 'iphoneos-arm64'
           dpkg-deb --contents "$DUOFACE_FILE" | grep -F 'DuoFaceVisualHook.dylib'
-          find repo/debs -maxdepth 1 -type f \( -name 'com.duoface.app_*.deb' -o -name 'com.duonavi.app_*.deb' \) ! -name 'com.duonavi.app_1.0.4-1_duofacetest_iphoneos-arm64.deb' -delete
+          # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

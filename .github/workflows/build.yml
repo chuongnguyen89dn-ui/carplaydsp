@@ -158,32 +158,29 @@ jobs:
           # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
-          # DuoFace Mới: native test nguyên UI/host. Cơ chế runtime cần thiết bị nghiệm thu.
-          # Chỉ thêm gói này vào APT, tuyệt đối không đụng các gói khác.
-          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/c3dd0118388faa2651f540ba61b3b35da80dd460/dist/payload-migration/native6/com.duoface.independent_0.1.0~native6_iphoneos-arm64.deb'
-          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native6_iphoneos-arm64.deb'
+          # DuoFace Mới native8: 39 audited presentation strings hidden and
+          # source-compiled 0.30s divider-logo drag. Retain native6 in Duoface
+          # GitHub as rollback; do not change any other Sileo package.
+          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/b960d1c0a8e28cc6ab27adfd78f1b25467f346b1/dist/payload-migration/native8/com.duoface.independent_0.1.0~native8_iphoneos-arm64.deb'
+          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native8_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_NEW_URL" -o "$DUOFACE_NEW_FILE"
-          printf '%s  %s\n' '88b0e9358c075e2131ddb9e6ac25689584765d1285120e2e3282ce8a5bb3df15' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' 'c4b5e07f20ca0c819e0e43c8cbbf7e560da961db8c7e74c82a7a4f6fc0274cec' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Package)" = 'com.duoface.independent'
-          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native6'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native8'
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Architecture)" = 'iphoneos-arm64'
-          # Native test: giữ nguyên 100% binary UI / host / menu gốc.
-          # Bao gồm Dashboard/FullscreenBridge/VisualHook + module thử nghiệm riêng.
           dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'A_DuoFaceNativeNoLease.dylib'
           dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceDashboard.dylib'
           dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceFullscreenBridge.dylib'
           dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceVisualHook.dylib'
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -Eiq 'com.duonavi.sync.plist|CarPlaySplit|Airaw'
-          # New version has ZERO old vendor-brand strings in data/control;
-          # installer collision safety is enforced by checking file ownership.
           dpkg-deb --ctrl-tarfile "$DUOFACE_NEW_FILE" | tar -xOf - ./preinst > /tmp/duoface-independent-preinst.sh
           sh -n /tmp/duoface-independent-preinst.sh
           grep -Fq 'dpkg-query -S' /tmp/duoface-independent-preinst.sh
           ! grep -Eiq 'duonavi|airaw' /tmp/duoface-independent-preinst.sh
-          # alpha2 < native1: bảo đảm Sileo nhận đây là phiên bản nâng cấp.
-          dpkg --compare-versions '0.1.0~native6' gt '0.1.0~native5'
-          # Chỉ dọn bản trước của CHÍNH package độc lập này, giữ mọi package khác.
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native6_iphoneos-arm64.deb' -delete
+          # Sileo sees native8 as upgrade from native6; preserve rollback DEB in Duoface Git.
+          dpkg --compare-versions '0.1.0~native8' gt '0.1.0~native6'
+          # Replace only the independent package version in published APT index.
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native8_iphoneos-arm64.deb' -delete
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

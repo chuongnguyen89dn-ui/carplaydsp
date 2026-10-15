@@ -191,10 +191,10 @@ jobs:
           # Gói mới hiển thị riêng trong Sileo, cùng dùng biểu tượng DuoFace gốc.
           independent=0
           for i,block in enumerate(blocks):
-              if block.startswith('Package: com.duoface.independent\\n'):
+              if block.startswith('Package: com.duoface.independent\n'):
                   lines=[line for line in block.splitlines() if not line.startswith('Icon: ')]
                   lines.append('Icon: https://chuongnguyen89dn-ui.github.io/carplaydsp/duoface-icon.png')
-                  blocks[i]='\\n'.join(lines)
+                  blocks[i]='\n'.join(lines)
                   independent+=1
           if independent!=1:
               raise SystemExit(f'Expected 1 independent DuoFace, found {independent}')

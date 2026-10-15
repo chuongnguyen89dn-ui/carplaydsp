@@ -158,6 +158,18 @@ jobs:
           # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
+          # DuoFace Mới: sản phẩm CarPlay độc lập, ID riêng, không thay thế bản đang dùng.
+          # Chỉ thêm gói này vào APT, tuyệt đối không đụng các gói khác.
+          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/cab4d9b725a0066c9840a7837a9a0a3a3ea32349/dist/independent/alpha1/com.duoface.independent_0.1.0~alpha1_iphoneos-arm64.deb'
+          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~alpha1_iphoneos-arm64.deb'
+          curl -fL --retry 3 "$DUOFACE_NEW_URL" -o "$DUOFACE_NEW_FILE"
+          printf '%s  %s\n' 'e1ac3ec78285924308bdb5f7a2d503c39cbf567f8a8293ad87ea1dc551d99439' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Package)" = 'com.duoface.independent'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~alpha1'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Architecture)" = 'iphoneos-arm64'
+          dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceIndependent.dylib'
+          ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -Eiq 'DuoNavi|CarPlaySplit|Airaw|DuoFaceDashboard'
+
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -176,6 +188,16 @@ jobs:
                   updated+=1
           if updated!=1:
               raise SystemExit(f'Expected exactly one DuoFace/DuoNavi entry, found {updated}')
+          # Gói mới hiển thị riêng trong Sileo, cùng dùng biểu tượng DuoFace gốc.
+          independent=0
+          for i,block in enumerate(blocks):
+              if block.startswith('Package: com.duoface.independent\\n'):
+                  lines=[line for line in block.splitlines() if not line.startswith('Icon: ')]
+                  lines.append('Icon: https://chuongnguyen89dn-ui.github.io/carplaydsp/duoface-icon.png')
+                  blocks[i]='\\n'.join(lines)
+                  independent+=1
+          if independent!=1:
+              raise SystemExit(f'Expected 1 independent DuoFace, found {independent}')
           p.write_text('\n\n'.join(blocks))
           PY
           gzip -9c Packages > Packages.gz

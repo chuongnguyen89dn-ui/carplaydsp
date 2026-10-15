@@ -147,10 +147,10 @@ jobs:
 
           # DuoFace 1.0.3-12 visual test: verified binary from DuoFace GitHub.
           # Keep all unrelated CarPlay packages unchanged.
-          DUOFACE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/dist/visual-1.0.3-12/com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb'
+          DUOFACE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/fab16e4bd06f7f25611740a556739bfb9393d002/dist/visual-1.0.3-12/com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb'
           DUOFACE_FILE='repo/debs/com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_URL" -o "$DUOFACE_FILE"
-          (cd repo/debs && printf '%s  %s\n' 'ed50ed8258762510974c763c15e9d59e082dea3474d618e9626141c8df9182e5' 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' | shasum -a 256 -c -)
+          (cd repo/debs && printf '%s  %s\n' '8b7dedf77b9ec05465b83fdb6e2d7127800eac232a34ecf12f2c08b3983a481a' 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' | shasum -a 256 -c -)
           test "$(dpkg-deb -f "$DUOFACE_FILE" Package)" = 'com.duonavi.app'
           test "$(dpkg-deb -f "$DUOFACE_FILE" Version)" = '1.0.3-12~visualtest'
           test "$(dpkg-deb -f "$DUOFACE_FILE" Architecture)" = 'iphoneos-arm64'

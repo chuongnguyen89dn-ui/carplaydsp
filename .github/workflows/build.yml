@@ -160,15 +160,17 @@ jobs:
 
           # DuoFace Mới: sản phẩm CarPlay độc lập, ID riêng, không thay thế bản đang dùng.
           # Chỉ thêm gói này vào APT, tuyệt đối không đụng các gói khác.
-          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/cab4d9b725a0066c9840a7837a9a0a3a3ea32349/dist/independent/alpha1/com.duoface.independent_0.1.0~alpha1_iphoneos-arm64.deb'
-          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~alpha1_iphoneos-arm64.deb'
+          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/d1c36c86a354716086b63624301e3240c2d4e2ed/dist/independent/alpha2/com.duoface.independent_0.1.0~alpha2_iphoneos-arm64.deb'
+          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~alpha2_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_NEW_URL" -o "$DUOFACE_NEW_FILE"
-          printf '%s  %s\n' 'e1ac3ec78285924308bdb5f7a2d503c39cbf567f8a8293ad87ea1dc551d99439' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' 'e0b9f509a847da56a90dc390394e808e5418cf402989e00fa321e89e0f4f5d19' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Package)" = 'com.duoface.independent'
-          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~alpha1'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~alpha2'
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Architecture)" = 'iphoneos-arm64'
           dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceIndependent.dylib'
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -Eiq 'DuoNavi|CarPlaySplit|Airaw|DuoFaceDashboard'
+          # Chỉ dọn bản trước của CHÍNH package độc lập này, giữ mọi package khác.
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~alpha2_iphoneos-arm64.deb' -delete
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

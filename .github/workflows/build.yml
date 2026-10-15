@@ -158,19 +158,28 @@ jobs:
           # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
-          # DuoFace Mới: sản phẩm CarPlay độc lập, ID riêng, không thay thế bản đang dùng.
+          # DuoFace Mới: native test nguyên UI/host. Cơ chế runtime cần thiết bị nghiệm thu.
           # Chỉ thêm gói này vào APT, tuyệt đối không đụng các gói khác.
-          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/d1c36c86a354716086b63624301e3240c2d4e2ed/dist/independent/alpha2/com.duoface.independent_0.1.0~alpha2_iphoneos-arm64.deb'
-          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~alpha2_iphoneos-arm64.deb'
+          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/6c6a1f6a1a4802373be14ddfb92c71e28a880d49/dist/payload-migration/native1/com.duoface.independent_0.1.0~native1_iphoneos-arm64.deb'
+          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native1_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_NEW_URL" -o "$DUOFACE_NEW_FILE"
-          printf '%s  %s\n' 'e0b9f509a847da56a90dc390394e808e5418cf402989e00fa321e89e0f4f5d19' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' '16fd5fcbad7eba98de91a2e7a1200793509640cc47decbcca30491a45a6b9a13' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Package)" = 'com.duoface.independent'
-          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~alpha2'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native1'
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Architecture)" = 'iphoneos-arm64'
-          dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceIndependent.dylib'
-          ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -Eiq 'DuoNavi|CarPlaySplit|Airaw|DuoFaceDashboard'
+          # Native test: giữ nguyên 100% binary UI / host / menu gốc.
+          # Bao gồm Dashboard/FullscreenBridge/VisualHook + module thử nghiệm riêng.
+          dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'A_DuoFaceNativeNoLease.dylib'
+          dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceDashboard.dylib'
+          dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceFullscreenBridge.dylib'
+          dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceVisualHook.dylib'
+          ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -Eiq 'com.duonavi.sync.plist|CarPlaySplit|Airaw'
+          # preinst không cho cài song song với com.duonavi.app; không tự xóa package cũ.
+          dpkg-deb --ctrl-tarfile "$DUOFACE_NEW_FILE" | tar -xOf - ./preinst | grep -F 'com.duonavi.app'
+          # alpha2 < native1: bảo đảm Sileo nhận đây là phiên bản nâng cấp.
+          dpkg --compare-versions '0.1.0~native1' gt '0.1.0~alpha2'
           # Chỉ dọn bản trước của CHÍNH package độc lập này, giữ mọi package khác.
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~alpha2_iphoneos-arm64.deb' -delete
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native1_iphoneos-arm64.deb' -delete
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

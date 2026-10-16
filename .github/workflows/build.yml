@@ -158,51 +158,54 @@ jobs:
           # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
-          # NATIVE18: user-requested CarPlay Add App direct picker replaces original modal.
-          # Native12 license core exact; native17 settings-only UI and SmartConnection 10s exact.
-          # Signed candidate from verified GitHub Actions 38858756031. DEVICE QA still pending.
-          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/9538dce1fdeb58794a24d586e5b01210e8c9a679/dist/payload-migration/native18/com.duoface.independent_0.1.0~native18_iphoneos-arm64.deb'
-          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native18_iphoneos-arm64.deb'
+          # NATIVE20: DuoFace-only identity. Same UI and CarPlay features as native19.
+          # Original iPhone+Dashboard executable code is byte-for-byte unchanged.
+          # One-time non-destructive settings migration, strict ZERO old-brand scan.
+          # Native19/native18 remain available as committed rollback artifacts.
+          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/4c9d4ec191ab125b0ea57bed43a2133ecfdef94b/dist/payload-migration/native20/com.duoface.independent_0.1.0~native20_iphoneos-arm64.deb'
+          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native20_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_NEW_URL" -o "$DUOFACE_NEW_FILE"
-          printf '%s  %s\n' 'dfbcde5a309f7e90c414c2a10385e96aab3f17ebab0c7dd491313c9ef6a63503' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' '020ec9c99eac4b8afc4e96c96c0769e1a83fcd5e687af0e37224e9a8af8778ef' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Package)" = 'com.duoface.independent'
-          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native18'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native20'
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Architecture)" = 'iphoneos-arm64'
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'A_DuoFaceNativeNoLease'
           for unit in DuoFaceDashboard DuoFaceFullscreenBridge DuoFaceVisualHook DuoFaceLogoGripOnly DuoFaceSmartConnection DuoFaceInCarAddApps DuoFaceSettingsUIRestore; do
             dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F "$unit.dylib"
           done
-          ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -Eiq 'com.duonavi.sync.plist|CarPlaySplit|Airaw'
           dpkg-deb --ctrl-tarfile "$DUOFACE_NEW_FILE" | tar -xOf - ./preinst > /tmp/duoface-independent-preinst.sh
           sh -n /tmp/duoface-independent-preinst.sh
           grep -Fq 'dpkg-query -S' /tmp/duoface-independent-preinst.sh
+          grep -Fq 'cp -p "$old_store" "$new_store"' /tmp/duoface-independent-preinst.sh
           ! grep -Eiq 'duonavi|airaw' /tmp/duoface-independent-preinst.sh
-          curl -fL --retry 3 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/9538dce1fdeb58794a24d586e5b01210e8c9a679/dist/payload-migration/native18/BAO_CAO.json' -o /tmp/duoface-native18-qa.json
+          curl -fL --retry 3 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/4c9d4ec191ab125b0ea57bed43a2133ecfdef94b/dist/payload-migration/native20/BAO_CAO.json' -o /tmp/duoface-native20-qa.json
+          curl -fL --retry 3 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/4c9d4ec191ab125b0ea57bed43a2133ecfdef94b/dist/payload-migration/native20/BRAND_ZERO_AUDIT.json' -o /tmp/duoface-native20-brand.json
           python3 - <<'PY'
           import json
-          j=json.load(open('/tmp/duoface-native18-qa.json'))
-          assert j['version']=='0.1.0~native18'
-          assert j['native18_sha256']=='dfbcde5a309f7e90c414c2a10385e96aab3f17ebab0c7dd491313c9ef6a63503'
-          assert j['source_native17_sha256']=='60f8a4277dd9df912036f93fc8edfd0897a516752f3014863459d5ce89ad5fff'
-          assert j['original_payload_files_preserved_count']==44
-          assert j['changed_payload_paths']==[
-            'var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceInCarAddApps.dylib']
-          assert j['every_other_native17_payload_byte_identical']
-          assert j['native12_exact_license_core_preserved']
-          assert not j['old_carplay_alert_fallback_in_new_module_source']
-          assert j['old_alert_bytes_still_in_unmodified_legacy_Dashboard']
-          assert j['appSettings_and_bridgedApps_schema_from_native_disassembly']
-          assert not j['shared_config_file_discovery_runtime_confirmed']
-          assert not j['app_picker_device_tested'] and not j['dopamine_touched']
-          assert j['required_preserved_hashes']['var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceSmartConnection.dylib']=='0986cf70b4c613ad011520204337e1e2b403d24111f39f14f70628fb57e61d50'
-          assert j['required_preserved_hashes']['var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceSettingsUIRestore.dylib']=='680f79a1bb4d58a3bf277f7ed253f88627459390599a0818660f89dabe2e629f'
-          assert j['required_preserved_hashes']['var/jb/Applications/DuoFaceUI.app/DuoFaceUI']=='cb40346d8ca504cb399abe31367847b4f980a01ba93810986ce1acf1fbe9eef9'
-          assert j['required_preserved_hashes']['var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceDashboard.dylib']=='9e02a4bcee98fb703777122c67286158d9ca9cfa3088887b5ca280c580a695ea'
-          print('NATIVE18_CARPLAY_ADD_APP_NATIVE12_CORE_EXACT_ONE_MODULE_PUBLISH_GATE_PASS')
+          b=json.load(open('/tmp/duoface-native20-qa.json'))
+          a=json.load(open('/tmp/duoface-native20-brand.json'))
+          assert b['version']=='0.1.0~native20'
+          assert b['new_deb_sha256']=='020ec9c99eac4b8afc4e96c96c0769e1a83fcd5e687af0e37224e9a8af8778ef'
+          assert b['source_native19_sha256']=='91feda0a7ff24bd7759b7448303d61fe774b16184e383fc11b6839186fa1ae1d'
+          assert b['native12_original_code_section_unchanged_in_both_hosts']
+          assert b['new_preferences_owner_path']=='/var/mobile/Library/Preferences/com.duoface.plist'
+          assert b['installer_migrates_existing_preferences_if_needed']
+          assert b['old_preferences_preserved_for_rollback']
+          assert b['legacy_brand_termmatches_all_staged_paths_and_bytes']==0
+          assert b['smartconnection_10sec_unchanged']
+          assert b['license_settings_ui_unchanged']
+          assert b['unchanged_payload_count']==42
+          assert len(b['changed_payload_paths'])==3
+          assert b['app_picker_device_tested'] is False
+          assert b['full_autorestore_device_tested'] is False
+          assert a['strict_byte_level_zero_matches']
+          assert a['total_detected_by_brand_encoding']=={}
+          assert a['affected_paths']==[]
+          print('NATIVE20_DUOFACE_NAME_ONLY_MIGRATION_SHA_BRAND_ZERO_PUBLICATION_GATE_PASS')
           PY
-          dpkg --compare-versions '0.1.0~native18' gt '0.1.0~native17'
-          # Update only com.duoface.independent, preserve other Sileo packages.
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native18_iphoneos-arm64.deb' -delete
+          dpkg --compare-versions '0.1.0~native20' gt '0.1.0~native18'
+          # Update only the independent DuoFace package; preserve unrelated Sileo packages.
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native20_iphoneos-arm64.deb' -delete
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

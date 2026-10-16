@@ -160,27 +160,27 @@ jobs:
 
           # USER-APPROVED 2026-10-16: publish Native12-based speed2 HUD-only isolation
           # device-test DEB. Native13-21 are not used; protect other packages.
-          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/c1e64f307a3769f0286512d66b8920fa8764708d/dist/payload-migration/native12-speed3hud/com.duoface.independent_0.1.0~native12+speed3hud_iphoneos-arm64.deb'
-          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native12+speed3hud_iphoneos-arm64.deb'
+          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/8470b07e066061ecafe12f484405e854df7d316a/dist/payload-migration/native12-speed4split/com.duoface.independent_0.1.0~native12+speed4split_iphoneos-arm64.deb'
+          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native12+speed4split_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_NEW_URL" -o "$DUOFACE_NEW_FILE"
-          printf '%s  %s\n' 'b4caf7e965a3d1cb83e52d27b67bea2642c8734f6ae78924d9b8a4e09307e582' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' 'e73d3f3bb3e428c5656a6923f1010724151a924b983284c5d0c6c287d3939236' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Package)" = 'com.duoface.independent'
-          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native12+speed3hud'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native12+speed4split'
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Architecture)" = 'iphoneos-arm64'
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'A_DuoFaceNativeNoLease'
           for unit in DuoFaceDashboard DuoFaceFullscreenBridge DuoFaceVisualHook DuoFaceLogoGripOnly; do
             dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F "$unit.dylib"
           done
-          # Speed3HUD device-isolation: exactly one new DuoFace-owned
+          # Speed4Split device-isolation: exactly one new DuoFace-owned
           # CarPlay UI module, NO Waze hook, NO copied TWHub/GMapHUD dylib.
-          # Unlike broken speed2hud, Speed3 hooks ONLY the verified
+          # Unlike broken speed2hud, Speed4 hooks ONLY the verified
           # DuoFaceDashboard CBWindow within CarPlayApp, no generic UIWindow scan.
           dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceSpeedHUD.dylib'
           dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceSpeedHUD.plist'
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -E 'DuoFaceSpeedSources|VietMapGoogleMapsSource|WazeGMapHUDSource|GofaGMapHUDSource|GMapHUDOverspeedScreen|GMapHUDPlacementRelay|GoogleMapsVietMap'
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -E '/DuoFace(SmartConnection|InCarAddApps)\.dylib'
-          dpkg --compare-versions '0.1.0~native12+speed3hud' gt '0.1.0~native12+speed2hud'
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native12+speed3hud_iphoneos-arm64.deb' -delete
+          dpkg --compare-versions '0.1.0~native12+speed4split' gt '0.1.0~native12+speed3hud'
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native12+speed4split_iphoneos-arm64.deb' -delete
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
@@ -247,11 +247,11 @@ jobs:
           Path('Release').write_text('\n'.join(fields) + '\n', encoding='utf-8')
           release = Path('Release').read_text()
           assert 'Date: ' in release and 'SHA256:' in release and 'SHA512:' in release
-          assert '0.1.0~native12+speed3hud' in Path('Packages').read_text()
+          assert '0.1.0~native12+speed4split' in Path('Packages').read_text()
           assert '0.1.0~native21' not in Path('Packages').read_text()
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.independent']) == 1
-          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_SPEED3HUD_ONLY_PASS')
+          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_SPEED4SPLIT_ONLY_PASS')
           PY
 
           cat > index.html <<'EOF'

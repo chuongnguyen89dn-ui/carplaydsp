@@ -158,16 +158,15 @@ jobs:
           # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
-          # NATIVE17 DUOFACE: restore iPhone-only native2 settings row presentation.
-          # Immutable native12 LICENSE CORE = native16 host binary SHA; no license engine restored.
-          # Every native16 payload file remains byte-identical, including CarPlay and 10s SmartConnection.
-          # Only two new DuoFaceUI filter files added; no Dopamine/unrelated package changes.
-          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/68ea8e776f7a1629b5945f35fa7dc17797941600/dist/payload-migration/native17/com.duoface.independent_0.1.0~native17_iphoneos-arm64.deb'
-          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native17_iphoneos-arm64.deb'
+          # NATIVE18: user-requested CarPlay Add App direct picker replaces original modal.
+          # Native12 license core exact; native17 settings-only UI and SmartConnection 10s exact.
+          # Signed candidate from verified GitHub Actions 38858756031. DEVICE QA still pending.
+          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/9538dce1fdeb58794a24d586e5b01210e8c9a679/dist/payload-migration/native18/com.duoface.independent_0.1.0~native18_iphoneos-arm64.deb'
+          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native18_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_NEW_URL" -o "$DUOFACE_NEW_FILE"
-          printf '%s  %s\n' '60f8a4277dd9df912036f93fc8edfd0897a516752f3014863459d5ce89ad5fff' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' 'dfbcde5a309f7e90c414c2a10385e96aab3f17ebab0c7dd491313c9ef6a63503' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Package)" = 'com.duoface.independent'
-          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native17'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native18'
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Architecture)" = 'iphoneos-arm64'
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'A_DuoFaceNativeNoLease'
           for unit in DuoFaceDashboard DuoFaceFullscreenBridge DuoFaceVisualHook DuoFaceLogoGripOnly DuoFaceSmartConnection DuoFaceInCarAddApps DuoFaceSettingsUIRestore; do
@@ -178,31 +177,32 @@ jobs:
           sh -n /tmp/duoface-independent-preinst.sh
           grep -Fq 'dpkg-query -S' /tmp/duoface-independent-preinst.sh
           ! grep -Eiq 'duonavi|airaw' /tmp/duoface-independent-preinst.sh
-          curl -fL --retry 3 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/68ea8e776f7a1629b5945f35fa7dc17797941600/dist/payload-migration/native17/BAO_CAO.json' -o /tmp/duoface-native17-qa.json
+          curl -fL --retry 3 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/9538dce1fdeb58794a24d586e5b01210e8c9a679/dist/payload-migration/native18/BAO_CAO.json' -o /tmp/duoface-native18-qa.json
           python3 - <<'PY'
           import json
-          j=json.load(open('/tmp/duoface-native17-qa.json'))
-          assert j['version']=='0.1.0~native17'
-          assert j['deb_sha256']=='60f8a4277dd9df912036f93fc8edfd0897a516752f3014863459d5ce89ad5fff'
-          assert j['base_published_native16_sha256']=='5d5cbd368c24d0c074b081d16aaf7d006467c3e9cfef01ee12378ce79d716fae'
-          assert j['preserved_native16_payload_entries']==43
-          assert set(j['new_payload_paths'])=={
-            'var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceSettingsUIRestore.dylib',
-            'var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceSettingsUIRestore.plist'}
-          assert j['all_native16_original_payload_byte_identical']
-          assert not j['restored_license_methods_or_registration']
-          assert not j['original_nolease_library_reintroduced']
-          assert not j['dopamine_touched']
-          assert not j['device_tested']
-          assert j['smartconnection_10s_unchanged_sha256']=='0986cf70b4c613ad011520204337e1e2b403d24111f39f14f70628fb57e61d50'
-          assert j['carplay_addapps_unchanged_sha256']=='d0246415f4020f353e5ec7373d8d375cbbda868471fd1a467f8e57654c4d01ad'
-          assert j['native12_exact_original_host_sha256']['var/jb/Applications/DuoFaceUI.app/DuoFaceUI']=='cb40346d8ca504cb399abe31367847b4f980a01ba93810986ce1acf1fbe9eef9'
-          assert j['native12_exact_original_host_sha256']['var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceDashboard.dylib']=='9e02a4bcee98fb703777122c67286158d9ca9cfa3088887b5ca280c580a695ea'
-          print('NATIVE17_NATIVE12_LICENSE_CORE_EXACT_UI_ONLY_PUBLISH_GATE_PASS')
+          j=json.load(open('/tmp/duoface-native18-qa.json'))
+          assert j['version']=='0.1.0~native18'
+          assert j['native18_sha256']=='dfbcde5a309f7e90c414c2a10385e96aab3f17ebab0c7dd491313c9ef6a63503'
+          assert j['source_native17_sha256']=='60f8a4277dd9df912036f93fc8edfd0897a516752f3014863459d5ce89ad5fff'
+          assert j['original_payload_files_preserved_count']==44
+          assert j['changed_payload_paths']==[
+            'var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceInCarAddApps.dylib']
+          assert j['every_other_native17_payload_byte_identical']
+          assert j['native12_exact_license_core_preserved']
+          assert not j['old_carplay_alert_fallback_in_new_module_source']
+          assert j['old_alert_bytes_still_in_unmodified_legacy_Dashboard']
+          assert j['appSettings_and_bridgedApps_schema_from_native_disassembly']
+          assert not j['shared_config_file_discovery_runtime_confirmed']
+          assert not j['app_picker_device_tested'] and not j['dopamine_touched']
+          assert j['required_preserved_hashes']['var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceSmartConnection.dylib']=='0986cf70b4c613ad011520204337e1e2b403d24111f39f14f70628fb57e61d50'
+          assert j['required_preserved_hashes']['var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceSettingsUIRestore.dylib']=='680f79a1bb4d58a3bf277f7ed253f88627459390599a0818660f89dabe2e629f'
+          assert j['required_preserved_hashes']['var/jb/Applications/DuoFaceUI.app/DuoFaceUI']=='cb40346d8ca504cb399abe31367847b4f980a01ba93810986ce1acf1fbe9eef9'
+          assert j['required_preserved_hashes']['var/jb/Library/MobileSubstrate/DynamicLibraries/DuoFaceDashboard.dylib']=='9e02a4bcee98fb703777122c67286158d9ca9cfa3088887b5ca280c580a695ea'
+          print('NATIVE18_CARPLAY_ADD_APP_NATIVE12_CORE_EXACT_ONE_MODULE_PUBLISH_GATE_PASS')
           PY
-          dpkg --compare-versions '0.1.0~native17' gt '0.1.0~native16'
-          # Update only com.duoface.independent; preserve every other package.
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native17_iphoneos-arm64.deb' -delete
+          dpkg --compare-versions '0.1.0~native18' gt '0.1.0~native17'
+          # Update only com.duoface.independent, preserve other Sileo packages.
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native18_iphoneos-arm64.deb' -delete
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

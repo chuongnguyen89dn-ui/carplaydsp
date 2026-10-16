@@ -158,18 +158,19 @@ jobs:
           # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
-          # DuoFace Mới native10: isolated, user-approved test of 19 lifecycle methods.
-          # WARNING: CarPlay runtime behavior is not yet device verified.
-          # Preserve the exact tested-native9 DEB on GitHub for direct downgrade.
-          # No other Sileo package is modified.
-          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/b66e436fa06e85dc188c650fa9597336475997ff/dist/payload-migration/native10/com.duoface.independent_0.1.0~native10_iphoneos-arm64.deb'
-          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native10_iphoneos-arm64.deb'
+          # DuoFace Mới native12: user-requested CarPlay device trial.
+          # Entire redundant A_DuoFaceNativeNoLease.dylib and .plist are REMOVED.
+          # Native10 remains the proven on-device rollback in immutable GitHub.
+          # New native12 has passed byte-exact package QA, not device QA.
+          # Other Sileo packages remain unchanged.
+          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/f08b6f4a7be0bc3a38cce1b0c9b52f8179841064/dist/payload-migration/native12/com.duoface.independent_0.1.0~native12_iphoneos-arm64.deb'
+          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native12_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_NEW_URL" -o "$DUOFACE_NEW_FILE"
-          printf '%s  %s\n' '3d39b181d0089ae9a7797eb1ca05790155d1b242e50ca2cff362e0a818ff8d29' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' '85d754ea887eb8dd0659f65a5b2e3425564f617983937579753bad1a69433bf7' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Package)" = 'com.duoface.independent'
-          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native10'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native12'
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Architecture)" = 'iphoneos-arm64'
-          dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'A_DuoFaceNativeNoLease.dylib'
+          ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'A_DuoFaceNativeNoLease'
           dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceDashboard.dylib'
           dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceFullscreenBridge.dylib'
           dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'DuoFaceVisualHook.dylib'
@@ -180,10 +181,10 @@ jobs:
           sh -n /tmp/duoface-independent-preinst.sh
           grep -Fq 'dpkg-query -S' /tmp/duoface-independent-preinst.sh
           ! grep -Eiq 'duonavi|airaw' /tmp/duoface-independent-preinst.sh
-          # Upgrade only the existing independent package; native9 remains the rollback source.
-          dpkg --compare-versions '0.1.0~native10' gt '0.1.0~native9'
+          # Upgrade independent DuoFace from tested native10; keep native10 artifact immutable.
+          dpkg --compare-versions '0.1.0~native12' gt '0.1.0~native10'
           # Replace only the independent package version in published APT index.
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native10_iphoneos-arm64.deb' -delete
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native12_iphoneos-arm64.deb' -delete
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

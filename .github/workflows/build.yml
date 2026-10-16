@@ -207,18 +207,47 @@ jobs:
               raise SystemExit(f'Expected 1 independent DuoFace, found {independent}')
           p.write_text('\n\n'.join(blocks))
           PY
+          # Sileo/apt compatibility: publish compressed indexes and an RFC2822
+          # Date plus SHA256/SHA512 checksums in the flat repository Release file.
+          # The earlier no-hash/no-Date Release produced apt warnings on 2026-10-16.
           gzip -9c Packages > Packages.gz
+          python3 - <<'PY'
+          import bz2
+          import hashlib
+          import lzma
+          from datetime import datetime, timezone
+          from email.utils import format_datetime
+          from pathlib import Path
 
-          cat > Release <<'EOF'
-          Origin: CarPlayDSP
-          Label: CarPlayDSP
-          Suite: stable
-          Version: 1.0
-          Codename: ios-rootless
-          Architectures: iphoneos-arm64
-          Components: main
-          Description: CarPlayDSP packages for rootless iOS
-          EOF
+          packages = Path('Packages').read_bytes()
+          Path('Packages.bz2').write_bytes(bz2.compress(packages, compresslevel=9))
+          Path('Packages.xz').write_bytes(lzma.compress(packages, format=lzma.FORMAT_XZ, preset=6))
+          filenames = ('Packages', 'Packages.gz', 'Packages.bz2', 'Packages.xz')
+          fields = [
+              'Origin: CarPlayDSP',
+              'Label: CarPlayDSP',
+              'Suite: stable',
+              'Version: 1.0',
+              'Codename: ios-rootless',
+              'Date: ' + format_datetime(datetime.now(timezone.utc), usegmt=True),
+              'Architectures: iphoneos-arm64',
+              'Components: main',
+              'Description: CarPlayDSP packages for rootless iOS',
+          ]
+          for header, digest in (('MD5Sum', 'md5'), ('SHA256', 'sha256'), ('SHA512', 'sha512')):
+              fields.append(header + ':')
+              for filename in filenames:
+                  data = Path(filename).read_bytes()
+                  fields.append(' ' + hashlib.new(digest, data).hexdigest() + ' ' + str(len(data)) + ' ' + filename)
+          Path('Release').write_text('\n'.join(fields) + '\n', encoding='utf-8')
+          release = Path('Release').read_text()
+          assert 'Date: ' in release and 'SHA256:' in release and 'SHA512:' in release
+          assert '0.1.0~native12' in Path('Packages').read_text()
+          assert '0.1.0~native21' not in Path('Packages').read_text()
+          assert len([line for line in Path('Packages').read_text().splitlines()
+                      if line == 'Package: com.duoface.independent']) == 1
+          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_ONLY_PASS')
+          PY
 
           cat > index.html <<'EOF'
           <!doctype html>

@@ -158,15 +158,16 @@ jobs:
           # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
-          # USER-REQUESTED 2026-10-17: Speed6 TRUE DuoFace-only split-host device-test DEB.
+          # USER-REQUESTED 2026-10-17: Speed6 native split owner PROBE device diagnostic; unchanged render gate.
           # EXACT Native12 preserved; CarPlayApp CBWindow host UIView (not CarPlay Home global UIWindow).
-          # GOFAHUD original NOT bundled; keep all unrelated Sileo packages unchanged.
-          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/414020c5e2aaf2c8a597b417b616580a3886b8c4/dist/payload-migration/native12-speed6split1/com.duoface.independent_0.1.0~native12+speed6split1_iphoneos-arm64.deb'
-          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native12+speed6split1_iphoneos-arm64.deb'
+          # Log class/host gate for NEXT device diagnosis; NOT proof that HUD now appears.
+          # Original GOFAHUD NOT bundled; no global CarPlay Home HUD; unrelated packages unchanged.
+          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/0af08387685c54717496b9492225a27fe093ca69/dist/payload-migration/native12-speed6probe1/com.duoface.independent_0.1.0~native12+speed6zprobe1_iphoneos-arm64.deb'
+          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native12+speed6zprobe1_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_NEW_URL" -o "$DUOFACE_NEW_FILE"
-          printf '%s  %s\n' '9cb2aa74e8684aabb081171b3ce4aa4af5b9bcc15bf39fd6eb29e3896eba8532' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' '42f7300463fa7aeecfb28342298e5faf3c77dcf0319e77964a6b35622eba722e' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Package)" = 'com.duoface.independent'
-          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native12+speed6split1'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native12+speed6zprobe1'
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Architecture)" = 'iphoneos-arm64'
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F 'A_DuoFaceNativeNoLease'
           for unit in DuoFaceDashboard DuoFaceFullscreenBridge DuoFaceVisualHook DuoFaceLogoGripOnly DuoFaceSpeedHUD; do
@@ -183,9 +184,9 @@ jobs:
           ! grep -Eiq 'SpringBoard|CarPlayTemplateUIHost|Waze|GOFA' "$FILTER"
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -E 'DuoFaceSpeedSources|VietMapGoogleMapsSource|WazeGMapHUDSource|GofaGMapHUDSource|GMapHUDOverspeedScreen|GMapHUDPlacementRelay|GoogleMapsVietMap'
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -E '/DuoFace(SmartConnection|InCarAddApps)\.dylib'
-          dpkg --compare-versions '0.1.0~native12+speed6split1' gt '0.1.0~native12+speed5scene'
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native12+speed6split1_iphoneos-arm64.deb' -delete
-          echo 'SILEO_SPEED6_EXACT_SHA_AND_INJECTION_FILTER_PASS'
+          dpkg --compare-versions '0.1.0~native12+speed6zprobe1' gt '0.1.0~native12+speed6split1'
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native12+speed6zprobe1_iphoneos-arm64.deb' -delete
+          echo 'SILEO_SPEED6PROBE_EXACT_SHA_AND_INJECTION_FILTER_PASS'
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
@@ -252,11 +253,11 @@ jobs:
           Path('Release').write_text('\n'.join(fields) + '\n', encoding='utf-8')
           release = Path('Release').read_text()
           assert 'Date: ' in release and 'SHA256:' in release and 'SHA512:' in release
-          assert '0.1.0~native12+speed6split1' in Path('Packages').read_text()
+          assert '0.1.0~native12+speed6zprobe1' in Path('Packages').read_text()
           assert '0.1.0~native21' not in Path('Packages').read_text()
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.independent']) == 1
-          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_SPEED6SPLIT1_ONLY_PASS')
+          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_SPEED6ZPROBE1_ONLY_PASS')
           PY
 
           cat > index.html <<'EOF'

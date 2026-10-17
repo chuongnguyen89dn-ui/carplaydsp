@@ -151,7 +151,7 @@ jobs:
           DUOFACE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/82d20f59318417de6b6bb9838a86995243cd5b5f/dist/visualtest12-launchfix1/com.duonavi.app_1.0.3-12~visualtest12launch1_iphoneos-arm64.deb'
           DUOFACE_FILE='repo/debs/com.duonavi.app_1.0.3-12~visualtest12launch1_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_URL" -o "$DUOFACE_FILE"
-          (cd repo/debs && printf '%s  %s\n' 'e30148affc767ce039040f0e0cccd9a0ecbd40e523ee66409ca96e6ef2085f02' 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' | shasum -a 256 -c -)
+          (cd repo/debs && printf '%s  %s\n' 'e30148affc767ce039040f0e0cccd9a0ecbd40e523ee66409ca96e6ef2085f02' 'com.duonavi.app_1.0.3-12~visualtest12launch1_iphoneos-arm64.deb' | shasum -a 256 -c -)
           test "$(dpkg-deb -f "$DUOFACE_FILE" Package)" = 'com.duonavi.app'
           test "$(dpkg-deb -f "$DUOFACE_FILE" Version)" = '1.0.3-12~visualtest12launch1'
           test "$(dpkg-deb -f "$DUOFACE_FILE" Architecture)" = 'iphoneos-arm64'

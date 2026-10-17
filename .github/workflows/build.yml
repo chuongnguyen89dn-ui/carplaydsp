@@ -145,20 +145,21 @@ jobs:
           unzip -j /tmp/duodash-airaw.zip '*.deb' -d external
           cp external/*.deb repo/debs/
 
-          # DuoFace VisualTest12 connection mismatch diagnostic, read-only extra dylib; core unchanged.
-          # Owner-requested direct update of com.duonavi.app; preserve independent Hub.
-          # Keep all unrelated CarPlay packages unchanged.
-          DUOFACE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/69861d41b98a2cf88e696ebf83351346f4a03b1a/dist/visualtest12-connectprobe1/com.duonavi.app_1.0.3-12~visualtest12launch2probe1_iphoneos-arm64.deb'
-          DUOFACE_FILE='repo/debs/com.duonavi.app_1.0.3-12~visualtest12launch2probe1_iphoneos-arm64.deb'
+          # VisualTest12 functional activation-gate repair (candidate awaiting device QA).
+          # Restore exact original VisualTest12 core; inject one ABI-pinned repair dylib.
+          # NO DuoDash or Airaw binary copied; independent Hub package remains untouched.
+          DUOFACE_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/9683dcfb2d85fa9e513f360c4ad8bbc2b2ebbbe8/dist/visualtest12-repair1/com.duonavi.app_1.0.3-12~visualtest12repair1_iphoneos-arm64.deb'
+          DUOFACE_FILE='repo/debs/com.duonavi.app_1.0.3-12~visualtest12repair1_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_URL" -o "$DUOFACE_FILE"
-          (cd repo/debs && printf '%s  %s\n' '43c7ffbaae23fa39a19c63e276f50cfd35c66ce1ea7ab887f9a78cc077738841' 'com.duonavi.app_1.0.3-12~visualtest12launch2probe1_iphoneos-arm64.deb' | shasum -a 256 -c -)
+          (cd repo/debs && printf '%s  %s\n' 'b2cc38bd50862df5fd9ec69bd4c62010c0623263a14346c695e895a92709753f' 'com.duonavi.app_1.0.3-12~visualtest12repair1_iphoneos-arm64.deb' | shasum -a 256 -c -)
           test "$(dpkg-deb -f "$DUOFACE_FILE" Package)" = 'com.duonavi.app'
-          test "$(dpkg-deb -f "$DUOFACE_FILE" Version)" = '1.0.3-12~visualtest12launch2probe1'
+          test "$(dpkg-deb -f "$DUOFACE_FILE" Version)" = '1.0.3-12~visualtest12repair1'
           test "$(dpkg-deb -f "$DUOFACE_FILE" Architecture)" = 'iphoneos-arm64'
           dpkg-deb --contents "$DUOFACE_FILE" | grep -F 'DuoFaceVisualHook.dylib'
-          # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
+          dpkg-deb --contents "$DUOFACE_FILE" | grep -F 'DFVisual12GateRepair.dylib'
+          # Only replace the VisualTest12 package. Never remove independent Hub.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' -delete
-          find repo/debs -maxdepth 1 -type f -name 'com.duonavi.app_*.deb' ! -name 'com.duonavi.app_1.0.3-12~visualtest12launch2probe1_iphoneos-arm64.deb' -delete
+          find repo/debs -maxdepth 1 -type f -name 'com.duonavi.app_*.deb' ! -name 'com.duonavi.app_1.0.3-12~visualtest12repair1_iphoneos-arm64.deb' -delete
 
           # Native12 Speed8 TEST: one UIView only in VERIFIED SpringBoard split native CBWindow.
           # Requires CBBridgedSplitApp.currentApp, >=2 live native appViews attached to same root.

@@ -294,7 +294,7 @@ jobs:
                       if line == 'Package: com.duoface.independent']) == 1
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.visual12']) == 1
-          assert '1.0.3-12~standalone2qa' in Path('Packages').read_text()
+          assert '1.0.3-12~standalone3diag' in Path('Packages').read_text()
           print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_G1G2_QA_PASS')
           PY
 

@@ -158,15 +158,15 @@ jobs:
           # Original DuoNavi package ID intentionally selected by user; remove older DuoFace builds.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.app_*.deb' ! -name 'com.duoface.app_1.0.3-12_visualtest_iphoneos-arm64.deb' -delete
 
-          # Native12 Speed7 TEST: one UIView only in VERIFIED SpringBoard split native CBWindow.
+          # Native12 Speed8 TEST: one UIView only in VERIFIED SpringBoard split native CBWindow.
           # Requires CBBridgedSplitApp.currentApp, >=2 live native appViews attached to same root.
           # No extra UIWindow, no CarPlayApp injection, Waze or GOFAHUD code.
-          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/7783c71b92ddd299f7f4e0b51b93c10c440eaac3/dist/payload-migration/native12-speed7split/com.duoface.independent_0.1.0~native12+speed7split_iphoneos-arm64.deb'
-          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native12+speed7split_iphoneos-arm64.deb'
+          DUOFACE_NEW_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/1286a3ef868cf7e29804bcddf7e20b2eae707ce1/dist/payload-migration/native12-speed8compact/com.duoface.independent_0.1.0~native12+speed8compact_iphoneos-arm64.deb'
+          DUOFACE_NEW_FILE='repo/debs/com.duoface.independent_0.1.0~native12+speed8compact_iphoneos-arm64.deb'
           curl -fL --retry 3 "$DUOFACE_NEW_URL" -o "$DUOFACE_NEW_FILE"
-          printf '%s  %s\n' 'a59c65f96457b436a0adf581ce96ad0a7fd769552f13ca67112b41b525811155' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' '2fe8892c5ef8762e1e83b0fd6c4a029e25fc11758cc98fdbbb851bf6637e68ad' "$DUOFACE_NEW_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Package)" = 'com.duoface.independent'
-          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native12+speed7split'
+          test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Version)" = '0.1.0~native12+speed8compact'
           test "$(dpkg-deb -f "$DUOFACE_NEW_FILE" Architecture)" = 'iphoneos-arm64'
           for unit in DuoFaceDashboard DuoFaceFullscreenBridge DuoFaceVisualHook DuoFaceLogoGripOnly DuoFaceSpeedHUD DuoFaceSpeedOwner; do
             dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -F "$unit.dylib"
@@ -175,20 +175,20 @@ jobs:
             test "$(dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -c "$unit.dylib")" -eq 1
             test "$(dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -c "$unit.plist")" -eq 1
           done
-          mkdir -p "$RUNNER_TEMP/duoface-speed7-split-verify"
-          dpkg-deb -x "$DUOFACE_NEW_FILE" "$RUNNER_TEMP/duoface-speed7-split-verify"
-          dir="$RUNNER_TEMP/duoface-speed7-split-verify/var/jb/Library/MobileSubstrate/DynamicLibraries"
+          mkdir -p "$RUNNER_TEMP/duoface-speed8-split-verify"
+          dpkg-deb -x "$DUOFACE_NEW_FILE" "$RUNNER_TEMP/duoface-speed8-split-verify"
+          dir="$RUNNER_TEMP/duoface-speed8-split-verify/var/jb/Library/MobileSubstrate/DynamicLibraries"
           for unit in DuoFaceSpeedHUD DuoFaceSpeedOwner; do
             grep -Fq '"SpringBoard"' "$dir/$unit.plist"
             ! grep -Eiq 'CarPlayApp|CarPlayTemplateUIHost|Waze|GOFA' "$dir/$unit.plist"
           done
-          printf '%s  %s\n' 'c0450e05709bca3c1beb65af3ad8929e58184c218f6d91a6ef9e2ec27633fb7d' "$dir/DuoFaceSpeedHUD.dylib" | shasum -a 256 -c -
+          printf '%s  %s\n' '8968e1724afda7087c258cd1146eac014e29daf2bf823e734bca91a81881a364' "$dir/DuoFaceSpeedHUD.dylib" | shasum -a 256 -c -
           printf '%s  %s\n' 'd3725aca26dbee03cc1ad8697612004f405b2f3759c94656eb3451f39422fee3' "$dir/DuoFaceSpeedOwner.dylib" | shasum -a 256 -c -
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -E 'A_DuoFaceNativeNoLease|DuoFaceSpeedSources|VietMapGoogleMapsSource|WazeGMapHUDSource|GofaGMapHUDSource|GMapHUDOverspeedScreen|GMapHUDPlacementRelay|GoogleMapsVietMap'
           ! dpkg-deb -c "$DUOFACE_NEW_FILE" | grep -E '/DuoFace(SmartConnection|InCarAddApps)\.dylib'
-          dpkg --compare-versions '0.1.0~native12+speed7split' gt '0.1.0~native12+speed6zzowner1'
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native12+speed7split_iphoneos-arm64.deb' -delete
-          echo 'SILEO_SPEED7_NATIVE_SPRINGBOARD_ONLY_SPLIT_TWO_PANES_AND_SHA_PASS'
+          dpkg --compare-versions '0.1.0~native12+speed8compact' gt '0.1.0~native12+speed6zzowner1'
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.independent_*.deb' ! -name 'com.duoface.independent_0.1.0~native12+speed8compact_iphoneos-arm64.deb' -delete
+          echo 'SILEO_SPEED8_NATIVE_SPRINGBOARD_ONLY_SPLIT_TWO_PANES_AND_SHA_PASS'
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
@@ -255,11 +255,11 @@ jobs:
           Path('Release').write_text('\n'.join(fields) + '\n', encoding='utf-8')
           release = Path('Release').read_text()
           assert 'Date: ' in release and 'SHA256:' in release and 'SHA512:' in release
-          assert '0.1.0~native12+speed7split' in Path('Packages').read_text()
+          assert '0.1.0~native12+speed8compact' in Path('Packages').read_text()
           assert '0.1.0~native21' not in Path('Packages').read_text()
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.independent']) == 1
-          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_SPEED7SPLIT_ONLY_PASS')
+          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_SPEED8COMPACT_ONLY_PASS')
           PY
 
           cat > index.html <<'EOF'

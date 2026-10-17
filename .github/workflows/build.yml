@@ -194,23 +194,25 @@ jobs:
           echo 'SILEO_SPEED8_NATIVE_SPRINGBOARD_ONLY_SPLIT_TWO_PANES_AND_SHA_PASS'
 
           # Standalone Visual12 QA package (separate ID; never replace Native12 + Hub8).
-          # Source artifact was signed and package-audited in DuoFace GitHub Actions 39037058354.
+          # QA G1/G2 package signed/verified in DuoFace Actions 39047207433.
           # Same-byte, SHA-pinned download; no changes to stable Native12 + Hub8 package.
-          VISUAL12_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/d0dac8598531de6bab3e5dfebe8179a117009876/dist/visual12-standalone-qa/com.duoface.visual12_1.0.3-12~standalone1_iphoneos-arm64.deb'
-          VISUAL12_QA_FILE='repo/debs/com.duoface.visual12_1.0.3-12~standalone1_iphoneos-arm64.deb'
+          VISUAL12_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/20c3e74654c2dd87c12fff3316967948393b9fc7/dist/visual12-g1g2-qa/com.duoface.visual12_1.0.3-12~standalone2qa_iphoneos-arm64.deb'
+          VISUAL12_QA_FILE='repo/debs/com.duoface.visual12_1.0.3-12~standalone2qa_iphoneos-arm64.deb'
           curl -fL --retry 3 "$VISUAL12_QA_URL" -o "$VISUAL12_QA_FILE"
-          printf '%s  %s\n' 'c838a61db75bfdc04d3d4c8b87ca8c982de215e458402907ab4a79e861c4d32f' "$VISUAL12_QA_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' '12b3e874175bae3059c499c10a365d62e724b2eb27cc3e67178dca2413423daa' "$VISUAL12_QA_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Package)" = 'com.duoface.visual12'
-          test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Version)" = '1.0.3-12~standalone1'
+          test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Version)" = '1.0.3-12~standalone2qa'
           test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Architecture)" = 'iphoneos-arm64'
-          test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Name)" = 'DuoFace CarPlay Standalone (QA only)'
+          dpkg --compare-versions '1.0.3-12~standalone2qa' gt '1.0.3-12~standalone1'
+          test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Name)" = 'DuoFace CarPlay QA G1/G2 (experimental)'
           ! dpkg-deb -f "$VISUAL12_QA_FILE" Conflicts | grep -Eq 'com.duoface.independent|com.duonavi.app'
           ! dpkg-deb -f "$VISUAL12_QA_FILE" Replaces | grep -Eq 'com.duoface.independent|com.duonavi.app'
           dpkg-deb -c "$VISUAL12_QA_FILE" | grep -F '/DuoFaceVisual12.dylib'
           dpkg-deb -c "$VISUAL12_QA_FILE" | grep -F '/DuoFaceVisual12.app/'
           ! dpkg-deb -c "$VISUAL12_QA_FILE" | grep -Eiq 'DuoFaceIndependent|DuoFaceDashboard|DuoNavi|Airaw|DuoDash'
-          printf '%s\n' 'VISUAL12_EXPERIMENTAL_SHA_METADATA_AND_PATHS_PASS; NATIVE12_HUB8_UNCHANGED'
+          printf '%s\n' 'VISUAL12_G1G2_STANDALONE2QA_SHA_METADATA_AND_PATHS_PASS; NATIVE12_HUB8_UNCHANGED'
 
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.visual12_*.deb' ! -name 'com.duoface.visual12_1.0.3-12~standalone2qa_iphoneos-arm64.deb' -delete
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -239,7 +241,7 @@ jobs:
                   independent+=1
           if independent!=1:
               raise SystemExit(f'Expected 1 independent DuoFace, found {independent}')
-          # Explicit QA-only listing: its name/description remain test-labelled.
+          # Explicit G1/G2 QA-only listing; device testing is pending.
           visual12qa=0
           for i,block in enumerate(blocks):
               if block.startswith('Package: com.duoface.visual12\n'):
@@ -292,8 +294,8 @@ jobs:
                       if line == 'Package: com.duoface.independent']) == 1
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.visual12']) == 1
-          assert '1.0.3-12~standalone1' in Path('Packages').read_text()
-          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_STANDALONE_QA_PASS')
+          assert '1.0.3-12~standalone2qa' in Path('Packages').read_text()
+          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_G1G2_QA_PASS')
           PY
 
           cat > index.html <<'EOF'

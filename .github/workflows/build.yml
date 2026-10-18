@@ -214,19 +214,22 @@ jobs:
 
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.visual12_*.deb' ! -name 'com.duoface.visual12_1.0.3-12~ui8native7_iphoneos-arm64.deb' -delete
 
-          # Separate owner-authorized SidePlay Zoom QA addon, without vendor binary.
-          SIDEPLAY_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/c75e960c33051cb6a117a75dd2c7a1b4d5902343/sideplay/artifacts/zoomqa1/com.duoface.sideplaydisplay_0.1.0~zoomqa1_iphoneos-arm64.deb'
-          SIDEPLAY_QA_DEB='repo/debs/com.duoface.sideplaydisplay_0.1.0~zoomqa1_iphoneos-arm64.deb'
+          # Independent SidePlay Native12 frame + live divider drag QA3, no vendor binary.
+          # Remove obsolete QA1/QA2 DEB to keep exactly one APT entry.
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.sideplaydisplay_*.deb' -delete
+          SIDEPLAY_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/315b052b9fb37beeb576eb881fd5cf00bbea03d4/sideplay/artifacts/native12frame3/com.duoface.sideplaydisplay_0.1.1~native12frame3_iphoneos-arm64.deb'
+          SIDEPLAY_QA_DEB='repo/debs/com.duoface.sideplaydisplay_0.1.1~native12frame3_iphoneos-arm64.deb'
           curl -fL --retry 3 "$SIDEPLAY_QA_URL" -o "$SIDEPLAY_QA_DEB"
-          printf '%s  %s\n' '4f3aeb1e905c71b17e3a97303275732e90f48e4a27e3434ca8d5221b77f68d2b' "$SIDEPLAY_QA_DEB" | shasum -a 256 -c -
+          printf '%s  %s\n' 'c41826d474aced13a48ddbf39ef72cb913f8cf9c933411da4c969cdff1ad443d' "$SIDEPLAY_QA_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Package)" = 'com.duoface.sideplaydisplay'
-          test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Version)" = '0.1.0~zoomqa1'
+          test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Version)" = '0.1.1~native12frame3'
           test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Architecture)" = 'iphoneos-arm64'
           dpkg-deb -f "$SIDEPLAY_QA_DEB" Depends | grep -F 'com.sideplay'
           dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -F '/DuoFaceSidePlayDisplayQA.dylib'
           dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -F '/DuoFaceSidePlayDisplayQA.plist'
+          dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -F '/DuoFaceSidePlayDisplayQA/duoface-logo-picker-alpha-v2.png'
           ! dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -Eq 'SidePlay.dylib|SidePlay.app|DuoFaceDashboard.dylib'
-          echo 'SIDEPLAY_ZOOM_QA1_ISOLATED_SHA256_AND_PAYLOAD_PASS'
+          echo 'SIDEPLAY_NATIVE12_FRAME_QA3_ISOLATED_SHA256_AND_PAYLOAD_PASS'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -321,7 +324,7 @@ jobs:
           assert '1.0.3-12~ui8native7' in Path('Packages').read_text()
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.sideplaydisplay']) == 1
-          assert '0.1.0~zoomqa1' in Path('Packages').read_text()
+          assert '0.1.1~native12frame3' in Path('Packages').read_text()
           print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_NATIVE_SHELL7_VISUAL_QA_PASS')
           PY
 

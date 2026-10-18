@@ -194,25 +194,25 @@ jobs:
           echo 'SILEO_SPEED8_NATIVE_SPRINGBOARD_ONLY_SPLIT_TWO_PANES_AND_SHA_PASS'
 
           # Standalone Visual12 QA package (separate ID; never replace Native12 + Hub8).
-          # QA Native12 HUD8 UI v2 package signed/verified in DuoFace Actions 39090276652.
+          # Independent QA per-slot controls/drag v3 built and verified in DuoFace Actions 39092553442.
           # Same-byte, SHA-pinned download; no changes to stable Native12 + Hub8 package.
-          VISUAL12_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/2268a2e3f77ab8c87a4235594c3ea88725a83523/dist/visual12-native8ui2-qa/com.duoface.visual12_1.0.3-12~ui8native2_iphoneos-arm64.deb'
-          VISUAL12_QA_FILE='repo/debs/com.duoface.visual12_1.0.3-12~ui8native2_iphoneos-arm64.deb'
+          VISUAL12_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/27fe8016de27970c715b52083adfea35ddba3d15/dist/visual12-native104ui3b-qa/com.duoface.visual12_1.0.3-12~ui8native3_iphoneos-arm64.deb'
+          VISUAL12_QA_FILE='repo/debs/com.duoface.visual12_1.0.3-12~ui8native3_iphoneos-arm64.deb'
           curl -fL --retry 3 "$VISUAL12_QA_URL" -o "$VISUAL12_QA_FILE"
-          printf '%s  %s\n' 'ff3e135d99d3ac744c139dcf05d0a0e52d34bcd7fcbc57a9748c627f812495d5' "$VISUAL12_QA_FILE" | shasum -a 256 -c -
+          printf '%s  %s\n' '3bb83550ead8cdc13fd7881e652aee2384d3ea1aba7bd5d5a235775809e73872' "$VISUAL12_QA_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Package)" = 'com.duoface.visual12'
-          test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Version)" = '1.0.3-12~ui8native2'
+          test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Version)" = '1.0.3-12~ui8native3'
           test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Architecture)" = 'iphoneos-arm64'
-          dpkg --compare-versions '1.0.3-12~ui8native2' gt '1.0.3-12~ui8native1'
+          dpkg --compare-versions '1.0.3-12~ui8native3' gt '1.0.3-12~ui8native2'
           test "$(dpkg-deb -f "$VISUAL12_QA_FILE" Name)" = 'DuoFace CarPlay Standalone (QA only)'
           ! dpkg-deb -f "$VISUAL12_QA_FILE" Conflicts | grep -Eq 'com.duoface.independent|com.duonavi.app'
           ! dpkg-deb -f "$VISUAL12_QA_FILE" Replaces | grep -Eq 'com.duoface.independent|com.duonavi.app'
           dpkg-deb -c "$VISUAL12_QA_FILE" | grep -F '/DuoFaceVisual12.dylib'
           dpkg-deb -c "$VISUAL12_QA_FILE" | grep -F '/DuoFaceVisual12.app/'
           ! dpkg-deb -c "$VISUAL12_QA_FILE" | grep -Eiq 'DuoFaceIndependent|DuoFaceDashboard|DuoNavi|Airaw|DuoDash'
-          printf '%s\n' 'VISUAL12_NATIVE8_UI1_SHA_METADATA_AND_PATHS_PASS; NATIVE12_HUB8_UNCHANGED'
+          printf '%s\n' 'VISUAL12_NATIVE104_PER_SLOT_UI3_SHA_METADATA_AND_PATHS_PASS; NATIVE12_HUB8_UNCHANGED'
 
-          find repo/debs -maxdepth 1 -type f -name 'com.duoface.visual12_*.deb' ! -name 'com.duoface.visual12_1.0.3-12~ui8native2_iphoneos-arm64.deb' -delete
+          find repo/debs -maxdepth 1 -type f -name 'com.duoface.visual12_*.deb' ! -name 'com.duoface.visual12_1.0.3-12~ui8native3_iphoneos-arm64.deb' -delete
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -294,8 +294,8 @@ jobs:
                       if line == 'Package: com.duoface.independent']) == 1
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.visual12']) == 1
-          assert '1.0.3-12~ui8native2' in Path('Packages').read_text()
-          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_NATIVE8_UI_QA_PASS')
+          assert '1.0.3-12~ui8native3' in Path('Packages').read_text()
+          print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_NATIVE104_UI3_QA_PASS')
           PY
 
           cat > index.html <<'EOF'

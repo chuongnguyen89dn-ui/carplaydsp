@@ -213,6 +213,20 @@ jobs:
           printf '%s\n' 'VISUAL12_NATIVE_SHELL7_VISUAL_QA_SHA_METADATA_AND_PATHS_PASS; NATIVE12_HUB8_UNCHANGED'
 
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.visual12_*.deb' ! -name 'com.duoface.visual12_1.0.3-12~ui8native7_iphoneos-arm64.deb' -delete
+
+          # Separate owner-authorized SidePlay Zoom QA addon, without vendor binary.
+          SIDEPLAY_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/c75e960c33051cb6a117a75dd2c7a1b4d5902343/sideplay/artifacts/zoomqa1/com.duoface.sideplaydisplay_0.1.0~zoomqa1_iphoneos-arm64.deb'
+          SIDEPLAY_QA_DEB='repo/debs/com.duoface.sideplaydisplay_0.1.0~zoomqa1_iphoneos-arm64.deb'
+          curl -fL --retry 3 "$SIDEPLAY_QA_URL" -o "$SIDEPLAY_QA_DEB"
+          printf '%s  %s\n' '4f3aeb1e905c71b17e3a97303275732e90f48e4a27e3434ca8d5221b77f68d2b' "$SIDEPLAY_QA_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Package)" = 'com.duoface.sideplaydisplay'
+          test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Version)" = '0.1.0~zoomqa1'
+          test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Architecture)" = 'iphoneos-arm64'
+          dpkg-deb -f "$SIDEPLAY_QA_DEB" Depends | grep -F 'com.sideplay'
+          dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -F '/DuoFaceSidePlayDisplayQA.dylib'
+          dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -F '/DuoFaceSidePlayDisplayQA.plist'
+          ! dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -Eq 'SidePlay.dylib|SidePlay.app|DuoFaceDashboard.dylib'
+          echo 'SIDEPLAY_ZOOM_QA1_ISOLATED_SHA256_AND_PAYLOAD_PASS'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -251,6 +265,16 @@ jobs:
                   visual12qa+=1
           if visual12qa!=1:
               raise SystemExit(f'Expected exactly one isolated Visual12 QA package, found {visual12qa}')
+          # Independent SidePlay display smoke-test; use the same DuoFace icon.
+          sideplayqa=0
+          for i,block in enumerate(blocks):
+              if block.startswith('Package: com.duoface.sideplaydisplay\n'):
+                  lines=[line for line in block.splitlines() if not line.startswith('Icon: ')]
+                  lines.append('Icon: https://chuongnguyen89dn-ui.github.io/carplaydsp/duoface-icon.png')
+                  blocks[i]='\n'.join(lines)
+                  sideplayqa+=1
+          if sideplayqa!=1:
+              raise SystemExit(f'Expected one SidePlay QA1 entry, found {sideplayqa}')
           p.write_text('\n\n'.join(blocks))
           PY
           # Sileo/apt compatibility: publish compressed indexes and an RFC2822
@@ -295,6 +319,9 @@ jobs:
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.visual12']) == 1
           assert '1.0.3-12~ui8native7' in Path('Packages').read_text()
+          assert len([line for line in Path('Packages').read_text().splitlines()
+                      if line == 'Package: com.duoface.sideplaydisplay']) == 1
+          assert '0.1.0~zoomqa1' in Path('Packages').read_text()
           print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_NATIVE_SHELL7_VISUAL_QA_PASS')
           PY
 

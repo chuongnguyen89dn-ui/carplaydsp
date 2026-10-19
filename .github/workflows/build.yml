@@ -529,7 +529,9 @@ jobs:
             echo "SOURCE_SHA=$GITHUB_SHA"
             echo "VERIFIED_UTC=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
             echo 'DEVICE_TESTED=false'
-            echo 'SCENE_HOST_INCLUDED=false'
+            echo 'SCENE_HOST_INCLUDED=true'
+            echo 'APP_PIXELS_VERIFIED=false'
+            echo 'REAL_APPDOCK_VERIFIED=false'
           } > "$F"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'

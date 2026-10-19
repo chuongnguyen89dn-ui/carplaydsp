@@ -130,6 +130,37 @@ jobs:
           printf '%s  %s\n' 'ea0d3bb8c8b9da2b45c3f158f390a7966419e84899f820d06f45cd51401fa465' "$BASE" | shasum -a 256 -c -
           dpkg-deb -I "$BASE"
 
+      - name: Pin verified independent CarPlay NativeBridge QA payload
+        run: |
+          set -euo pipefail
+          mkdir -p repo/debs
+          # Independent DuoFace Dashboard native sidebar QA, explicit TRIPLE opt-in.
+          # Stable V1BC recovery, Native12/HUD8 and QA11 are separate packages.
+          NATIVEBRIDGE_FILE='com.duoface.carplay.nativebridgeqa_0.0.2~sidebartest1_iphoneos-arm64.deb'
+          NATIVEBRIDGE_SHA='6cb04db3130cfa121d1fc63974475edbed6fa40defba1fe598363d3c9e3c1bbd'
+          NATIVEBRIDGE_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/654d8a0bba25c83fecbc82d1a5ec1a8a76a70032/sideplay/test-artifacts/mytweak-native-bridgeqa1/$NATIVEBRIDGE_FILE"
+          NATIVEBRIDGE_DEB="repo/debs/$NATIVEBRIDGE_FILE"
+          curl -fL --retry 3 "$NATIVEBRIDGE_URL" -o "$NATIVEBRIDGE_DEB"
+          printf '%s  %s\n' "$NATIVEBRIDGE_SHA" "$NATIVEBRIDGE_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$NATIVEBRIDGE_DEB" Package)" = 'com.duoface.carplay.nativebridgeqa'
+          test "$(dpkg-deb -f "$NATIVEBRIDGE_DEB" Version)" = '0.0.2~sidebartest1'
+          test "$(dpkg-deb -f "$NATIVEBRIDGE_DEB" Architecture)" = 'iphoneos-arm64'
+          dpkg-deb -f "$NATIVEBRIDGE_DEB" Depends | grep -F 'com.duoface.mytweak.v1a.preflight'
+          ! dpkg-deb -f "$NATIVEBRIDGE_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
+          dpkg-deb -c "$NATIVEBRIDGE_DEB" | grep -F '/DFNativeDashboardBridgeQA.dylib'
+          dpkg-deb -c "$NATIVEBRIDGE_DEB" | grep -F '/DFNativeDashboardBridgeQA.plist'
+          test "$(dpkg-deb -c "$NATIVEBRIDGE_DEB" | grep -cE '^-' )" -eq 2
+          mkdir -p "$RUNNER_TEMP/nativebridgeqa-extract"
+          dpkg-deb -x "$NATIVEBRIDGE_DEB" "$RUNNER_TEMP/nativebridgeqa-extract"
+          NATIVEBRIDGE_PLIST="$RUNNER_TEMP/nativebridgeqa-extract/var/jb/Library/MobileSubstrate/DynamicLibraries/DFNativeDashboardBridgeQA.plist"
+          NATIVEBRIDGE_PLIST="$NATIVEBRIDGE_PLIST" python3 - <<'PY'
+          import os,plistlib
+          with open(os.environ["NATIVEBRIDGE_PLIST"],"rb") as f: p=plistlib.load(f)
+          assert p["Filter"]["Executables"]==["SpringBoard","CarPlay","CarPlayApp"],p
+          print("DUOFACE_NATIVE_BRIDGEQA_BINARY_FILTER_EXACT_PASS")
+          PY
+          echo 'DUOFACE_NATIVE_BRIDGEQA_OPTIN_PINNED_PACKAGE_PASS'
+
       - name: Build APT repository
         shell: bash
         run: |
@@ -277,32 +308,6 @@ jobs:
           PY
           echo 'DUOFACE_NATIVE_OWNERPROBE_DEB_PINNED_SHA_SEPARATE_PACKAGE_PASS'
 
-          # Independent DuoFace Dashboard native sidebar QA, explicit TRIPLE opt-in.
-          # Stable V1BC recovery, Native12/HUD8 and QA11 are separate packages.
-          NATIVEBRIDGE_FILE='com.duoface.carplay.nativebridgeqa_0.0.2~sidebartest1_iphoneos-arm64.deb'
-          NATIVEBRIDGE_SHA='6cb04db3130cfa121d1fc63974475edbed6fa40defba1fe598363d3c9e3c1bbd'
-          NATIVEBRIDGE_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/654d8a0bba25c83fecbc82d1a5ec1a8a76a70032/sideplay/test-artifacts/mytweak-native-bridgeqa1/$NATIVEBRIDGE_FILE"
-          NATIVEBRIDGE_DEB="repo/debs/$NATIVEBRIDGE_FILE"
-          curl -fL --retry 3 "$NATIVEBRIDGE_URL" -o "$NATIVEBRIDGE_DEB"
-          printf '%s  %s\n' "$NATIVEBRIDGE_SHA" "$NATIVEBRIDGE_DEB" | shasum -a 256 -c -
-          test "$(dpkg-deb -f "$NATIVEBRIDGE_DEB" Package)" = 'com.duoface.carplay.nativebridgeqa'
-          test "$(dpkg-deb -f "$NATIVEBRIDGE_DEB" Version)" = '0.0.2~sidebartest1'
-          test "$(dpkg-deb -f "$NATIVEBRIDGE_DEB" Architecture)" = 'iphoneos-arm64'
-          dpkg-deb -f "$NATIVEBRIDGE_DEB" Depends | grep -F 'com.duoface.mytweak.v1a.preflight'
-          ! dpkg-deb -f "$NATIVEBRIDGE_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
-          dpkg-deb -c "$NATIVEBRIDGE_DEB" | grep -F '/DFNativeDashboardBridgeQA.dylib'
-          dpkg-deb -c "$NATIVEBRIDGE_DEB" | grep -F '/DFNativeDashboardBridgeQA.plist'
-          test "$(dpkg-deb -c "$NATIVEBRIDGE_DEB" | grep -cE '^-' )" -eq 2
-          mkdir -p "$RUNNER_TEMP/nativebridgeqa-extract"
-          dpkg-deb -x "$NATIVEBRIDGE_DEB" "$RUNNER_TEMP/nativebridgeqa-extract"
-          NATIVEBRIDGE_PLIST="$RUNNER_TEMP/nativebridgeqa-extract/var/jb/Library/MobileSubstrate/DynamicLibraries/DFNativeDashboardBridgeQA.plist"
-          NATIVEBRIDGE_PLIST="$NATIVEBRIDGE_PLIST" python3 - <<'PY'
-          import os,plistlib
-          with open(os.environ["NATIVEBRIDGE_PLIST"],"rb") as f: p=plistlib.load(f)
-          assert p["Filter"]["Executables"]==["SpringBoard","CarPlay","CarPlayApp"],p
-          print("DUOFACE_NATIVE_BRIDGEQA_BINARY_FILTER_EXACT_PASS")
-          PY
-          echo 'DUOFACE_NATIVE_BRIDGEQA_OPTIN_PINNED_PACKAGE_PASS'
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages

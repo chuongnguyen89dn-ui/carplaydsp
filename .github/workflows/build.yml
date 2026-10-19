@@ -373,14 +373,14 @@ jobs:
               raise SystemExit(f'Expected one isolated CarPlay native owner probe entry, got {ownerprobe}')
           bridgeqa=0
           for i,block in enumerate(blocks):
-              if block.startswith('Package: com.duoface.carplay.nativebridgeqa\\n'):
+              if block.startswith('Package: com.duoface.carplay.nativebridgeqa\n'):
                   lines=[line for line in block.splitlines() if not line.startswith('Icon: ')]
                   lines.append('Icon: https://chuongnguyen89dn-ui.github.io/carplaydsp/duoface-icon.png')
-                  blocks[i]='\\n'.join(lines)
+                  blocks[i]='\n'.join(lines)
                   bridgeqa+=1
           if bridgeqa!=1:
               raise SystemExit(f'Expected 1 optional native Dashboard bridge QA entry, got {bridgeqa}')
-          p.write_text('\\n\\n'.join(blocks))
+          p.write_text('\n\n'.join(blocks))
           PY
           # Sileo/apt compatibility: publish compressed indexes and an RFC2822
           # Date plus SHA256/SHA512 checksums in the flat repository Release file.

@@ -277,6 +277,33 @@ jobs:
           PY
           echo 'DUOFACE_NATIVE_OWNERPROBE_DEB_PINNED_SHA_SEPARATE_PACKAGE_PASS'
 
+          # Independent DuoFace Dashboard native sidebar QA, explicit TRIPLE opt-in.
+          # Stable V1BC recovery, Native12/HUD8 and QA11 are separate packages.
+          NATIVEBRIDGE_FILE='com.duoface.carplay.nativebridgeqa_0.0.2~sidebartest1_iphoneos-arm64.deb'
+          NATIVEBRIDGE_SHA='6cb04db3130cfa121d1fc63974475edbed6fa40defba1fe598363d3c9e3c1bbd'
+          NATIVEBRIDGE_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/654d8a0bba25c83fecbc82d1a5ec1a8a76a70032/sideplay/test-artifacts/mytweak-native-bridgeqa1/$NATIVEBRIDGE_FILE"
+          NATIVEBRIDGE_DEB="repo/debs/$NATIVEBRIDGE_FILE"
+          curl -fL --retry 3 "$NATIVEBRIDGE_URL" -o "$NATIVEBRIDGE_DEB"
+          printf '%s  %s\n' "$NATIVEBRIDGE_SHA" "$NATIVEBRIDGE_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$NATIVEBRIDGE_DEB" Package)" = 'com.duoface.carplay.nativebridgeqa'
+          test "$(dpkg-deb -f "$NATIVEBRIDGE_DEB" Version)" = '0.0.2~sidebartest1'
+          test "$(dpkg-deb -f "$NATIVEBRIDGE_DEB" Architecture)" = 'iphoneos-arm64'
+          dpkg-deb -f "$NATIVEBRIDGE_DEB" Depends | grep -F 'com.duoface.mytweak.v1a.preflight'
+          ! dpkg-deb -f "$NATIVEBRIDGE_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
+          dpkg-deb -c "$NATIVEBRIDGE_DEB" | grep -F '/DFNativeDashboardBridgeQA.dylib'
+          dpkg-deb -c "$NATIVEBRIDGE_DEB" | grep -F '/DFNativeDashboardBridgeQA.plist'
+          test "$(dpkg-deb -c "$NATIVEBRIDGE_DEB" | grep -cE '^-' )" -eq 2
+          mkdir -p "$RUNNER_TEMP/nativebridgeqa-extract"
+          dpkg-deb -x "$NATIVEBRIDGE_DEB" "$RUNNER_TEMP/nativebridgeqa-extract"
+          NATIVEBRIDGE_PLIST="$RUNNER_TEMP/nativebridgeqa-extract/var/jb/Library/MobileSubstrate/DynamicLibraries/DFNativeDashboardBridgeQA.plist"
+          NATIVEBRIDGE_PLIST="$NATIVEBRIDGE_PLIST" python3 - <<'PY'
+          import os,plistlib
+          with open(os.environ["NATIVEBRIDGE_PLIST"],"rb") as f: p=plistlib.load(f)
+          assert p["Filter"]["Executables"]==["SpringBoard","CarPlay","CarPlayApp"],p
+          print("DUOFACE_NATIVE_BRIDGEQA_BINARY_FILTER_EXACT_PASS")
+          PY
+          echo 'DUOFACE_NATIVE_BRIDGEQA_OPTIN_PINNED_PACKAGE_PASS'
+
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -344,7 +371,16 @@ jobs:
                   ownerprobe+=1
           if ownerprobe!=1:
               raise SystemExit(f'Expected one isolated CarPlay native owner probe entry, got {ownerprobe}')
-          p.write_text('\n\n'.join(blocks))
+          bridgeqa=0
+          for i,block in enumerate(blocks):
+              if block.startswith('Package: com.duoface.carplay.nativebridgeqa\\n'):
+                  lines=[line for line in block.splitlines() if not line.startswith('Icon: ')]
+                  lines.append('Icon: https://chuongnguyen89dn-ui.github.io/carplaydsp/duoface-icon.png')
+                  blocks[i]='\\n'.join(lines)
+                  bridgeqa+=1
+          if bridgeqa!=1:
+              raise SystemExit(f'Expected 1 optional native Dashboard bridge QA entry, got {bridgeqa}')
+          p.write_text('\\n\\n'.join(blocks))
           PY
           # Sileo/apt compatibility: publish compressed indexes and an RFC2822
           # Date plus SHA256/SHA512 checksums in the flat repository Release file.
@@ -397,6 +433,8 @@ jobs:
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.carplay.ownerprobe']) == 1
           assert '0.0.1~ownerprobe1' in Path('Packages').read_text()
+          assert len([line for line in Path('Packages').read_text().splitlines() if line == 'Package: com.duoface.carplay.nativebridgeqa']) == 1
+          assert '0.0.2~sidebartest1' in Path('Packages').read_text()
           print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_NATIVE_SHELL7_VISUAL_QA_PASS')
           PY
 
@@ -660,3 +698,74 @@ jobs:
           git commit -m 'docs(sileo): verify standalone native Dock owner probe public APT and binary [skip ci]'
           git push origin HEAD:main
           echo OWNERPROBE1_SILEO_PUBLIC_APT_BINARY_VERIFIED
+
+      - name: Verify Native Dashboard Bridge QA 0.0.2 public Sileo APT and exact DEB
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          PKG='com.duoface.carplay.nativebridgeqa'
+          VER='0.0.2~sidebartest1'
+          FILE='com.duoface.carplay.nativebridgeqa_0.0.2~sidebartest1_iphoneos-arm64.deb'
+          SHA='6cb04db3130cfa121d1fc63974475edbed6fa40defba1fe598363d3c9e3c1bbd'
+          for attempt in $(seq 1 18); do
+            curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/nativebridge-Packages" || true
+            if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/nativebridge-Packages" 2>/dev/null; then break; fi
+            echo "Waiting for NativeBridgeQA Pages CDN: $attempt/18"
+            sleep 12
+          done
+          export BR_PKG="$PKG" BR_VER="$VER" BR_SHA="$SHA" BR_FILE="$FILE"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          stanzas=Path(os.environ['RUNNER_TEMP'],'nativebridge-Packages').read_text().split('\n\n')
+          hits=[]; stable=[]; qa11=[]
+          for stanza in stanzas:
+              fields={}
+              for line in stanza.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      key,val=line.split(': ',1);fields[key]=val
+              if fields.get('Package')==os.environ['BR_PKG']:hits.append(fields)
+              if fields.get('Package')=='com.duoface.mytweak.v1a.preflight':stable.append(fields)
+              if fields.get('Package')=='com.duoface.sideplaydisplay':qa11.append(fields)
+          assert len(hits)==1,hits
+          item=hits[0]
+          assert item['Version']==os.environ['BR_VER'],item
+          assert item['SHA256']==os.environ['BR_SHA'],item
+          assert item['Filename']=='debs/'+os.environ['BR_FILE'],item
+          assert item['Architecture']=='iphoneos-arm64',item
+          assert 'com.duoface.mytweak.v1a.preflight' in item['Depends'],item
+          assert not any(item.get(k) for k in ('Conflicts','Replaces','Breaks')),item
+          assert len(stable)==1 and stable[0]['Version']=='0.2.6~recovery1',stable
+          assert len(qa11)==1 and qa11[0]['Version']=='0.1.9~native12dock11',qa11
+          print('NATIVE_BRIDGEQA_PUBLIC_APT_STABLE_PRESERVED_PASS')
+          PY
+          curl -fLsS --retry 4 "$SITE/Release" -o "$RUNNER_TEMP/nativebridge-Release"
+          grep -Fq 'SHA256:' "$RUNNER_TEMP/nativebridge-Release"
+          curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/nativebridge-public.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/nativebridge-public.deb" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/nativebridge-public.deb" Package)" = "$PKG"
+          test "$(dpkg-deb -f "$RUNNER_TEMP/nativebridge-public.deb" Version)" = "$VER"
+          OUTPUT=release-checkpoints/native-bridgeqa2-pages-verified.txt
+          {
+            echo NATIVE_BRIDGEQA2_PAGES_PUBLIC_VERIFIED
+            echo "RUN_ID=$GITHUB_RUN_ID"
+            echo "PACKAGE=$PKG"
+            echo "VERSION=$VER"
+            echo "PAGES_URL=$SITE/"
+            echo "DEB_SHA256=$SHA"
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "VERIFIED_UTC=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            echo 'THREE_OPTINS_REQUIRED=true'
+            echo 'DEFAULT_ENABLED=false'
+            echo 'SIDEBAR_SYSTEM_WINDOW_TRIAL_MAX_SEC=45'
+            echo 'REAL_NATIVE_APPDOCK_DEVICE_VERIFIED=false'
+            echo 'FULL_IPHONE_TOUCH_IMPLEMENTED=false'
+            echo 'MYTWEAK_RECOVERY_QA11_NATIVE12_HUD8_UNCHANGED=true'
+          } > "$OUTPUT"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$OUTPUT"
+          git commit -m 'docs(sileo): verify independent native bridge QA2 Pages APT and binary [skip ci]'
+          git push origin HEAD:main
+          echo NATIVE_BRIDGEQA2_SILEO_PAGES_SHA_VERIFIED

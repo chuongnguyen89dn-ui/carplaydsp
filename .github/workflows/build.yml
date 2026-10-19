@@ -233,6 +233,21 @@ jobs:
           done
           ! dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -Eq 'SidePlay.dylib|SidePlay.app|DuoFaceDashboard.dylib'
           echo 'DUOFACE_NATIVE12_DOCK_QA11_LOGO_DRAG_AND_APPDOCK_SHA256_AND_PAYLOAD_PASS'
+
+          # MyTweak V1A DIAGNOSTIC ONLY; independent package ID, no SidePlay or Native12 replacement.
+          # Proven DuoFace artifact commit; pinned SHA256 prevents accidental branch drift.
+          MYTWEAK_V1A_FILE='com.duoface.mytweak.v1a.preflight_0.1.0~v1a1_iphoneos-arm64.deb'
+          MYTWEAK_V1A_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/ce898aa4f2215ce4fae389374653814049adddfb/sideplay/test-artifacts/mytweak-v1a/$MYTWEAK_V1A_FILE"
+          MYTWEAK_V1A_DEB="repo/debs/$MYTWEAK_V1A_FILE"
+          curl -fL --retry 3 "$MYTWEAK_V1A_URL" -o "$MYTWEAK_V1A_DEB"
+          printf '%s  %s\n' 'caad8e129357f65ac3dbd3c26ffbb024027f7c25505f2c01f9fdefbeb31d1b3d' "$MYTWEAK_V1A_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$MYTWEAK_V1A_DEB" Package)" = 'com.duoface.mytweak.v1a.preflight'
+          test "$(dpkg-deb -f "$MYTWEAK_V1A_DEB" Version)" = '0.1.0~v1a1'
+          test "$(dpkg-deb -f "$MYTWEAK_V1A_DEB" Architecture)" = 'iphoneos-arm64'
+          dpkg-deb -c "$MYTWEAK_V1A_DEB" | grep -F '/DFV1APreflight.dylib'
+          dpkg-deb -c "$MYTWEAK_V1A_DEB" | grep -F '/DFV1APreflight.plist'
+          ! dpkg-deb -c "$MYTWEAK_V1A_DEB" | grep -E '/(SidePlay|DuoFaceDashboard|DuoFaceSidePlayDisplayQA|MyTweak)\.dylib'
+          echo 'MYTWEAK_V1A_INDEPENDENT_DEB_PINNED_SHA_AND_PAYLOAD_PASS'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -281,6 +296,16 @@ jobs:
                   sideplayqa+=1
           if sideplayqa!=1:
               raise SystemExit(f'Expected one SidePlay QA1 entry, found {sideplayqa}')
+          # The standalone ABI preflight is listed as its own optional diagnostic.
+          v1a=0
+          for i,block in enumerate(blocks):
+              if block.startswith('Package: com.duoface.mytweak.v1a.preflight\n'):
+                  lines=[line for line in block.splitlines() if not line.startswith('Icon: ')]
+                  lines.append('Icon: https://chuongnguyen89dn-ui.github.io/carplaydsp/duoface-icon.png')
+                  blocks[i]='\n'.join(lines)
+                  v1a+=1
+          if v1a!=1:
+              raise SystemExit(f'Expected one independent MyTweak V1A preflight entry, got {v1a}')
           p.write_text('\n\n'.join(blocks))
           PY
           # Sileo/apt compatibility: publish compressed indexes and an RFC2822
@@ -328,6 +353,9 @@ jobs:
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.sideplaydisplay']) == 1
           assert '0.1.9~native12dock11' in Path('Packages').read_text()
+          assert len([line for line in Path('Packages').read_text().splitlines()
+                      if line == 'Package: com.duoface.mytweak.v1a.preflight']) == 1
+          assert '0.1.0~v1a1' in Path('Packages').read_text()
           print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_NATIVE_SHELL7_VISUAL_QA_PASS')
           PY
 
@@ -444,3 +472,68 @@ jobs:
           git commit -m 'docs(sileo): verify QA11 live Pages Packages and DEB hash [skip ci]'
           git push origin HEAD:main
           echo QA11_SILEO_PUBLIC_INDEX_AND_BINARY_DEPLOY_SUCCESS
+
+      - name: Verify MyTweak V1A live Sileo index and binary independently of QA11
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          PKG='com.duoface.mytweak.v1a.preflight'
+          VER='0.1.0~v1a1'
+          FILE='com.duoface.mytweak.v1a.preflight_0.1.0~v1a1_iphoneos-arm64.deb'
+          SHA='caad8e129357f65ac3dbd3c26ffbb024027f7c25505f2c01f9fdefbeb31d1b3d'
+          for attempt in $(seq 1 15); do
+            if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/mytweak-v1a-Packages"; then
+              if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/mytweak-v1a-Packages"; then break; fi
+            fi
+            echo "Waiting for MyTweak V1A APT listing: $attempt/15"
+            sleep 15
+          done
+          export V1A_PACKAGE="$PKG" V1A_VERSION="$VER" V1A_SHA="$SHA" V1A_FILE="$FILE"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          stanzas=Path(os.environ['RUNNER_TEMP'],'mytweak-v1a-Packages').read_text().split('\n\n')
+          hits=[]
+          for stanza in stanzas:
+              fields={}
+              for line in stanza.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1);fields[k]=v
+              if fields.get('Package')==os.environ['V1A_PACKAGE']:
+                  hits.append(fields)
+          assert len(hits)==1, f'MyTweak V1A index count {len(hits)}'
+          d=hits[0]
+          assert d['Version']==os.environ['V1A_VERSION'],d
+          assert d['SHA256']==os.environ['V1A_SHA'],d
+          assert d['Filename']=='debs/'+os.environ['V1A_FILE'],d
+          assert d['Architecture']=='iphoneos-arm64',d
+          assert 'com.sideplay' not in d.get('Depends',''),d
+          assert not any(d.get(k) for k in ('Conflicts','Replaces','Breaks')),d
+          print('MYTWEAK_V1A_SILEO_LIVE_INDEX_ONE_ENTRY_VERSION_SHA_AND_NO_CONFLICT_PASS')
+          PY
+          curl -fLsS --retry 4 "$SITE/Release" -o "$RUNNER_TEMP/mytweak-v1a-Release"
+          grep -Fq 'SHA256:' "$RUNNER_TEMP/mytweak-v1a-Release"
+          curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/mytweak-v1a-download.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/mytweak-v1a-download.deb" | sha256sum -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/mytweak-v1a-download.deb" Package)" = "$PKG"
+          test "$(dpkg-deb -f "$RUNNER_TEMP/mytweak-v1a-download.deb" Version)" = "$VER"
+          F='release-checkpoints/mytweak-v1a1-pages-verified.txt'
+          {
+            echo 'MYTWEAK_V1A_SILEO_PAGES_DEPLOY_VERIFIED'
+            echo "RUN_ID=$GITHUB_RUN_ID"
+            echo "PAGES_URL=$SITE/"
+            echo "PACKAGE=$PKG"
+            echo "VERSION=$VER"
+            echo "DEB_SHA256=$SHA"
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "VERIFIED_UTC=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            echo 'DEVICE_TESTED=false'
+            echo 'SCENE_HOST_INCLUDED=false'
+          } > "$F"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$F"
+          git commit -m 'docs(sileo): verify MyTweak V1A public APT and binary checksum [skip ci]'
+          git push origin HEAD:main
+          echo MYTWEAK_V1A_SILEO_INDEX_AND_PUBLIC_DEB_VERIFIED

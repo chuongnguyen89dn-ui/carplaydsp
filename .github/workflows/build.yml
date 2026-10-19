@@ -161,6 +161,36 @@ jobs:
           PY
           echo 'DUOFACE_NATIVE_BRIDGEQA_OPTIN_PINNED_PACKAGE_PASS'
 
+      - name: Pin verified Filza-free DuoFace Bridge QA activation helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p repo/debs
+          CONFIG_FILE='com.duoface.carplay.nativebridgeqa.activate_0.0.1~configfix1_iphoneos-arm64.deb'
+          CONFIG_SHA='8f6e5261a077137337e48b5e43784f4beadd3c051158f26d1c0a42c46cc30d02'
+          CONFIG_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/e715807fb167df280d78963de4e5e8a906050256/sideplay/test-artifacts/nativebridgeqa-activate-configfix1/$CONFIG_FILE"
+          CONFIG_DEB="repo/debs/$CONFIG_FILE"
+          curl -fL --retry 4 "$CONFIG_URL" -o "$CONFIG_DEB"
+          printf '%s  %s\n' "$CONFIG_SHA" "$CONFIG_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$CONFIG_DEB" Package)" = 'com.duoface.carplay.nativebridgeqa.activate'
+          test "$(dpkg-deb -f "$CONFIG_DEB" Version)" = '0.0.1~configfix1'
+          test "$(dpkg-deb -f "$CONFIG_DEB" Architecture)" = 'iphoneos-arm64'
+          dpkg-deb -f "$CONFIG_DEB" Depends | grep -F 'com.duoface.carplay.nativebridgeqa'
+          ! dpkg-deb -f "$CONFIG_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
+          mkdir -p "$RUNNER_TEMP/activate-config-extract"
+          dpkg-deb -x "$CONFIG_DEB" "$RUNNER_TEMP/activate-config-extract"
+          dpkg-deb -e "$CONFIG_DEB" "$RUNNER_TEMP/activate-config-extract/DEBIAN"
+          test -x "$RUNNER_TEMP/activate-config-extract/DEBIAN/postinst"
+          test -x "$RUNNER_TEMP/activate-config-extract/DEBIAN/prerm"
+          test "$(find "$RUNNER_TEMP/activate-config-extract/var" -type f | wc -l | tr -d ' ')" -eq 1
+          python3 - <<'PY'
+          import plistlib, os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'activate-config-extract/var/jb/usr/share/doc/duoface-nativebridgeqa-activate/enabled.plist'
+          assert plistlib.loads(root.read_bytes())=={'Enabled':True,'NativeSidebarTrial':True}
+          print('NATIVE_BRIDGEQA_FILZA_FREE_CONF_HELPER_EXPLICIT_OPTIN_VERIFIED')
+          PY
+
       - name: Build APT repository
         shell: bash
         run: |
@@ -774,3 +804,70 @@ jobs:
           git commit -m 'docs(sileo): verify independent native bridge QA2 Pages APT and binary [skip ci]'
           git push origin HEAD:main
           echo NATIVE_BRIDGEQA2_SILEO_PAGES_SHA_VERIFIED
+
+      - name: Verify public Sileo Filza-free Bridge QA activation helper exact hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          PKG='com.duoface.carplay.nativebridgeqa.activate'
+          VER='0.0.1~configfix1'
+          DEB='com.duoface.carplay.nativebridgeqa.activate_0.0.1~configfix1_iphoneos-arm64.deb'
+          SHA='8f6e5261a077137337e48b5e43784f4beadd3c051158f26d1c0a42c46cc30d02'
+          for attempt in $(seq 1 20); do
+            curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/configfix-Packages" || true
+            if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/configfix-Packages" 2>/dev/null; then break; fi
+            echo "Waiting for Pages: $attempt/20"
+            sleep 10
+          done
+          export CFG_PKG="$PKG" CFG_VER="$VER" CFG_DEB="$DEB" CFG_SHA="$SHA"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          content=Path(os.environ['RUNNER_TEMP'],'configfix-Packages').read_text()
+          entries=[]
+          for stanza in content.split('\n\n'):
+            d={}
+            for line in stanza.splitlines():
+              if ': ' in line and not line.startswith(' '):
+                key,val=line.split(': ',1); d[key]=val
+            if d.get('Package')==os.environ['CFG_PKG']: entries.append(d)
+          assert len(entries)==1,entries
+          x=entries[0]
+          assert x['Version']==os.environ['CFG_VER'],x
+          assert x['SHA256']==os.environ['CFG_SHA'],x
+          assert x['Filename']=='debs/'+os.environ['CFG_DEB'],x
+          assert x['Architecture']=='iphoneos-arm64',x
+          assert 'com.duoface.carplay.nativebridgeqa' in x['Depends'],x
+          assert not any(x.get(k) for k in ('Conflicts','Replaces','Breaks')),x
+          print('DUOFACE_FILZA_FREE_CONFIG_HELPER_ONE_PUBLIC_SILEO_ENTRY_PASS')
+          PY
+          curl -fLsS --retry 4 "$SITE/Release" -o "$RUNNER_TEMP/configfix-Release"
+          grep -Fq SHA256: "$RUNNER_TEMP/configfix-Release"
+          curl -fLsS --retry 4 "$SITE/debs/$DEB" -o "$RUNNER_TEMP/configfix-public.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/configfix-public.deb" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/configfix-public.deb" Package)" = "$PKG"
+          test "$(dpkg-deb -f "$RUNNER_TEMP/configfix-public.deb" Version)" = "$VER"
+          OUT=release-checkpoints/native-bridgeqa-configfix1-pages-verified.txt
+          {
+            echo NATIVE_BRIDGEQA_CONFIGFIX1_SILEO_PUBLIC_VERIFIED
+            echo "RUN_ID=$GITHUB_RUN_ID"
+            echo "PUBLIC_SOURCE=$SITE/"
+            echo "PACKAGE=$PKG"
+            echo "VERSION=$VER"
+            echo "DEB_SHA256=$SHA"
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "UTC=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            echo 'REQUIRES_EXPLICIT_INSTALLATION=true'
+            echo 'ACTIVATION_MAINTAINER_SCRIPTS=true'
+            echo 'NO_RESPIING=true'
+            echo 'RESTORES_OLD_USER_CONFIG_ON_REMOVE=true'
+            echo 'MYTWEAK_RECOVERY_QA11_NATIVE12_HUD8_UNCHANGED=true'
+            echo 'REAL_CARPLAY_DOCK_DEVICE_VERIFIED=false'
+          } > "$OUT"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$OUT"
+          git commit -m 'docs(sileo): verify Filza-free native bridge QA config helper public APT and checksum [skip ci]'
+          git push origin HEAD:main
+          echo DUOFACE_NATIVE_BRIDGE_CONFIG_HELPER_PAGES_SHA_VERIFIED

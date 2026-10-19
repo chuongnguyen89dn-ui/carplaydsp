@@ -217,12 +217,12 @@ jobs:
           # DuoFace Native12 QA5 center dual-pill and real-pane focus/restore TEST addon. SidePlay binary not included.
           # Remove obsolete QA1/QA2 DEB to keep exactly one APT entry.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.sideplaydisplay_*.deb' -delete
-          SIDEPLAY_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/12d8038a0562fd946ae66aaba0457a7270f2a145/sideplay/artifacts/native12dock10/com.duoface.sideplaydisplay_0.1.8~native12dock10_iphoneos-arm64.deb'
-          SIDEPLAY_QA_DEB='repo/debs/com.duoface.sideplaydisplay_0.1.8~native12dock10_iphoneos-arm64.deb'
+          SIDEPLAY_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/d49fa099f3c100607d1e7e6fd1f35922f34eb01c/sideplay/artifacts/native12dock11/com.duoface.sideplaydisplay_0.1.9~native12dock11_iphoneos-arm64.deb'
+          SIDEPLAY_QA_DEB='repo/debs/com.duoface.sideplaydisplay_0.1.9~native12dock11_iphoneos-arm64.deb'
           curl -fL --retry 3 "$SIDEPLAY_QA_URL" -o "$SIDEPLAY_QA_DEB"
-          printf '%s  %s\n' 'c651828290fbc21e45c8529fd5f6d0ba9cbb59e00dfb0af2b45629f4ecfae064' "$SIDEPLAY_QA_DEB" | shasum -a 256 -c -
+          printf '%s  %s\n' '0d20390c560452b0c68c9311ae3c58a48bc9d3e7528de1b130c6bca58c87c1b9' "$SIDEPLAY_QA_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Package)" = 'com.duoface.sideplaydisplay'
-          test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Version)" = '0.1.8~native12dock10'
+          test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Version)" = '0.1.9~native12dock11'
           test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Architecture)" = 'iphoneos-arm64'
           dpkg-deb -f "$SIDEPLAY_QA_DEB" Depends | grep -F 'com.sideplay'
           dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -F '/DuoFaceSidePlayDisplayQA.dylib'
@@ -232,7 +232,7 @@ jobs:
             dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -F "/DuoFaceSidePlayDisplayQA/$asset"
           done
           ! dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -Eq 'SidePlay.dylib|SidePlay.app|DuoFaceDashboard.dylib'
-          echo 'DUOFACE_NATIVE12_DOCK_QA10_MENU_SPLITTER_SHA256_AND_PAYLOAD_PASS'
+          echo 'DUOFACE_NATIVE12_DOCK_QA11_LOGO_DRAG_AND_APPDOCK_SHA256_AND_PAYLOAD_PASS'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -327,7 +327,7 @@ jobs:
           assert '1.0.3-12~ui8native7' in Path('Packages').read_text()
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.sideplaydisplay']) == 1
-          assert '0.1.8~native12dock10' in Path('Packages').read_text()
+          assert '0.1.9~native12dock11' in Path('Packages').read_text()
           print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_NATIVE_SHELL7_VISUAL_QA_PASS')
           PY
 
@@ -369,7 +369,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  verify-qa10-pages:
+  verify-qa11-pages:
     # Verify exactly what Sileo can retrieve, not only the uploaded Pages artifact.
     needs: [build, deploy]
     runs-on: ubuntu-latest
@@ -378,30 +378,30 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
-      - name: Verify live Sileo Packages Release and QA10 DEB checksum
+      - name: Verify live Sileo Packages Release and QA11 DEB checksum
         shell: bash
         run: |
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
-          VERSION='0.1.8~native12dock10'
-          FILE='com.duoface.sideplaydisplay_0.1.8~native12dock10_iphoneos-arm64.deb'
-          EXPECTED='c651828290fbc21e45c8529fd5f6d0ba9cbb59e00dfb0af2b45629f4ecfae064'
+          VERSION='0.1.9~native12dock11'
+          FILE='com.duoface.sideplaydisplay_0.1.9~native12dock11_iphoneos-arm64.deb'
+          EXPECTED='0d20390c560452b0c68c9311ae3c58a48bc9d3e7528de1b130c6bca58c87c1b9'
           for i in $(seq 1 15); do
             if curl --fail --location --silent --show-error \
-                 --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/qa10-Packages"; then
-              if grep -Fqx "Version: $VERSION" "$RUNNER_TEMP/qa10-Packages" &&
-                 grep -Fqx "SHA256: $EXPECTED" "$RUNNER_TEMP/qa10-Packages"; then
+                 --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/qa11-Packages"; then
+              if grep -Fqx "Version: $VERSION" "$RUNNER_TEMP/qa11-Packages" &&
+                 grep -Fqx "SHA256: $EXPECTED" "$RUNNER_TEMP/qa11-Packages"; then
                 break
               fi
             fi
-            echo "QA10 public APT index not updated yet: attempt $i/15"
+            echo "QA11 public APT index not updated yet: attempt $i/15"
             sleep 15
           done
-          export QA10_VERSION="$VERSION" QA10_FILE="$FILE" QA10_HASH="$EXPECTED"
+          export QA11_VERSION="$VERSION" QA11_FILE="$FILE" QA11_HASH="$EXPECTED"
           python3 - <<'PY'
           import os
           from pathlib import Path
-          text=Path(os.environ["RUNNER_TEMP"],"qa10-Packages").read_text()
+          text=Path(os.environ["RUNNER_TEMP"],"qa11-Packages").read_text()
           matching=[]
           for stanza in text.split("\n\n"):
               fields={}
@@ -413,22 +413,22 @@ jobs:
                   matching.append(fields)
           assert len(matching)==1, f"QA package entries: {len(matching)}"
           q=matching[0]
-          assert q.get("Version")==os.environ["QA10_VERSION"],q
-          assert q.get("SHA256")==os.environ["QA10_HASH"],q
-          assert q.get("Filename")=="debs/"+os.environ["QA10_FILE"],q
+          assert q.get("Version")==os.environ["QA11_VERSION"],q
+          assert q.get("SHA256")==os.environ["QA11_HASH"],q
+          assert q.get("Filename")=="debs/"+os.environ["QA11_FILE"],q
           assert "com.sideplay" in q.get("Depends",""),q
-          print("QA10_SILEO_PUBLIC_PACKAGES_ONE_ENTRY_VERSION_SHA_DEPENDENCY_PASS")
+          print("QA11_SILEO_PUBLIC_PACKAGES_ONE_ENTRY_VERSION_SHA_DEPENDENCY_PASS")
           PY
           curl --fail --location --silent --show-error --retry 4 \
-            "$SITE/Release" -o "$RUNNER_TEMP/qa10-Release"
-          grep -F 'SHA256:' "$RUNNER_TEMP/qa10-Release"
+            "$SITE/Release" -o "$RUNNER_TEMP/qa11-Release"
+          grep -F 'SHA256:' "$RUNNER_TEMP/qa11-Release"
           curl --fail --location --silent --show-error --retry 4 \
-            "$SITE/debs/$FILE" -o "$RUNNER_TEMP/qa10-download.deb"
-          printf '%s  %s\n' "$EXPECTED" "$RUNNER_TEMP/qa10-download.deb" | sha256sum -c -
-          FILE_OUT='release-checkpoints/qa10-native12dock10-pages-verified.txt'
+            "$SITE/debs/$FILE" -o "$RUNNER_TEMP/qa11-download.deb"
+          printf '%s  %s\n' "$EXPECTED" "$RUNNER_TEMP/qa11-download.deb" | sha256sum -c -
+          FILE_OUT='release-checkpoints/qa11-native12dock11-pages-verified.txt'
           mkdir -p "$(dirname "$FILE_OUT")"
           {
-            printf 'QA10_SILEO_PAGES_DEPLOY_VERIFIED\n'
+            printf 'QA11_SILEO_PAGES_DEPLOY_VERIFIED\n'
             printf 'RUN_ID=%s\n' "$GITHUB_RUN_ID"
             printf 'PAGES_URL=%s/\n' "$SITE"
             printf 'APT_PACKAGE=com.duoface.sideplaydisplay\n'
@@ -441,6 +441,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$FILE_OUT"
-          git commit -m 'docs(sileo): verify QA10 live Pages Packages and DEB hash [skip ci]'
+          git commit -m 'docs(sileo): verify QA11 live Pages Packages and DEB hash [skip ci]'
           git push origin HEAD:main
-          echo QA10_SILEO_PUBLIC_INDEX_AND_BINARY_DEPLOY_SUCCESS
+          echo QA11_SILEO_PUBLIC_INDEX_AND_BINARY_DEPLOY_SUCCESS

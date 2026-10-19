@@ -1,0 +1,31 @@
+name: Validate Sileo build workflow YAML before deployment
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build.yml'
+      - '.github/workflows/validate-build-yaml.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse all workflow YAML and verify important Sileo jobs
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check pyyaml
+          python3 - <<'PY'
+          import yaml
+          from pathlib import Path
+          p=Path('.github/workflows/build.yml')
+          cfg=yaml.safe_load(p.read_text())
+          assert 'jobs' in cfg
+          assert all(x in cfg['jobs'] for x in ('build','deploy','verify-qa11-pages')),cfg['jobs'].keys()
+          steps=cfg['jobs']['verify-qa11-pages']['steps']
+          assert any('Native Dashboard Bridge QA' in v.get('name','') for v in steps),steps
+          print('SILEO_BUILD_YAML_VALID with',len(steps),'verification steps')
+          PY

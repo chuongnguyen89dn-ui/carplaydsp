@@ -251,6 +251,32 @@ jobs:
           test "$(dpkg-deb -c "$MYTWEAK_RECOVERY1_DEB" | grep -cE '^-' )" -eq 2
           ! dpkg-deb -c "$MYTWEAK_RECOVERY1_DEB" | grep -E '/(SidePlay|DuoFaceDashboard|DuoFaceSidePlayDisplayQA|MyTweak)\.dylib'
           echo 'MYTWEAK_RECOVERY1_INDEPENDENT_DEB_PINNED_SHA_AND_PAYLOAD_PASS'
+          # NEW standalone read-only native CarPlay window-owner QA, separate from MyTweak recovery.
+          # No LS hooks, no SpringBoard process filter, no auto-respring.
+          OWNERPROBE_FILE='com.duoface.carplay.ownerprobe_0.0.1~ownerprobe1_iphoneos-arm64.deb'
+          OWNERPROBE_SHA='4b474336b3eda3c898c9d49815579bc98ce071d3711b8f6397158aca5f4535e6'
+          OWNERPROBE_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/98b97fed88163c1db363a6f00c3840f524911af6/sideplay/test-artifacts/mytweak-native-ownerprobe1/$OWNERPROBE_FILE"
+          OWNERPROBE_DEB="repo/debs/$OWNERPROBE_FILE"
+          curl -fL --retry 3 "$OWNERPROBE_URL" -o "$OWNERPROBE_DEB"
+          printf '%s  %s\n' "$OWNERPROBE_SHA" "$OWNERPROBE_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$OWNERPROBE_DEB" Package)" = 'com.duoface.carplay.ownerprobe'
+          test "$(dpkg-deb -f "$OWNERPROBE_DEB" Version)" = '0.0.1~ownerprobe1'
+          test "$(dpkg-deb -f "$OWNERPROBE_DEB" Architecture)" = 'iphoneos-arm64'
+          ! dpkg-deb -f "$OWNERPROBE_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
+          dpkg-deb -c "$OWNERPROBE_DEB" | grep -F '/DFNativeDockOwnerProbe.dylib'
+          dpkg-deb -c "$OWNERPROBE_DEB" | grep -F '/DFNativeDockOwnerProbe.plist'
+          test "$(dpkg-deb -c "$OWNERPROBE_DEB" | grep -cE '^-' )" -eq 2
+          mkdir -p "$RUNNER_TEMP/ownerprobe-public-extract"
+          dpkg-deb -x "$OWNERPROBE_DEB" "$RUNNER_TEMP/ownerprobe-public-extract"
+          OWNERPROBE_PLIST="$RUNNER_TEMP/ownerprobe-public-extract/var/jb/Library/MobileSubstrate/DynamicLibraries/DFNativeDockOwnerProbe.plist"
+          OWNERPROBE_PLIST="$OWNERPROBE_PLIST" python3 - <<'PY'
+          import os,plistlib
+          with open(os.environ['OWNERPROBE_PLIST'],'rb') as f: p=plistlib.load(f)
+          assert p['Filter']['Executables']==['CarPlay','CarPlayApp'],p
+          print('DUOFACE_NATIVE_OWNERPROBE_BINARY_FILTER_ONLY_CARPLAY_PASS')
+          PY
+          echo 'DUOFACE_NATIVE_OWNERPROBE_DEB_PINNED_SHA_SEPARATE_PACKAGE_PASS'
+
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -309,6 +335,15 @@ jobs:
                   v1a+=1
           if v1a!=1:
               raise SystemExit(f'Expected one independent MyTweak Stable V1BC Emergency Recovery preflight entry, got {v1a}')
+          ownerprobe=0
+          for i,block in enumerate(blocks):
+              if block.startswith('Package: com.duoface.carplay.ownerprobe\n'):
+                  lines=[line for line in block.splitlines() if not line.startswith('Icon: ')]
+                  lines.append('Icon: https://chuongnguyen89dn-ui.github.io/carplaydsp/duoface-icon.png')
+                  blocks[i]='\n'.join(lines)
+                  ownerprobe+=1
+          if ownerprobe!=1:
+              raise SystemExit(f'Expected one isolated CarPlay native owner probe entry, got {ownerprobe}')
           p.write_text('\n\n'.join(blocks))
           PY
           # Sileo/apt compatibility: publish compressed indexes and an RFC2822
@@ -359,6 +394,9 @@ jobs:
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.mytweak.v1a.preflight']) == 1
           assert '0.2.6~recovery1' in Path('Packages').read_text()
+          assert len([line for line in Path('Packages').read_text().splitlines()
+                      if line == 'Package: com.duoface.carplay.ownerprobe']) == 1
+          assert '0.0.1~ownerprobe1' in Path('Packages').read_text()
           print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_NATIVE_SHELL7_VISUAL_QA_PASS')
           PY
 
@@ -554,3 +592,71 @@ jobs:
           git commit -m 'docs(sileo): verify MyTweak Stable V1BC Emergency Recovery public APT and binary checksum [skip ci]'
           git push origin HEAD:main
           echo MYTWEAK_RECOVERY1_SILEO_INDEX_AND_PUBLIC_DEB_VERIFIED
+
+      - name: Verify standalone native CarPlay owner probe in public Sileo Packages and exact DEB
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          PKG='com.duoface.carplay.ownerprobe'
+          VER='0.0.1~ownerprobe1'
+          FILE='com.duoface.carplay.ownerprobe_0.0.1~ownerprobe1_iphoneos-arm64.deb'
+          SHA='4b474336b3eda3c898c9d49815579bc98ce071d3711b8f6397158aca5f4535e6'
+          for attempt in $(seq 1 15); do
+            if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/ownerprobe-Packages"; then
+              if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/ownerprobe-Packages"; then break; fi
+            fi
+            echo "Waiting for standalone CarPlay owner probe Pages: $attempt/15"
+            sleep 15
+          done
+          export OWNER_PKG="$PKG" OWNER_VER="$VER" OWNER_SHA="$SHA" OWNER_FILE="$FILE"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          stanzas=Path(os.environ["RUNNER_TEMP"],"ownerprobe-Packages").read_text().split('\n\n')
+          hits=[]
+          for stanza in stanzas:
+              d={}
+              for line in stanza.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1)
+                      d[k]=v
+              if d.get('Package')==os.environ['OWNER_PKG']: hits.append(d)
+          assert len(hits)==1, f'Owner probe APT count {len(hits)}'
+          p=hits[0]
+          assert p['Version']==os.environ['OWNER_VER'],p
+          assert p['SHA256']==os.environ['OWNER_SHA'],p
+          assert p['Filename']=='debs/'+os.environ['OWNER_FILE'],p
+          assert p['Architecture']=='iphoneos-arm64',p
+          assert not any(p.get(k) for k in ('Conflicts','Replaces','Breaks')),p
+          print('OWNERPROBE_SILEO_PUBLIC_ONE_ENTRY_VERSION_SHA_PASS')
+          PY
+          curl -fLsS --retry 4 "$SITE/Release" -o "$RUNNER_TEMP/ownerprobe-Release"
+          grep -Fq 'SHA256:' "$RUNNER_TEMP/ownerprobe-Release"
+          curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/ownerprobe-download.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/ownerprobe-download.deb" | sha256sum -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/ownerprobe-download.deb" Package)" = "$PKG"
+          test "$(dpkg-deb -f "$RUNNER_TEMP/ownerprobe-download.deb" Version)" = "$VER"
+          OUT='release-checkpoints/native-ownerprobe1-pages-verified.txt'
+          {
+            echo OWNERPROBE1_SILEO_PAGES_DEPLOY_VERIFIED
+            echo "RUN_ID=$GITHUB_RUN_ID"
+            echo "PAGES_URL=$SITE/"
+            echo "PACKAGE=$PKG"
+            echo "VERSION=$VER"
+            echo "DEB_SHA256=$SHA"
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "VERIFIED_UTC=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            echo 'PROCESS_FILTER=CarPlay,CarPlayApp'
+            echo 'SPRINGBOARD_HOOKS=false'
+            echo 'REAL_NATIVE_APPDOCK_VERIFIED=false'
+            echo 'DEVICE_TESTED=false'
+            echo 'MYTWEAK_RECOVERY_UNCHANGED=true'
+            echo 'QA11_NATIVE12_HUD8_UNCHANGED=true'
+          } > "$OUT"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$OUT"
+          git commit -m 'docs(sileo): verify standalone native Dock owner probe public APT and binary [skip ci]'
+          git push origin HEAD:main
+          echo OWNERPROBE1_SILEO_PUBLIC_APT_BINARY_VERIFIED

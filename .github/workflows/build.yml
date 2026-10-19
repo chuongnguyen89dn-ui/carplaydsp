@@ -234,20 +234,22 @@ jobs:
           ! dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -Eq 'SidePlay.dylib|SidePlay.app|DuoFaceDashboard.dylib'
           echo 'DUOFACE_NATIVE12_DOCK_QA11_LOGO_DRAG_AND_APPDOCK_SHA256_AND_PAYLOAD_PASS'
 
-          # MyTweak CarPlay Dashboard Context DIAGNOSTIC ONLY; independent package ID, no SidePlay or Native12 replacement.
+          # MyTweak Independent Native CarPlay Scene DIAGNOSTIC ONLY; independent package ID, no SidePlay or Native12 replacement.
           # Proven DuoFace artifact commit; pinned SHA256 prevents accidental branch drift.
-          MYTWEAK_DASHCTX1_FILE='com.duoface.mytweak.v1a.preflight_0.2.2~dashctx1_iphoneos-arm64.deb'
-          MYTWEAK_DASHCTX1_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/6cc257d7f08d3003fbf83bbaeb158287dd2cd449/sideplay/test-artifacts/mytweak-dashboard-context1/$MYTWEAK_DASHCTX1_FILE"
-          MYTWEAK_DASHCTX1_DEB="repo/debs/$MYTWEAK_DASHCTX1_FILE"
-          curl -fL --retry 3 "$MYTWEAK_DASHCTX1_URL" -o "$MYTWEAK_DASHCTX1_DEB"
-          printf '%s  %s\n' '9fd3e122a7e431566b8b3a9469e8c477f1cfedfacf5e85d4e049ec4cc3834898' "$MYTWEAK_DASHCTX1_DEB" | shasum -a 256 -c -
-          test "$(dpkg-deb -f "$MYTWEAK_DASHCTX1_DEB" Package)" = 'com.duoface.mytweak.v1a.preflight'
-          test "$(dpkg-deb -f "$MYTWEAK_DASHCTX1_DEB" Version)" = '0.2.2~dashctx1'
-          test "$(dpkg-deb -f "$MYTWEAK_DASHCTX1_DEB" Architecture)" = 'iphoneos-arm64'
-          dpkg-deb -c "$MYTWEAK_DASHCTX1_DEB" | grep -F '/DFV1APreflight.dylib'
-          dpkg-deb -c "$MYTWEAK_DASHCTX1_DEB" | grep -F '/DFV1APreflight.plist'
-          ! dpkg-deb -c "$MYTWEAK_DASHCTX1_DEB" | grep -E '/(SidePlay|DuoFaceDashboard|DuoFaceSidePlayDisplayQA|MyTweak)\.dylib'
-          echo 'MYTWEAK_DASHCTX1_INDEPENDENT_DEB_PINNED_SHA_AND_PAYLOAD_PASS'
+          MYTWEAK_SHELL1_FILE='com.duoface.mytweak.v1a.preflight_0.2.5~shell1_iphoneos-arm64.deb'
+          MYTWEAK_SHELL1_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/10a659e6d8a67e81632caa3c467b098c207c451f/sideplay/test-artifacts/mytweak-native-shell1/$MYTWEAK_SHELL1_FILE"
+          MYTWEAK_SHELL1_DEB="repo/debs/$MYTWEAK_SHELL1_FILE"
+          curl -fL --retry 3 "$MYTWEAK_SHELL1_URL" -o "$MYTWEAK_SHELL1_DEB"
+          printf '%s  %s\n' '30a648f61cc60a5aed9e1226037210c51691a9ecb21e9c16ec1b41b8c617fa2e' "$MYTWEAK_SHELL1_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$MYTWEAK_SHELL1_DEB" Package)" = 'com.duoface.mytweak.v1a.preflight'
+          test "$(dpkg-deb -f "$MYTWEAK_SHELL1_DEB" Version)" = '0.2.5~shell1'
+          test "$(dpkg-deb -f "$MYTWEAK_SHELL1_DEB" Architecture)" = 'iphoneos-arm64'
+          dpkg-deb -c "$MYTWEAK_SHELL1_DEB" | grep -F '/DFV1APreflight.dylib'
+          dpkg-deb -c "$MYTWEAK_SHELL1_DEB" | grep -F '/DFV1APreflight.plist'
+          dpkg-deb -c "$MYTWEAK_SHELL1_DEB" | grep -F '/MTDuoFaceShell.app/Info.plist'
+          dpkg-deb -c "$MYTWEAK_SHELL1_DEB" | grep -F '/MTDuoFaceShell.app/MTDuoFaceShell'
+          ! dpkg-deb -c "$MYTWEAK_SHELL1_DEB" | grep -E '/(SidePlay|DuoFaceDashboard|DuoFaceSidePlayDisplayQA|MyTweak)\.dylib'
+          echo 'MYTWEAK_SHELL1_INDEPENDENT_DEB_PINNED_SHA_AND_PAYLOAD_PASS'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -305,7 +307,7 @@ jobs:
                   blocks[i]='\n'.join(lines)
                   v1a+=1
           if v1a!=1:
-              raise SystemExit(f'Expected one independent MyTweak CarPlay Dashboard Context preflight entry, got {v1a}')
+              raise SystemExit(f'Expected one independent MyTweak Independent Native CarPlay Scene preflight entry, got {v1a}')
           p.write_text('\n\n'.join(blocks))
           PY
           # Sileo/apt compatibility: publish compressed indexes and an RFC2822
@@ -355,7 +357,7 @@ jobs:
           assert '0.1.9~native12dock11' in Path('Packages').read_text()
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.mytweak.v1a.preflight']) == 1
-          assert '0.2.2~dashctx1' in Path('Packages').read_text()
+          assert '0.2.5~shell1' in Path('Packages').read_text()
           print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_NATIVE_SHELL7_VISUAL_QA_PASS')
           PY
 
@@ -473,27 +475,27 @@ jobs:
           git push origin HEAD:main
           echo QA11_SILEO_PUBLIC_INDEX_AND_BINARY_DEPLOY_SUCCESS
 
-      - name: Verify MyTweak CarPlay Dashboard Context live Sileo index and binary independently of QA11
+      - name: Verify MyTweak Independent Native CarPlay Scene live Sileo index and binary independently of QA11
         shell: bash
         run: |
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.mytweak.v1a.preflight'
-          VER='0.2.2~dashctx1'
-          FILE='com.duoface.mytweak.v1a.preflight_0.2.2~dashctx1_iphoneos-arm64.deb'
-          SHA='9fd3e122a7e431566b8b3a9469e8c477f1cfedfacf5e85d4e049ec4cc3834898'
+          VER='0.2.5~shell1'
+          FILE='com.duoface.mytweak.v1a.preflight_0.2.5~shell1_iphoneos-arm64.deb'
+          SHA='30a648f61cc60a5aed9e1226037210c51691a9ecb21e9c16ec1b41b8c617fa2e'
           for attempt in $(seq 1 15); do
-            if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/mytweak-dashctx1-Packages"; then
-              if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/mytweak-dashctx1-Packages"; then break; fi
+            if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/mytweak-shell1-Packages"; then
+              if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/mytweak-shell1-Packages"; then break; fi
             fi
-            echo "Waiting for MyTweak CarPlay Dashboard Context APT listing: $attempt/15"
+            echo "Waiting for MyTweak Independent Native CarPlay Scene APT listing: $attempt/15"
             sleep 15
           done
           export V1A_PACKAGE="$PKG" V1A_VERSION="$VER" V1A_SHA="$SHA" V1A_FILE="$FILE"
           python3 - <<'PY'
           import os
           from pathlib import Path
-          stanzas=Path(os.environ['RUNNER_TEMP'],'mytweak-dashctx1-Packages').read_text().split('\n\n')
+          stanzas=Path(os.environ['RUNNER_TEMP'],'mytweak-shell1-Packages').read_text().split('\n\n')
           hits=[]
           for stanza in stanzas:
               fields={}
@@ -502,7 +504,7 @@ jobs:
                       k,v=line.split(': ',1);fields[k]=v
               if fields.get('Package')==os.environ['V1A_PACKAGE']:
                   hits.append(fields)
-          assert len(hits)==1, f'MyTweak CarPlay Dashboard Context index count {len(hits)}'
+          assert len(hits)==1, f'MyTweak Independent Native CarPlay Scene index count {len(hits)}'
           d=hits[0]
           assert d['Version']==os.environ['V1A_VERSION'],d
           assert d['SHA256']==os.environ['V1A_SHA'],d
@@ -510,17 +512,17 @@ jobs:
           assert d['Architecture']=='iphoneos-arm64',d
           assert 'com.sideplay' not in d.get('Depends',''),d
           assert not any(d.get(k) for k in ('Conflicts','Replaces','Breaks')),d
-          print('MYTWEAK_DASHCTX1_SILEO_LIVE_INDEX_ONE_ENTRY_VERSION_SHA_AND_NO_CONFLICT_PASS')
+          print('MYTWEAK_SHELL1_SILEO_LIVE_INDEX_ONE_ENTRY_VERSION_SHA_AND_NO_CONFLICT_PASS')
           PY
-          curl -fLsS --retry 4 "$SITE/Release" -o "$RUNNER_TEMP/mytweak-dashctx1-Release"
-          grep -Fq 'SHA256:' "$RUNNER_TEMP/mytweak-dashctx1-Release"
-          curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/mytweak-dashctx1-download.deb"
-          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/mytweak-dashctx1-download.deb" | sha256sum -c -
-          test "$(dpkg-deb -f "$RUNNER_TEMP/mytweak-dashctx1-download.deb" Package)" = "$PKG"
-          test "$(dpkg-deb -f "$RUNNER_TEMP/mytweak-dashctx1-download.deb" Version)" = "$VER"
-          F='release-checkpoints/mytweak-dashctx1-pages-verified.txt'
+          curl -fLsS --retry 4 "$SITE/Release" -o "$RUNNER_TEMP/mytweak-shell1-Release"
+          grep -Fq 'SHA256:' "$RUNNER_TEMP/mytweak-shell1-Release"
+          curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/mytweak-shell1-download.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/mytweak-shell1-download.deb" | sha256sum -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/mytweak-shell1-download.deb" Package)" = "$PKG"
+          test "$(dpkg-deb -f "$RUNNER_TEMP/mytweak-shell1-download.deb" Version)" = "$VER"
+          F='release-checkpoints/mytweak-shell1-pages-verified.txt'
           {
-            echo 'MYTWEAK_DASHCTX1_SILEO_PAGES_DEPLOY_VERIFIED'
+            echo 'MYTWEAK_SHELL1_SILEO_PAGES_DEPLOY_VERIFIED'
             echo "RUN_ID=$GITHUB_RUN_ID"
             echo "PAGES_URL=$SITE/"
             echo "PACKAGE=$PKG"
@@ -535,6 +537,9 @@ jobs:
             echo 'DASHBOARD_CONTEXT_NATIVE_WINDOW_PROBE=true'
             echo 'DBDOCKWINDOW_HOOK_IN_PACKAGE=false'
             echo 'CARPLAY_DASHBOARD_CONTEXT_DEVICE_VERIFIED=false'
+            echo 'NATIVE_CARPLAY_SCENE_PACKAGED=true'
+            echo 'DASHBOARD_WORKSPACE_ACTIVATION_SOURCE=true'
+            echo 'REAL_NATIVE_APPDOCK_DEVICE_VERIFIED=false'
             echo 'APPLE_APPDOCK_HOME_NAVIGATION_VERIFIED=false'
             echo 'NATIVE_DOCK_LAYOUT_CANDIDATE=true'
             echo 'NATIVE_APPDOCK_DEVICE_TESTED=false'
@@ -542,6 +547,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$F"
-          git commit -m 'docs(sileo): verify MyTweak CarPlay Dashboard Context public APT and binary checksum [skip ci]'
+          git commit -m 'docs(sileo): verify MyTweak Independent Native CarPlay Scene public APT and binary checksum [skip ci]'
           git push origin HEAD:main
-          echo MYTWEAK_DASHCTX1_SILEO_INDEX_AND_PUBLIC_DEB_VERIFIED
+          echo MYTWEAK_SHELL1_SILEO_INDEX_AND_PUBLIC_DEB_VERIFIED

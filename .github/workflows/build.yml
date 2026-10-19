@@ -217,12 +217,12 @@ jobs:
           # DuoFace Native12 QA5 center dual-pill and real-pane focus/restore TEST addon. SidePlay binary not included.
           # Remove obsolete QA1/QA2 DEB to keep exactly one APT entry.
           find repo/debs -maxdepth 1 -type f -name 'com.duoface.sideplaydisplay_*.deb' -delete
-          SIDEPLAY_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/f99aba274febda46e21f2fa9249a94ed86f50363/sideplay/artifacts/native12chrome9/com.duoface.sideplaydisplay_0.1.7~native12chrome9_iphoneos-arm64.deb'
-          SIDEPLAY_QA_DEB='repo/debs/com.duoface.sideplaydisplay_0.1.7~native12chrome9_iphoneos-arm64.deb'
+          SIDEPLAY_QA_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/12d8038a0562fd946ae66aaba0457a7270f2a145/sideplay/artifacts/native12dock10/com.duoface.sideplaydisplay_0.1.8~native12dock10_iphoneos-arm64.deb'
+          SIDEPLAY_QA_DEB='repo/debs/com.duoface.sideplaydisplay_0.1.8~native12dock10_iphoneos-arm64.deb'
           curl -fL --retry 3 "$SIDEPLAY_QA_URL" -o "$SIDEPLAY_QA_DEB"
-          printf '%s  %s\n' 'ab5dba7165d5a860d93a1047c5ca95f17540b560edc4b371521bcbcc833e3346' "$SIDEPLAY_QA_DEB" | shasum -a 256 -c -
+          printf '%s  %s\n' 'c651828290fbc21e45c8529fd5f6d0ba9cbb59e00dfb0af2b45629f4ecfae064' "$SIDEPLAY_QA_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Package)" = 'com.duoface.sideplaydisplay'
-          test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Version)" = '0.1.7~native12chrome9'
+          test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Version)" = '0.1.8~native12dock10'
           test "$(dpkg-deb -f "$SIDEPLAY_QA_DEB" Architecture)" = 'iphoneos-arm64'
           dpkg-deb -f "$SIDEPLAY_QA_DEB" Depends | grep -F 'com.sideplay'
           dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -F '/DuoFaceSidePlayDisplayQA.dylib'
@@ -232,7 +232,7 @@ jobs:
             dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -F "/DuoFaceSidePlayDisplayQA/$asset"
           done
           ! dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -Eq 'SidePlay.dylib|SidePlay.app|DuoFaceDashboard.dylib'
-          echo 'DUOFACE_NATIVE12_CHROME_QA9_ISOLATED_SHA256_AND_PAYLOAD_PASS'
+          echo 'DUOFACE_NATIVE12_DOCK_QA10_MENU_SPLITTER_SHA256_AND_PAYLOAD_PASS'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -327,7 +327,7 @@ jobs:
           assert '1.0.3-12~ui8native7' in Path('Packages').read_text()
           assert len([line for line in Path('Packages').read_text().splitlines()
                       if line == 'Package: com.duoface.sideplaydisplay']) == 1
-          assert '0.1.7~native12chrome9' in Path('Packages').read_text()
+          assert '0.1.8~native12dock10' in Path('Packages').read_text()
           print('SILEO_APT_RELEASE_VALID_DATE_CHECKSUMS_NATIVE12_HUB8_AND_NATIVE_SHELL7_VISUAL_QA_PASS')
           PY
 

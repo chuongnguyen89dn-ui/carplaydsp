@@ -368,3 +368,79 @@ jobs:
       - name: Deploy Sileo repo to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-qa10-pages:
+    # Verify exactly what Sileo can retrieve, not only the uploaded Pages artifact.
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify live Sileo Packages Release and QA10 DEB checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          VERSION='0.1.8~native12dock10'
+          FILE='com.duoface.sideplaydisplay_0.1.8~native12dock10_iphoneos-arm64.deb'
+          EXPECTED='c651828290fbc21e45c8529fd5f6d0ba9cbb59e00dfb0af2b45629f4ecfae064'
+          for i in $(seq 1 15); do
+            if curl --fail --location --silent --show-error \
+                 --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/qa10-Packages"; then
+              if grep -Fqx "Version: $VERSION" "$RUNNER_TEMP/qa10-Packages" &&
+                 grep -Fqx "SHA256: $EXPECTED" "$RUNNER_TEMP/qa10-Packages"; then
+                break
+              fi
+            fi
+            echo "QA10 public APT index not updated yet: attempt $i/15"
+            sleep 15
+          done
+          export QA10_VERSION="$VERSION" QA10_FILE="$FILE" QA10_HASH="$EXPECTED"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          text=Path(os.environ["RUNNER_TEMP"],"qa10-Packages").read_text()
+          matching=[]
+          for stanza in text.split("\n\n"):
+              fields={}
+              for line in stanza.splitlines():
+                  if ": " in line and not line.startswith(" "):
+                      k,v=line.split(": ",1)
+                      fields[k]=v
+              if fields.get("Package")=="com.duoface.sideplaydisplay":
+                  matching.append(fields)
+          assert len(matching)==1, f"QA package entries: {len(matching)}"
+          q=matching[0]
+          assert q.get("Version")==os.environ["QA10_VERSION"],q
+          assert q.get("SHA256")==os.environ["QA10_HASH"],q
+          assert q.get("Filename")=="debs/"+os.environ["QA10_FILE"],q
+          assert "com.sideplay" in q.get("Depends",""),q
+          print("QA10_SILEO_PUBLIC_PACKAGES_ONE_ENTRY_VERSION_SHA_DEPENDENCY_PASS")
+          PY
+          curl --fail --location --silent --show-error --retry 4 \
+            "$SITE/Release" -o "$RUNNER_TEMP/qa10-Release"
+          grep -F 'SHA256:' "$RUNNER_TEMP/qa10-Release"
+          curl --fail --location --silent --show-error --retry 4 \
+            "$SITE/debs/$FILE" -o "$RUNNER_TEMP/qa10-download.deb"
+          printf '%s  %s\n' "$EXPECTED" "$RUNNER_TEMP/qa10-download.deb" | sha256sum -c -
+          FILE_OUT='release-checkpoints/qa10-native12dock10-pages-verified.txt'
+          mkdir -p "$(dirname "$FILE_OUT")"
+          {
+            printf 'QA10_SILEO_PAGES_DEPLOY_VERIFIED\n'
+            printf 'RUN_ID=%s\n' "$GITHUB_RUN_ID"
+            printf 'PAGES_URL=%s/\n' "$SITE"
+            printf 'APT_PACKAGE=com.duoface.sideplaydisplay\n'
+            printf 'VERSION=%s\n' "$VERSION"
+            printf 'DEB_SHA256=%s\n' "$EXPECTED"
+            printf 'SOURCE_COMMIT=%s\n' "$GITHUB_SHA"
+            printf 'VERIFIED_UTC=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          } > "$FILE_OUT"
+          cat "$FILE_OUT"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$FILE_OUT"
+          git commit -m 'docs(sileo): verify QA10 live Pages Packages and DEB hash [skip ci]'
+          git push origin HEAD:main
+          echo QA10_SILEO_PUBLIC_INDEX_AND_BINARY_DEPLOY_SUCCESS

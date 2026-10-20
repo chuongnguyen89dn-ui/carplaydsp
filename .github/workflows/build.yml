@@ -196,14 +196,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p repo/debs
-          FILE='com.duoface.carplay.nativejoinprobe_0.0.1~sceneprobe1_iphoneos-arm64.deb'
-          SHA='a9c337f107b4a28e638dae1e285691afbbb0f79434d4ca994bbda6c555566ee6'
-          URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/adb556c6198af5ddc117182e8bd5822780390aee/sideplay/test-artifacts/native-carplay-scene-v1/$FILE"
+          FILE='com.duoface.carplay.nativejoinprobe_0.0.2~bargeometry1_iphoneos-arm64.deb'
+          SHA='8135de144e5e7ee8c0004b9a8323f1bf8a9165383e46d7ccbd9061f188783be2'
+          URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/e2fbe005b400af14a1d6da0d35f4ebded5977859/sideplay/test-artifacts/native-carplay-scene-v1/$FILE"
           DEB="repo/debs/$FILE"
           curl -fLsS --retry 4 "$URL" -o "$DEB"
           printf '%s  %s\n' "$SHA" "$DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DEB" Package)" = com.duoface.carplay.nativejoinprobe
-          test "$(dpkg-deb -f "$DEB" Version)" = '0.0.1~sceneprobe1'
+          test "$(dpkg-deb -f "$DEB" Version)" = '0.0.2~bargeometry1'
           test "$(dpkg-deb -f "$DEB" Architecture)" = iphoneos-arm64
           ! dpkg-deb -f "$DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
           dpkg-deb -c "$DEB" | grep -F '/DFNativeSceneJoinProbe.dylib'
@@ -1047,7 +1047,7 @@ jobs:
           assert 'com.duoface.carplay.nativebridgeqa (>= 0.0.5~controlapp1)' in a['Depends'],a
           assert 'com.duoface.carplay.nativejoinprobe (>= 0.0.1~sceneprobe1)' in a['Depends'],a
           assert len(pkgs.get('com.duoface.carplay.nativejoinprobe',[]))==1
-          assert pkgs['com.duoface.carplay.nativejoinprobe'][0]['Version']=='0.0.1~sceneprobe1'
+          assert pkgs['com.duoface.carplay.nativejoinprobe'][0]['Version']=='0.0.2~bargeometry1'
           assert not any(a.get(k) for k in ('Conflicts','Replaces','Breaks')),a
           assert len(pkgs.get('com.duoface.carplay.nativebridgeqa',[]))==1
           assert pkgs['com.duoface.carplay.nativebridgeqa'][0]['Version']=='0.0.6~dockcrop1'

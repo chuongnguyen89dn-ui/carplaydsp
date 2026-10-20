@@ -84,3 +84,12 @@ respring và kiểm tra Settings trước khi thử split. Không cài chồng c
 DuoDash/Airaw/adapter khác. Không tự cài/gỡ trên máy người dùng từ CI.
 Chỉ tiếp tục ghép adapter khi có kết quả đối chứng. Các gói thử cũ giữ trên
 nguồn phục vụ truy vết, nhưng không hướng dẫn cài test2 để làm đối chứng.
+
+
+## 2026-10-20 — PUBLISH EXISTING OMNICAR UNIFIED 1.0.3-omnicar1 TO SILEO; KEEP OTHERS
+
+- User explicitly requires new OmniCar QA releases via Sileo rather than manually downloading a DEB. This publishing repository is chuongnguyen89dn-ui/carplaydsp main, with source https://chuongnguyen89dn-ui.github.io/carplaydsp/.
+- Changed ONLY existing .github/workflows/build.yml, commit b38dd812ee100f1e568bc2a92c0e9fa2d639b19c: added SHA256-pinned existing OmniCar 1.0.3-omnicar1 QA .deb from chuongnguyen89dn-ui/Omnicar commit 251ccec43f602a48b448427eb80d49d7c223ea9e. Exact SHA256 8a84b3d6a4d44ecdf2f7185ef6d79139eba85d4dd0b5769044daf8f61b7a8757, package com.anlai.omnicar architecture iphoneos-arm64. Verifies all 4 added dylib+plist pairs plus original OmniCarSplitScreen, and exactly one APT stanza; it never removes DuoFace/DuoDash/Hub from this repo. Do not silently update their pinned bytes or dependencies for OmniCar releases.
+- YAML/actionlint run 39370226744 SUCCESS. Existing Sileo build/deploy GitHub Actions run https://github.com/chuongnguyen89dn-ui/carplaydsp/actions/runs/39370226883: build job 118456193155 SUCCESS, GitHub Pages deploy job 118456966918 SUCCESS, existing QA11 live validator job 118457022575 SUCCESS.
+- Independent OmniCar live public verifier https://github.com/chuongnguyen89dn-ui/Omnicar/actions/runs/39370310105, job 118456451243 SUCCESS: actual public APT Packages + compressed index + Release SHA checksum entries, exactly one com.anlai.omnicar 1.0.3-omnicar1 entry, preserved DuoFace entries, downloaded full public OmniCar .deb sha256 EXACT, original SplitScreen and 4 module dylibs+plists present. Display name in original control is OmniCar. No real iPhone/CarPlay device QA yet.
+- New delivery policy: for each future approved OmniCar build, publish by updating immutable OmniCar source commit/version/SHA in the SAME block of .github/workflows/build.yml, verifying APT/deploy/public downloaded hash, then instruct user only Sileo Sources → CarPlayDSP → Refresh → OmniCar upgrade; never require Filza/manual DEB downloads. Preserve all other packages and existing Sileo indexes. Latest OmniCar handoff: Omnicar/tiep tuc du an.md commit 2ad6605d4ee29ac23cfd7abe7eec4fae30bc2097.

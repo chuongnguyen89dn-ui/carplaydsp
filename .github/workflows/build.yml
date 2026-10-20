@@ -368,15 +368,15 @@ jobs:
         run: |
           set -euo pipefail
           # User-approved Sileo distribution of OmniCar candidate; no changes to DuoFace/Hub/DuoDash.
-          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar7_iphoneos-arm64.deb'
-          OMNI_SHA='fad7e4923f576d248c16ac2b6153b14680ac60116d3316642043edacb8cbdfee'
-          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/743b4abaef8c2f3183bbafd15dd1c4ea25a92f74/dist/candidates/omnicar-unified-1.0.3-omnicar7/$OMNI_FILE"
+          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar8-touchqa_iphoneos-arm64.deb'
+          OMNI_SHA='d8761b47e32190c1ed13df3738eb3c1b5ab1ad1cb009db3e8779dfbec1fb7eaf'
+          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/9bdabae99b04a3792c3abde35c6e0827c3e5ad11/dist/candidates/omnicar-unified-1.0.3-omnicar8-touchqa/$OMNI_FILE"
           mkdir -p repo/debs
           OMNI_PATH="repo/debs/$OMNI_FILE"
           curl -fLsS --retry 4 --connect-timeout 20 "$OMNI_URL" -o "$OMNI_PATH"
           printf '%s  %s\n' "$OMNI_SHA" "$OMNI_PATH" | shasum -a 256 --check
           test "$(dpkg-deb -f "$OMNI_PATH" Package)" = 'com.anlai.omnicar'
-          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar7'
+          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar8-touchqa'
           test "$(dpkg-deb -f "$OMNI_PATH" Architecture)" = 'iphoneos-arm64'
           # Exactly one Sileo version, without touching any other package family.
           find repo/debs -maxdepth 1 -type f -name 'com.anlai.omnicar_*.deb' ! -name "$OMNI_FILE" -delete
@@ -553,10 +553,10 @@ jobs:
                   stanzas.append(fields)
           assert len(stanzas)==1,stanzas
           entry=stanzas[0]
-          assert entry['Version']=='1.0.3-omnicar7',entry
+          assert entry['Version']=='1.0.3-omnicar8-touchqa',entry
           assert entry['Architecture']=='iphoneos-arm64',entry
-          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar7_iphoneos-arm64.deb',entry
-          assert entry['SHA256']=='fad7e4923f576d248c16ac2b6153b14680ac60116d3316642043edacb8cbdfee',entry
+          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar8-touchqa_iphoneos-arm64.deb',entry
+          assert entry['SHA256']=='d8761b47e32190c1ed13df3738eb3c1b5ab1ad1cb009db3e8779dfbec1fb7eaf',entry
           assert len([s for s in p.split('\n') if s=='Package: com.duoface.independent'])==1
           assert len([s for s in p.split('\n') if s=='Package: com.duonavi.app'])==1
           print('OMNICAR_SINGLE_APT_ENTRY_AND_EXISTING_DUOFACE_ENTRIES_PASS')

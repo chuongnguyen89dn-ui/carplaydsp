@@ -211,6 +211,46 @@ jobs:
           dpkg-deb -c "$QAAPP_DEB" | grep -F '/Applications/DuoFaceQA.app/AppIcon60x60@3x.png'
           echo DUOFACE_QA_IPHONE_APP_IN_APT_PREPARED
 
+      - name: Pin tested launchable DuoFace Test iPhone app from project release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p repo/debs
+          APP_FILE='com.duoface.testapp_0.1.0~app1_iphoneos-arm64.deb'
+          APP_SHA='39e40b43f8b121090d5df41a6ad37e352c8d6bfdcf27cb20f5c5514bd7420444'
+          APP_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/3b22856cef0c3ed4cca9c05d3826b871be6abc2a/sideplay/test-artifacts/duoface-test-app1/$APP_FILE"
+          APP_DEB="repo/debs/$APP_FILE"
+          curl -fL --retry 4 "$APP_URL" -o "$APP_DEB"
+          printf '%s  %s\n' "$APP_SHA" "$APP_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$APP_DEB" Package)" = com.duoface.testapp
+          test "$(dpkg-deb -f "$APP_DEB" Version)" = '0.1.0~app1'
+          test "$(dpkg-deb -f "$APP_DEB" Architecture)" = iphoneos-arm64
+          dpkg-deb -f "$APP_DEB" Depends | grep -F 'com.duoface.carplay.nativebridgeqa'
+          dpkg-deb -f "$APP_DEB" Depends | grep -F 'com.duoface.mytweak.v1a.preflight'
+          ! dpkg-deb -f "$APP_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
+          mkdir -p "$RUNNER_TEMP/duoface-test-app-extract"
+          dpkg-deb -x "$APP_DEB" "$RUNNER_TEMP/duoface-test-app-extract"
+          dpkg-deb -e "$APP_DEB" "$RUNNER_TEMP/duoface-test-app-extract/DEBIAN"
+          test -x "$RUNNER_TEMP/duoface-test-app-extract/var/jb/Applications/DuoFaceTest.app/DuoFaceTest"
+          test -s "$RUNNER_TEMP/duoface-test-app-extract/var/jb/Applications/DuoFaceTest.app/AppIcon60x60@2x.png"
+          test -s "$RUNNER_TEMP/duoface-test-app-extract/var/jb/Applications/DuoFaceTest.app/AppIcon60x60@3x.png"
+          test -f "$RUNNER_TEMP/duoface-test-app-extract/var/jb/Applications/DuoFaceTest.app/Info.plist"
+          test -s "$RUNNER_TEMP/duoface-test-app-extract/var/jb/Library/MobileSubstrate/DynamicLibraries/DFDuoFaceTestController.dylib"
+          test -x "$RUNNER_TEMP/duoface-test-app-extract/DEBIAN/postinst"
+          APP_ROOT="$RUNNER_TEMP/duoface-test-app-extract" python3 - <<'PY'
+          from pathlib import Path
+          import plistlib,os
+          p=Path(os.environ['APP_ROOT'])/'var/jb/Applications/DuoFaceTest.app/Info.plist'
+          info=plistlib.loads(p.read_bytes())
+          assert info['CFBundleIdentifier']=='com.duoface.testapp',info
+          assert info['CFBundleExecutable']=='DuoFaceTest',info
+          assert info['CFBundlePackageType']=='APPL',info
+          f=Path(os.environ['APP_ROOT'])/'var/jb/Library/MobileSubstrate/DynamicLibraries/DFDuoFaceTestController.plist'
+          assert plistlib.loads(f.read_bytes())['Filter']['Executables']==['SpringBoard']
+          print('DUOFACE_LAUNCHABLE_APP_ICON_AND_FILTER_BIN_VERIFIED')
+          PY
+          echo DUOFACE_TEST_APP_PINNED_IN_SILEO
+
       - name: Build APT repository
         shell: bash
         run: |
@@ -970,3 +1010,75 @@ jobs:
           git commit -m 'docs(sileo): verified real DuoFace QA iPhone app on public Pages, exact hash [skip ci]'
           git push origin HEAD:main
           echo DUOFACE_QA_IPHONE_APP_PUBLIC_SHA_VERIFIED
+
+      - name: Verify public DuoFace Test launchable app and exact Sileo APT SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          PKG='com.duoface.testapp'
+          VER='0.1.0~app1'
+          FILE='com.duoface.testapp_0.1.0~app1_iphoneos-arm64.deb'
+          SHA='39e40b43f8b121090d5df41a6ad37e352c8d6bfdcf27cb20f5c5514bd7420444'
+          for attempt in $(seq 1 20); do
+            curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-test-app-Packages" || true
+            if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/duoface-test-app-Packages" 2>/dev/null; then break; fi
+            echo "Waiting for DuoFace Test App Pages: $attempt/20"
+            sleep 10
+          done
+          export TESTAPP_PKG="$PKG" TESTAPP_VER="$VER" TESTAPP_FILE="$FILE" TESTAPP_SHA="$SHA"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          content=Path(os.environ['RUNNER_TEMP'],'duoface-test-app-Packages').read_text()
+          match=[]
+          for item in content.split('\n\n'):
+              values={}
+              for line in item.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      key,value=line.split(': ',1)
+                      values[key]=value
+              if values.get('Package')==os.environ['TESTAPP_PKG']:
+                  match.append(values)
+          assert len(match)==1,match
+          x=match[0]
+          assert x['Version']==os.environ['TESTAPP_VER'],x
+          assert x['SHA256']==os.environ['TESTAPP_SHA'],x
+          assert x['Architecture']=='iphoneos-arm64',x
+          assert x['Filename']=='debs/'+os.environ['TESTAPP_FILE'],x
+          assert 'com.duoface.carplay.nativebridgeqa' in x['Depends'],x
+          assert 'com.duoface.mytweak.v1a.preflight' in x['Depends'],x
+          assert not any(x.get(k) for k in ('Conflicts','Replaces','Breaks')),x
+          print('DUOFACE_TEST_APP_PUBLIC_APT_SINGLE_PACKAGE_PASS')
+          PY
+          curl -fLsS --retry 4 "$SITE/Release" -o "$RUNNER_TEMP/duoface-test-app-Release"
+          grep -Fq 'SHA256:' "$RUNNER_TEMP/duoface-test-app-Release"
+          curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duoface-test-app-public.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duoface-test-app-public.deb" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-test-app-public.deb" Package)" = "$PKG"
+          test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-test-app-public.deb" Version)" = "$VER"
+          OUT=release-checkpoints/duoface-test-app1-pages-verified.txt
+          {
+            echo DUOFACE_TEST_APP_PUBLIC_PAGES_VERIFIED
+            echo "RUN_ID=$GITHUB_RUN_ID"
+            echo "PACKAGE=$PKG"
+            echo "VERSION=$VER"
+            echo "SOURCE_URL=$SITE/"
+            echo "PUBLIC_DEB=$SITE/debs/$FILE"
+            echo "DEB_SHA256=$SHA"
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "VERIFIED_UTC=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            echo 'REAL_LAUNCHABLE_APP_BIN_VERIFIED=true'
+            echo 'MANUAL_FILZA_REQUIRED=false'
+            echo 'START_ONLY_FROM_APP_UI=true'
+            echo 'AUTO_ROLLBACK_45_SECONDS=true'
+            echo 'USER_DEVICE_TESTED=false'
+            echo 'APPLE_DOCK_HOME_VERIFIED=false'
+            echo 'ORIGINAL_RECOVERY_QA11_NATIVE12_HUD8_MODIFIED=false'
+          } > "$OUT"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$OUT"
+          git commit -m 'docs(sileo): verify public DuoFace Test app icon and exact DEB SHA [skip ci]'
+          git push origin HEAD:main
+          echo DUOFACE_TEST_APP_PUBLIC_PAGES_SHA_VERIFIED

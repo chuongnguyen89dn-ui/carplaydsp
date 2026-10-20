@@ -254,15 +254,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SOURCE='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/7c9091db51a596980077cd646f828123782bf9a2/sideplay/test-artifacts/firstparty-admission-signal2'
+          SOURCE='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/4d4ae8a552685d0443461dcf4625a876a3b1cd7c/sideplay/test-artifacts/firstparty-roster-readonly1'
           mkdir -p repo/debs
-          GATE_FILE='com.duoface.carplay.firstpartyadmission_0.0.2~signal1_iphoneos-arm64.deb'
-          GATE_SHA='82ac1594f2a35bcc285a68fdc6ccb7bf47124f1b46f988f79b14cadb79983892'
+          GATE_FILE='com.duoface.carplay.firstpartyadmission_0.0.3~roster1_iphoneos-arm64.deb'
+          GATE_SHA='85fe55ff499e7d6a406c912f71fb268477bb0467c95d9dcca2f9aefb4a2d962a'
           GATE_DEB="repo/debs/$GATE_FILE"
           curl -fLsS --retry 4 "$SOURCE/$GATE_FILE" -o "$GATE_DEB"
           printf '%s  %s\n' "$GATE_SHA" "$GATE_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$GATE_DEB" Package)" = 'com.duoface.carplay.firstpartyadmission'
-          test "$(dpkg-deb -f "$GATE_DEB" Version)" = '0.0.2~signal1'
+          test "$(dpkg-deb -f "$GATE_DEB" Version)" = '0.0.3~roster1'
           test "$(dpkg-deb -f "$GATE_DEB" Architecture)" = iphoneos-arm64
           ! dpkg-deb -f "$GATE_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
           mkdir -p "$RUNNER_TEMP/df-firstparty-extract"
@@ -276,7 +276,7 @@ jobs:
           print('DUOFACE_FIRSTPARTY_GATE_ONLY_CARPLAY_PASS')
           PY
           HOST_FILE='com.duoface.carplay.nativescenehost_0.0.1~scenehost1_iphoneos-arm64.deb'
-          HOST_SHA='e87089bfd69978a9ec09dcf52858f93b8aa35367a32c917ca0ed4a7c22bed701'
+          HOST_SHA='4326db767add6383aafc17695f73e13f3aa6d207dbe34b0ceca6fc26cbbbefe1'
           HOST_DEB="repo/debs/$HOST_FILE"
           curl -fLsS --retry 4 "$SOURCE/$HOST_FILE" -o "$HOST_DEB"
           printf '%s  %s\n' "$HOST_SHA" "$HOST_DEB" | shasum -a 256 -c -
@@ -304,19 +304,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p repo/debs
-          QAAPP_FILE='com.duoface.qa.controlapp_0.1.4~signal1_iphoneos-arm64.deb'
-          QAAPP_SHA='4aa07ea17e5fe50bae5e37fbf8e0a6ae2444b7076d8e5fde328fdf7657d2b17a'
-          QAAPP_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/7c9091db51a596980077cd646f828123782bf9a2/sideplay/test-artifacts/firstparty-admission-signal2/$QAAPP_FILE"
+          QAAPP_FILE='com.duoface.qa.controlapp_0.1.5~roster1_iphoneos-arm64.deb'
+          QAAPP_SHA='e880b5ec0cee1ca8a829645632237bcd0937fe46c29272772f63c0cb18aeefc1'
+          QAAPP_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/4d4ae8a552685d0443461dcf4625a876a3b1cd7c/sideplay/test-artifacts/firstparty-roster-readonly1/$QAAPP_FILE"
           QAAPP_DEB="repo/debs/$QAAPP_FILE"
           curl -fLsS --retry 4 "$QAAPP_URL" -o "$QAAPP_DEB"
           printf '%s  %s\n' "$QAAPP_SHA" "$QAAPP_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$QAAPP_DEB" Package)" = 'com.duoface.qa.controlapp'
-          test "$(dpkg-deb -f "$QAAPP_DEB" Version)" = '0.1.4~signal1'
+          test "$(dpkg-deb -f "$QAAPP_DEB" Version)" = '0.1.5~roster1'
           test "$(dpkg-deb -f "$QAAPP_DEB" Architecture)" = 'iphoneos-arm64'
           dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.nativebridgeqa (>= 0.0.5~controlapp1)'
           dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.nativejoinprobe (>= 0.0.1~sceneprobe1)'
           dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.sbadmissionprobe (>= 0.0.1~readonly1)'
-          dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.firstpartyadmission (>= 0.0.2~signal1)'
+          dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.firstpartyadmission (>= 0.0.3~roster1)'
           dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.nativescenehost (>= 0.0.1~scenehost1)'
           ! dpkg-deb -f "$QAAPP_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
           dpkg-deb -c "$QAAPP_DEB" | grep -F '/Applications/DuoFaceQA.app/DuoFaceQA'
@@ -1098,9 +1098,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.qa.controlapp'
-          VER='0.1.4~signal1'
-          DEB='com.duoface.qa.controlapp_0.1.4~signal1_iphoneos-arm64.deb'
-          SHA='4aa07ea17e5fe50bae5e37fbf8e0a6ae2444b7076d8e5fde328fdf7657d2b17a'
+          VER='0.1.5~roster1'
+          DEB='com.duoface.qa.controlapp_0.1.5~roster1_iphoneos-arm64.deb'
+          SHA='e880b5ec0cee1ca8a829645632237bcd0937fe46c29272772f63c0cb18aeefc1'
           for attempt in $(seq 1 22); do
             curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-qa-app-Packages" || true
             if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/duoface-qa-app-Packages" 2>/dev/null; then break; fi
@@ -1129,11 +1129,11 @@ jobs:
           assert 'com.duoface.carplay.nativebridgeqa (>= 0.0.5~controlapp1)' in a['Depends'],a
           assert 'com.duoface.carplay.nativejoinprobe (>= 0.0.1~sceneprobe1)' in a['Depends'],a
           assert 'com.duoface.carplay.sbadmissionprobe (>= 0.0.1~readonly1)' in a['Depends'],a
-          assert 'com.duoface.carplay.firstpartyadmission (>= 0.0.2~signal1)' in a['Depends'],a
+          assert 'com.duoface.carplay.firstpartyadmission (>= 0.0.3~roster1)' in a['Depends'],a
           assert 'com.duoface.carplay.nativescenehost (>= 0.0.1~scenehost1)' in a['Depends'],a
           for pkg,version,sha in (
-            ('com.duoface.carplay.firstpartyadmission','0.0.2~signal1','82ac1594f2a35bcc285a68fdc6ccb7bf47124f1b46f988f79b14cadb79983892'),
-            ('com.duoface.carplay.nativescenehost','0.0.1~scenehost1','e87089bfd69978a9ec09dcf52858f93b8aa35367a32c917ca0ed4a7c22bed701')):
+            ('com.duoface.carplay.firstpartyadmission','0.0.3~roster1','85fe55ff499e7d6a406c912f71fb268477bb0467c95d9dcca2f9aefb4a2d962a'),
+            ('com.duoface.carplay.nativescenehost','0.0.1~scenehost1','4326db767add6383aafc17695f73e13f3aa6d207dbe34b0ceca6fc26cbbbefe1')):
             entries=pkgs.get(pkg,[])
             assert len(entries)==1,entries
             actual=entries[0]
@@ -1168,16 +1168,16 @@ jobs:
           curl -fLsS --retry 4 "$SITE/debs/com.duoface.carplay.sbadmissionprobe_0.0.1~readonly1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-sb-admission-public.deb"
           printf '%s  %s\n' '32d1af9bd32f53d0e10c445c0b69941924dc6c2f18601aa01bc9361b7ddf8ffa' "$RUNNER_TEMP/duoface-sb-admission-public.deb" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-sb-admission-public.deb" Package)" = 'com.duoface.carplay.sbadmissionprobe'
-          curl -fLsS --retry 4 "$SITE/debs/com.duoface.carplay.firstpartyadmission_0.0.2~signal1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-firstparty-public.deb"
-          printf '%s  %s\n' '82ac1594f2a35bcc285a68fdc6ccb7bf47124f1b46f988f79b14cadb79983892' "$RUNNER_TEMP/duoface-firstparty-public.deb" | shasum -a 256 -c -
+          curl -fLsS --retry 4 "$SITE/debs/com.duoface.carplay.firstpartyadmission_0.0.3~roster1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-firstparty-public.deb"
+          printf '%s  %s\n' '85fe55ff499e7d6a406c912f71fb268477bb0467c95d9dcca2f9aefb4a2d962a' "$RUNNER_TEMP/duoface-firstparty-public.deb" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-firstparty-public.deb" Package)" = 'com.duoface.carplay.firstpartyadmission'
           curl -fLsS --retry 4 "$SITE/debs/com.duoface.carplay.nativescenehost_0.0.1~scenehost1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-firstparty-host-public.deb"
-          printf '%s  %s\n' 'e87089bfd69978a9ec09dcf52858f93b8aa35367a32c917ca0ed4a7c22bed701' "$RUNNER_TEMP/duoface-firstparty-host-public.deb" | shasum -a 256 -c -
+          printf '%s  %s\n' '4326db767add6383aafc17695f73e13f3aa6d207dbe34b0ceca6fc26cbbbefe1' "$RUNNER_TEMP/duoface-firstparty-host-public.deb" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-firstparty-host-public.deb" Package)" = 'com.duoface.carplay.nativescenehost'
           mkdir -p "$RUNNER_TEMP/duoface-qa-app-verified"
           dpkg-deb -x "$RUNNER_TEMP/duoface-qa-app-public.deb" "$RUNNER_TEMP/duoface-qa-app-verified"
           test -s "$RUNNER_TEMP/duoface-qa-app-verified/var/jb/Applications/DuoFaceQA.app/DuoFaceQA"
-          OUTPUT=release-checkpoints/duoface-qa-admission-signal1-pages-verified.txt
+          OUTPUT=release-checkpoints/duoface-qa-roster1-pages-verified.txt
           {
             echo DUOFACE_QA_CONTROL_APP_PUBLIC_SILEO_VERIFIED
             echo "RUN_ID=$GITHUB_RUN_ID"
@@ -1185,8 +1185,8 @@ jobs:
             echo "VERSION=$VER"
             echo "PUBLIC_SOURCE=$SITE/"
             echo "APP_DEB_SHA256=$SHA"
-            echo 'FIRSTPARTY_GATE_SHA256=82ac1594f2a35bcc285a68fdc6ccb7bf47124f1b46f988f79b14cadb79983892'
-            echo 'FIRSTPARTY_HOST_SHA256=e87089bfd69978a9ec09dcf52858f93b8aa35367a32c917ca0ed4a7c22bed701'
+            echo 'FIRSTPARTY_GATE_SHA256=85fe55ff499e7d6a406c912f71fb268477bb0467c95d9dcca2f9aefb4a2d962a'
+            echo 'FIRSTPARTY_HOST_SHA256=4326db767add6383aafc17695f73e13f3aa6d207dbe34b0ceca6fc26cbbbefe1'
             echo 'FIRSTPARTY_GATE_DEFAULT_OFF=true'
             echo 'SPRINGBOARD_INJECTION_NEW_PACKAGE=false'
             echo 'CARPLAY_DEVICE_ADMISSION_VERIFIED=false'

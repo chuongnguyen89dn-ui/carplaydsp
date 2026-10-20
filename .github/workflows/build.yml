@@ -220,22 +220,53 @@ jobs:
           PY
           echo NATIVE_CARPLAY_SCENE_PROBE_PINNED_SHA_PASS
 
+      - name: Pin independent SpringBoard-only OFF-by-default admission ABI probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p repo/debs
+          FILE='com.duoface.carplay.sbadmissionprobe_0.0.1~readonly1_iphoneos-arm64.deb'
+          SHA='32d1af9bd32f53d0e10c445c0b69941924dc6c2f18601aa01bc9361b7ddf8ffa'
+          URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/15dac7e795733c1e33f63c4fdbd6c8433784eca4/sideplay/test-artifacts/sb-admission-probe1/$FILE"
+          DEB="repo/debs/$FILE"
+          curl -fLsS --retry 4 "$URL" -o "$DEB"
+          printf '%s  %s\n' "$SHA" "$DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DEB" Package)" = 'com.duoface.carplay.sbadmissionprobe'
+          test "$(dpkg-deb -f "$DEB" Version)" = '0.0.1~readonly1'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = iphoneos-arm64
+          ! dpkg-deb -f "$DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
+          dpkg-deb -c "$DEB" > "$RUNNER_TEMP/duoface-sb-admission-filelist.txt"
+          test "$(grep -c '^-' "$RUNNER_TEMP/duoface-sb-admission-filelist.txt")" -eq 2
+          grep -F '/DFReadOnlySBAdmissionProbe.dylib' "$RUNNER_TEMP/duoface-sb-admission-filelist.txt"
+          grep -F '/DFReadOnlySBAdmissionProbe.plist' "$RUNNER_TEMP/duoface-sb-admission-filelist.txt"
+          mkdir -p "$RUNNER_TEMP/duoface-sb-admission-extract"
+          dpkg-deb -x "$DEB" "$RUNNER_TEMP/duoface-sb-admission-extract"
+          FILTER="$RUNNER_TEMP/duoface-sb-admission-extract/var/jb/Library/MobileSubstrate/DynamicLibraries/DFReadOnlySBAdmissionProbe.plist"
+          FILTER="$FILTER" python3 - <<'PY'
+          import plistlib,os
+          with open(os.environ['FILTER'],'rb') as f: p=plistlib.load(f)
+          assert p['Filter']['Executables']==['SpringBoard'],p
+          print('READONLY_OPTIN_SPRINGBOARD_ONLY_FILTER_PASS')
+          PY
+          echo DUOFACE_SPRINGBOARD_ABI_PROBE_PINNED_SHA_PASS
+
       - name: Add signed DuoFace QA iPhone control app from immutable verified source
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p repo/debs
-          QAAPP_FILE='com.duoface.qa.controlapp_0.1.1~nativeprobe1_iphoneos-arm64.deb'
-          QAAPP_SHA='a222010e200a5ab59eed0b322483a629135bffd5b31ece16676a14118f15333d'
-          QAAPP_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/adb556c6198af5ddc117182e8bd5822780390aee/sideplay/test-artifacts/native-carplay-scene-v1/$QAAPP_FILE"
+          QAAPP_FILE='com.duoface.qa.controlapp_0.1.2~sbgate1_iphoneos-arm64.deb'
+          QAAPP_SHA='9c5dda4e694bab319ac055e563eaf2eb9ffaffebf730a44dcc50aa269cf73c37'
+          QAAPP_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/15dac7e795733c1e33f63c4fdbd6c8433784eca4/sideplay/test-artifacts/sb-admission-probe1/$QAAPP_FILE"
           QAAPP_DEB="repo/debs/$QAAPP_FILE"
           curl -fLsS --retry 4 "$QAAPP_URL" -o "$QAAPP_DEB"
           printf '%s  %s\n' "$QAAPP_SHA" "$QAAPP_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$QAAPP_DEB" Package)" = 'com.duoface.qa.controlapp'
-          test "$(dpkg-deb -f "$QAAPP_DEB" Version)" = '0.1.1~nativeprobe1'
+          test "$(dpkg-deb -f "$QAAPP_DEB" Version)" = '0.1.2~sbgate1'
           test "$(dpkg-deb -f "$QAAPP_DEB" Architecture)" = 'iphoneos-arm64'
           dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.nativebridgeqa (>= 0.0.5~controlapp1)'
           dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.nativejoinprobe (>= 0.0.1~sceneprobe1)'
+          dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.sbadmissionprobe (>= 0.0.1~readonly1)'
           ! dpkg-deb -f "$QAAPP_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
           dpkg-deb -c "$QAAPP_DEB" | grep -F '/Applications/DuoFaceQA.app/DuoFaceQA'
           dpkg-deb -c "$QAAPP_DEB" | grep -F '/Applications/DuoFaceQA.app/AppIcon60x60@3x.png'
@@ -1016,9 +1047,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.qa.controlapp'
-          VER='0.1.1~nativeprobe1'
-          DEB='com.duoface.qa.controlapp_0.1.1~nativeprobe1_iphoneos-arm64.deb'
-          SHA='a222010e200a5ab59eed0b322483a629135bffd5b31ece16676a14118f15333d'
+          VER='0.1.2~sbgate1'
+          DEB='com.duoface.qa.controlapp_0.1.2~sbgate1_iphoneos-arm64.deb'
+          SHA='9c5dda4e694bab319ac055e563eaf2eb9ffaffebf730a44dcc50aa269cf73c37'
           for attempt in $(seq 1 22); do
             curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-qa-app-Packages" || true
             if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/duoface-qa-app-Packages" 2>/dev/null; then break; fi
@@ -1046,6 +1077,13 @@ jobs:
           assert a['Architecture']=='iphoneos-arm64',a
           assert 'com.duoface.carplay.nativebridgeqa (>= 0.0.5~controlapp1)' in a['Depends'],a
           assert 'com.duoface.carplay.nativejoinprobe (>= 0.0.1~sceneprobe1)' in a['Depends'],a
+          assert 'com.duoface.carplay.sbadmissionprobe (>= 0.0.1~readonly1)' in a['Depends'],a
+          assert len(pkgs.get('com.duoface.carplay.sbadmissionprobe',[]))==1
+          x=pkgs['com.duoface.carplay.sbadmissionprobe'][0]
+          assert x['Version']=='0.0.1~readonly1',x
+          assert x['SHA256']=='32d1af9bd32f53d0e10c445c0b69941924dc6c2f18601aa01bc9361b7ddf8ffa',x
+          assert x['Architecture']=='iphoneos-arm64',x
+          assert not any(x.get(k) for k in ('Conflicts','Replaces','Breaks')),x
           assert len(pkgs.get('com.duoface.carplay.nativejoinprobe',[]))==1
           assert pkgs['com.duoface.carplay.nativejoinprobe'][0]['Version']=='0.0.3~rosterabi1'
           assert not any(a.get(k) for k in ('Conflicts','Replaces','Breaks')),a
@@ -1064,10 +1102,13 @@ jobs:
           printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duoface-qa-app-public.deb" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-qa-app-public.deb" Package)" = "$PKG"
           test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-qa-app-public.deb" Version)" = "$VER"
+          curl -fLsS --retry 4 "$SITE/debs/com.duoface.carplay.sbadmissionprobe_0.0.1~readonly1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-sb-admission-public.deb"
+          printf '%s  %s\n' '32d1af9bd32f53d0e10c445c0b69941924dc6c2f18601aa01bc9361b7ddf8ffa' "$RUNNER_TEMP/duoface-sb-admission-public.deb" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-sb-admission-public.deb" Package)" = 'com.duoface.carplay.sbadmissionprobe'
           mkdir -p "$RUNNER_TEMP/duoface-qa-app-verified"
           dpkg-deb -x "$RUNNER_TEMP/duoface-qa-app-public.deb" "$RUNNER_TEMP/duoface-qa-app-verified"
           test -s "$RUNNER_TEMP/duoface-qa-app-verified/var/jb/Applications/DuoFaceQA.app/DuoFaceQA"
-          OUTPUT=release-checkpoints/duoface-qa-nativeprobe1-pages-verified.txt
+          OUTPUT=release-checkpoints/duoface-qa-sbgate1-pages-verified.txt
           {
             echo DUOFACE_QA_CONTROL_APP_PUBLIC_SILEO_VERIFIED
             echo "RUN_ID=$GITHUB_RUN_ID"

@@ -251,6 +251,31 @@ jobs:
           PY
           echo DUOFACE_TEST_APP_PINNED_IN_SILEO
 
+      - name: Add exact SHA-pinned OmniCar unified QA package (no changes to other packages)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # User-approved Sileo distribution of OmniCar candidate; no changes to DuoFace/Hub/DuoDash.
+          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar1_iphoneos-arm64.deb'
+          OMNI_SHA='8a84b3d6a4d44ecdf2f7185ef6d79139eba85d4dd0b5769044daf8f61b7a8757'
+          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/251ccec43f602a48b448427eb80d49d7c223ea9e/dist/candidates/omnicar-unified-1.0.3-omnicar1/$OMNI_FILE"
+          mkdir -p repo/debs
+          OMNI_PATH="repo/debs/$OMNI_FILE"
+          curl -fLsS --retry 4 --connect-timeout 20 "$OMNI_URL" -o "$OMNI_PATH"
+          printf '%s  %s\n' "$OMNI_SHA" "$OMNI_PATH" | shasum -a 256 --check
+          test "$(dpkg-deb -f "$OMNI_PATH" Package)" = 'com.anlai.omnicar'
+          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar1'
+          test "$(dpkg-deb -f "$OMNI_PATH" Architecture)" = 'iphoneos-arm64'
+          # Exactly one Sileo version, without touching any other package family.
+          find repo/debs -maxdepth 1 -type f -name 'com.anlai.omnicar_*.deb' ! -name "$OMNI_FILE" -delete
+          OMNI_LIST="$(dpkg-deb -c "$OMNI_PATH")"
+          for module in OmniCarDoubleTapFullscreen OmniCarIdleControls OmniCarSoloThreeDots OmniCarGraphiteTitanium; do
+            printf '%s\n' "$OMNI_LIST" | grep -F "/$module.dylib"
+            printf '%s\n' "$OMNI_LIST" | grep -F "/$module.plist"
+          done
+          printf '%s\n' "$OMNI_LIST" | grep -F '/OmniCarSplitScreen.dylib'
+          echo 'OMNICAR_ORIGINAL_UNIFIED_SHA256_AND_4_MODULES_PINNED_SILEO_PASS'
+
       - name: Build APT repository
         shell: bash
         run: |
@@ -401,6 +426,29 @@ jobs:
 
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
+          # Verify the new OmniCar entry is Sileo-visible once, preserving existing APT entries.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Packages').read_text()
+          stanzas=[]
+          for block in p.split('\n\n'):
+              fields={}
+              for line in block.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1)
+                      fields[k]=v
+              if fields.get('Package')=='com.anlai.omnicar':
+                  stanzas.append(fields)
+          assert len(stanzas)==1,stanzas
+          entry=stanzas[0]
+          assert entry['Version']=='1.0.3-omnicar1',entry
+          assert entry['Architecture']=='iphoneos-arm64',entry
+          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar1_iphoneos-arm64.deb',entry
+          assert entry['SHA256']=='8a84b3d6a4d44ecdf2f7185ef6d79139eba85d4dd0b5769044daf8f61b7a8757',entry
+          assert len([s for s in p.split('\n') if s=='Package: com.duoface.independent'])==1
+          assert len([s for s in p.split('\n') if s=='Package: com.duonavi.app'])==1
+          print('OMNICAR_SINGLE_APT_ENTRY_AND_EXISTING_DUOFACE_ENTRIES_PASS')
+          PY
           python3 ../scripts/label-duodash-baseline.py Packages
           # Sileo icon is APT metadata; iPhone app icons do not populate it.
           curl -fL --retry 3 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/main/dist/visual-1.0.3-12/assets/duoface-icon.png' -o duoface-icon.png

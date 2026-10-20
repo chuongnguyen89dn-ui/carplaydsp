@@ -191,21 +191,51 @@ jobs:
           print('NATIVE_BRIDGEQA_FILZA_FREE_CONF_HELPER_EXPLICIT_OPTIN_VERIFIED')
           PY
 
+      - name: Pin separate read-only native CarPlay scene / Dock ABI diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p repo/debs
+          FILE='com.duoface.carplay.nativejoinprobe_0.0.1~sceneprobe1_iphoneos-arm64.deb'
+          SHA='a9c337f107b4a28e638dae1e285691afbbb0f79434d4ca994bbda6c555566ee6'
+          URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/adb556c6198af5ddc117182e8bd5822780390aee/sideplay/test-artifacts/native-carplay-scene-v1/$FILE"
+          DEB="repo/debs/$FILE"
+          curl -fLsS --retry 4 "$URL" -o "$DEB"
+          printf '%s  %s\n' "$SHA" "$DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DEB" Package)" = com.duoface.carplay.nativejoinprobe
+          test "$(dpkg-deb -f "$DEB" Version)" = '0.0.1~sceneprobe1'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = iphoneos-arm64
+          ! dpkg-deb -f "$DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
+          dpkg-deb -c "$DEB" | grep -F '/DFNativeSceneJoinProbe.dylib'
+          dpkg-deb -c "$DEB" | grep -F '/DFNativeSceneJoinProbe.plist'
+          test "$(dpkg-deb -c "$DEB" | grep -c '^-' )" -eq 2
+          mkdir -p "$RUNNER_TEMP/native-scene-probe"
+          dpkg-deb -x "$DEB" "$RUNNER_TEMP/native-scene-probe"
+          FILTER="$RUNNER_TEMP/native-scene-probe/var/jb/Library/MobileSubstrate/DynamicLibraries/DFNativeSceneJoinProbe.plist"
+          FILTER="$FILTER" python3 - <<'PY'
+          import plistlib,os
+          with open(os.environ['FILTER'],'rb') as f: p=plistlib.load(f)
+          assert p['Filter']['Executables']==['CarPlay','CarPlayApp'],p
+          print('READONLY_DASHBOARD_SCENE_PROBE_FILTER_PASS')
+          PY
+          echo NATIVE_CARPLAY_SCENE_PROBE_PINNED_SHA_PASS
+
       - name: Add signed DuoFace QA iPhone control app from immutable verified source
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p repo/debs
-          QAAPP_FILE='com.duoface.qa.controlapp_0.1.0~app1_iphoneos-arm64.deb'
-          QAAPP_SHA='ac787b8a042c092dc90876b12b039409422a74273e8cbdc7d27fdf9b93b71a41'
-          QAAPP_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/01936a12da53868e90cb1fec4a4d88d3ce4170c8/sideplay/test-artifacts/duoface-qa-control-app1/$QAAPP_FILE"
+          QAAPP_FILE='com.duoface.qa.controlapp_0.1.1~nativeprobe1_iphoneos-arm64.deb'
+          QAAPP_SHA='a222010e200a5ab59eed0b322483a629135bffd5b31ece16676a14118f15333d'
+          QAAPP_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/adb556c6198af5ddc117182e8bd5822780390aee/sideplay/test-artifacts/native-carplay-scene-v1/$QAAPP_FILE"
           QAAPP_DEB="repo/debs/$QAAPP_FILE"
           curl -fLsS --retry 4 "$QAAPP_URL" -o "$QAAPP_DEB"
           printf '%s  %s\n' "$QAAPP_SHA" "$QAAPP_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$QAAPP_DEB" Package)" = 'com.duoface.qa.controlapp'
-          test "$(dpkg-deb -f "$QAAPP_DEB" Version)" = '0.1.0~app1'
+          test "$(dpkg-deb -f "$QAAPP_DEB" Version)" = '0.1.1~nativeprobe1'
           test "$(dpkg-deb -f "$QAAPP_DEB" Architecture)" = 'iphoneos-arm64'
           dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.nativebridgeqa (>= 0.0.5~controlapp1)'
+          dpkg-deb -f "$QAAPP_DEB" Depends | grep -F 'com.duoface.carplay.nativejoinprobe (>= 0.0.1~sceneprobe1)'
           ! dpkg-deb -f "$QAAPP_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
           dpkg-deb -c "$QAAPP_DEB" | grep -F '/Applications/DuoFaceQA.app/DuoFaceQA'
           dpkg-deb -c "$QAAPP_DEB" | grep -F '/Applications/DuoFaceQA.app/AppIcon60x60@3x.png'
@@ -986,9 +1016,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.qa.controlapp'
-          VER='0.1.0~app1'
-          DEB='com.duoface.qa.controlapp_0.1.0~app1_iphoneos-arm64.deb'
-          SHA='ac787b8a042c092dc90876b12b039409422a74273e8cbdc7d27fdf9b93b71a41'
+          VER='0.1.1~nativeprobe1'
+          DEB='com.duoface.qa.controlapp_0.1.1~nativeprobe1_iphoneos-arm64.deb'
+          SHA='a222010e200a5ab59eed0b322483a629135bffd5b31ece16676a14118f15333d'
           for attempt in $(seq 1 22); do
             curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-qa-app-Packages" || true
             if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/duoface-qa-app-Packages" 2>/dev/null; then break; fi
@@ -1015,6 +1045,9 @@ jobs:
           assert a['Filename']=='debs/'+os.environ['DQA_DEB'],a
           assert a['Architecture']=='iphoneos-arm64',a
           assert 'com.duoface.carplay.nativebridgeqa (>= 0.0.5~controlapp1)' in a['Depends'],a
+          assert 'com.duoface.carplay.nativejoinprobe (>= 0.0.1~sceneprobe1)' in a['Depends'],a
+          assert len(pkgs.get('com.duoface.carplay.nativejoinprobe',[]))==1
+          assert pkgs['com.duoface.carplay.nativejoinprobe'][0]['Version']=='0.0.1~sceneprobe1'
           assert not any(a.get(k) for k in ('Conflicts','Replaces','Breaks')),a
           assert len(pkgs.get('com.duoface.carplay.nativebridgeqa',[]))==1
           assert pkgs['com.duoface.carplay.nativebridgeqa'][0]['Version']=='0.0.6~dockcrop1'
@@ -1034,7 +1067,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/duoface-qa-app-verified"
           dpkg-deb -x "$RUNNER_TEMP/duoface-qa-app-public.deb" "$RUNNER_TEMP/duoface-qa-app-verified"
           test -s "$RUNNER_TEMP/duoface-qa-app-verified/var/jb/Applications/DuoFaceQA.app/DuoFaceQA"
-          OUTPUT=release-checkpoints/duoface-qa-control-app1-pages-verified.txt
+          OUTPUT=release-checkpoints/duoface-qa-nativeprobe1-pages-verified.txt
           {
             echo DUOFACE_QA_CONTROL_APP_PUBLIC_SILEO_VERIFIED
             echo "RUN_ID=$GITHUB_RUN_ID"

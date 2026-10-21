@@ -448,14 +448,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p packages
-          CPA_FILE='com.chuong.carplayaudit_0.4.0_iphoneos-arm64.deb'
-          CPA_SHA='31a40df54191ff3adac2dc853f4bf13b79e904c3c8c071f05b9dbd7ee0583d28'
-          CPA_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/DuoDash-Diagnostic/b3722b0855bbf981fedd95f8300d0501f6c36983/carplay-residual-audit/packages/$CPA_FILE"
+          CPA_FILE='com.chuong.carplayaudit_0.5.0_iphoneos-arm64.deb'
+          CPA_SHA='b285673ca78e7906d58d4561768ac0b9261617c5f4a745ca3c5c7d2e0a7871a4'
+          CPA_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/DuoDash-Diagnostic/0272eb7d997655307218817159d4f7ca68305d75/carplay-residual-audit/packages/$CPA_FILE"
           CPA_DEB="packages/$CPA_FILE"
           curl -fLsS --retry 3 "$CPA_URL" -o "$CPA_DEB"
           printf '%s  %s\n' "$CPA_SHA" "$CPA_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$CPA_DEB" Package)" = 'com.chuong.carplayaudit'
-          test "$(dpkg-deb -f "$CPA_DEB" Version)" = '0.4.0'
+          test "$(dpkg-deb -f "$CPA_DEB" Version)" = '0.5.0'
           test "$(dpkg-deb -f "$CPA_DEB" Architecture)" = 'iphoneos-arm64'
           ! dpkg-deb -f "$CPA_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
           dpkg-deb -c "$CPA_DEB" | grep -F '/CarPlayRuntimeProbe.dylib'

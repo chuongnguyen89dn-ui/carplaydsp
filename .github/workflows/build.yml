@@ -398,15 +398,15 @@ jobs:
           set -euo pipefail
           # This is a NEW package ID, NOT the unsafe all-in-one 0.0.7 candidate.
           # It does not upgrade/remove Native12, HUD8 or existing QA packages.
-          FILE='com.duoface.carplay.gate1smoke_0.0.6~fbsrefresh1_iphoneos-arm64.deb'
-          SHA='f9fdd47aecd3ff691aa3581a6f2ab474cf19b7ae9cff9bb865cd91145ce94803'
-          URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/a56535446a4d8500479575ae9ebdfa060d3cc70e/sideplay/carplay-gate1-smoke/packages/com.duoface.carplay.gate1smoke_0.0.6~fbsrefresh1_iphoneos-arm64.deb'
+          FILE='com.duoface.carplay.gate1smoke_0.0.7~fbsquery1_iphoneos-arm64.deb'
+          SHA='01679b3f1f2fdc56affc291700ddda3d69305dfeee572a7bbad173f9f87b7320'
+          URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/aaad7d6a47ab6a2c6b98f4ad5628a3768455229f/sideplay/carplay-gate1-smoke/packages/com.duoface.carplay.gate1smoke_0.0.7~fbsquery1_iphoneos-arm64.deb'
           mkdir -p repo/debs
           DEB="repo/debs/$FILE"
           curl -fLsS --retry 4 "$URL" -o "$DEB"
           printf '%s  %s\n' "$SHA" "$DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DEB" Package)" = 'com.duoface.carplay.gate1smoke'
-          test "$(dpkg-deb -f "$DEB" Version)" = '0.0.6~fbsrefresh1'
+          test "$(dpkg-deb -f "$DEB" Version)" = '0.0.7~fbsquery1'
           test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64'
           ! dpkg-deb -f "$DEB" | grep -Eq '^(Conflicts|Replaces|Breaks|Provides):'
           ! dpkg-deb -f "$DEB" Depends | grep -Ei 'duonavi|carbridge|native12|com\.duoface\.independent|com\.duoface\.qa\.controlapp'
@@ -1338,9 +1338,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.carplay.gate1smoke'
-          VER='0.0.6~fbsrefresh1'
-          FILE='com.duoface.carplay.gate1smoke_0.0.6~fbsrefresh1_iphoneos-arm64.deb'
-          SHA='f9fdd47aecd3ff691aa3581a6f2ab474cf19b7ae9cff9bb865cd91145ce94803'
+          VER='0.0.7~fbsquery1'
+          FILE='com.duoface.carplay.gate1smoke_0.0.7~fbsquery1_iphoneos-arm64.deb'
+          SHA='01679b3f1f2fdc56affc291700ddda3d69305dfeee572a7bbad173f9f87b7320'
           for attempt in $(seq 1 24); do
             curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/gate1-public-Packages" || true
             if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/gate1-public-Packages" 2>/dev/null; then break; fi

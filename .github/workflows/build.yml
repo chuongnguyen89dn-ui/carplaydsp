@@ -363,20 +363,20 @@ jobs:
           PY
           echo DUOFACE_TEST_APP_PINNED_IN_SILEO
 
-      - name: Add SHA-pinned ORIGINAL OmniCar Solo plus sole 4s visual timer (no changes to other packages)
+      - name: Add SHA-pinned original OmniCar Solo + Zoom Swap + 4s timer (other packages unchanged)
         shell: bash
         run: |
           set -euo pipefail
-          # Original OmniCar 1.0.3 Solo unmodified; only two-menu/divider timer added. All other packages untouched.
-          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar11-native-solo-timer_iphoneos-arm64.deb'
-          OMNI_SHA='44c5133cfd687ce437bde4ca503c897796e0bee72f1dbc607adf8a51706d0ed7'
-          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/745771611ef01b779c36f30078cf607c42efd2af/dist/candidates/omnicar-original-1.0.3-omnicar11-native-solo-timer/$OMNI_FILE"
+          # Original Solo preserved; approved Zoom/Swap two-action menu and cosmetic 4s timer present.
+          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar12-timer-zoom-swap_iphoneos-arm64.deb'
+          OMNI_SHA='f07c293a52882ab420aca49e4fe9e30d141d2cba412185938bf09ec9154685ba'
+          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/76e5252a1aae5387bed0b53d1fc3e8365f1ce709/dist/candidates/omnicar-original-1.0.3-omnicar12-timer-zoom-swap/$OMNI_FILE"
           mkdir -p repo/debs
           OMNI_PATH="repo/debs/$OMNI_FILE"
           curl -fLsS --retry 4 --connect-timeout 20 "$OMNI_URL" -o "$OMNI_PATH"
           printf '%s  %s\n' "$OMNI_SHA" "$OMNI_PATH" | shasum -a 256 --check
           test "$(dpkg-deb -f "$OMNI_PATH" Package)" = 'com.anlai.omnicar'
-          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar11-native-solo-timer'
+          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar12-timer-zoom-swap'
           test "$(dpkg-deb -f "$OMNI_PATH" Architecture)" = 'iphoneos-arm64'
           # Exactly one Sileo version, without touching any other package family.
           find repo/debs -maxdepth 1 -type f -name 'com.anlai.omnicar_*.deb' ! -name "$OMNI_FILE" -delete
@@ -384,13 +384,15 @@ jobs:
           printf '%s\n' "$OMNI_LIST" | grep -F '/OmniCarSplitScreen.dylib'
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarNativeSoloTimer.dylib')" -eq 1
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarNativeSoloTimer.plist')" -eq 1
-          for banned in OmniCarDoubleTapFullscreen OmniCarIdleControls OmniCarSoloThreeDots OmniCarGraphiteTitanium OmniCarDuoActivityIdle; do
+          test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarDoubleTapFullscreen.dylib')" -eq 1
+          test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarDoubleTapFullscreen.plist')" -eq 1
+          for banned in OmniCarIdleControls OmniCarSoloThreeDots OmniCarGraphiteTitanium OmniCarDuoActivityIdle; do
             if printf '%s\n' "$OMNI_LIST" | grep -F "/$banned."; then
-              echo "Refuse old experimental module $banned in original Solo restore" >&2
+              echo "Refuse experimental Solo/Idle module $banned in QA12" >&2
               exit 1
             fi
           done
-          echo 'OMNICAR_ORIGINAL_SOLO_ONLY_ONE_TIMER_SHA256_PINNED_SILEO_PASS'
+          echo 'OMNICAR_QA12_SOLO_ZOOM_SWAP_TIMER_SHA256_PINNED_SILEO_PASS'
 
       - name: Pin distinct DuoFace Gate1 smoke package (no stable QA replacement)
         shell: bash
@@ -602,10 +604,10 @@ jobs:
                   stanzas.append(fields)
           assert len(stanzas)==1,stanzas
           entry=stanzas[0]
-          assert entry['Version']=='1.0.3-omnicar11-native-solo-timer',entry
+          assert entry['Version']=='1.0.3-omnicar12-timer-zoom-swap',entry
           assert entry['Architecture']=='iphoneos-arm64',entry
-          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar11-native-solo-timer_iphoneos-arm64.deb',entry
-          assert entry['SHA256']=='44c5133cfd687ce437bde4ca503c897796e0bee72f1dbc607adf8a51706d0ed7',entry
+          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar12-timer-zoom-swap_iphoneos-arm64.deb',entry
+          assert entry['SHA256']=='f07c293a52882ab420aca49e4fe9e30d141d2cba412185938bf09ec9154685ba',entry
           assert len([s for s in p.split('\n') if s=='Package: com.duoface.independent'])==1
           assert len([s for s in p.split('\n') if s=='Package: com.duonavi.app'])==1
           print('OMNICAR_SINGLE_APT_ENTRY_AND_EXISTING_DUOFACE_ENTRIES_PASS')

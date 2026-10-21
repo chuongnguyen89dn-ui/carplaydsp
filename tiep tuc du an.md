@@ -1,5 +1,14 @@
 # Tiếp tục dự án CarPlay Split
 
+## 2026-10-21 — LIVE SILEO DuoFace Gate1 smoke2, proof in public Packages (NO hardware proof)
+
+- Updated ONLY existing `.github/workflows/build.yml` pin and live verifier, commits `0b9ded45f3974d63aa34318aa0ec9fd2a396c23d` (initial smoke1) and final `4164bc5ba395eb18368cf9ee76bcf74e49911eac` (superseding smoke2). New **separate** package `com.duoface.carplay.gate1smoke 0.0.2~smoke2`, architecture `iphoneos-arm64`; no Conflicts/Replaces/Breaks/Provides, no dependency on Native12/HUD8/QA, no installed stable package changed. This is NOT the monolithic `com.duoface.jb.embedded`. Earlier smoke1 is superseded; install only smoke2.
+- Source exact DuoFace project feature artifact commit `140433a37a33f0bd53618d8504f2c830e8316698`, `sideplay/carplay-gate1-smoke/packages/com.duoface.carplay.gate1smoke_0.0.2~smoke2_iphoneos-arm64.deb`. SHA256 `f1effac6051103ff9c0cff60e0fe9cb8faa0647e7606d94e15829f84c89832a3`, signed Mach-O headerpad and signature nonoverlap static check PASS in DuoFace CI [39522725164](https://github.com/chuongnguyen89dn-ui/Duoface/actions/runs/39522725164). Own iPhone app + icon, opt-in 600sec unique SpringBoard/CarPlay tweak + kill switch and native UIWindowScene handler. No auto-respring.
+- **Verified public release:** GitHub Actions [39522945378](https://github.com/chuongnguyen89dn-ui/carplaydsp/actions/runs/39522945378) build, Pages deploy and verify-qa11-pages all SUCCESS. Actual live Pages verifier job `118971806875`: `GATE1_PUBLIC_SILEO_SINGLE_ISOLATED_APT_ENTRY_PASS`, `GATE1_PUBLIC_SILEO_BINARY_SHA256_PASS_NO_DEVICE_CARPLAY_PROOF`; HTTP download `https://chuongnguyen89dn-ui.github.io/carplaydsp/debs/com.duoface.carplay.gate1smoke_0.0.2~smoke2_iphoneos-arm64.deb` matched SHA. Single exact `Packages` APT stanza. Existing QA/Native12/HUD8 package checks in same CI PASS.
+- User acceptance is still **NOT DONE**: actual iPhone X rootless iOS16 + DiPlay, CarPlay Home icon, native blue Gate1 proof scene, Dock, reconnect/disable/uninstall. Must not declare DuoFace functional before user test. Sileo source `https://chuongnguyen89dn-ui.github.io/carplaydsp/`; search `DuoFace CarPlay Gate 1 (Safe Beta)`. Original DuoFace project primary handoff `Duoface/sideplay/tiep tuc du an.md` on main commit `baafb1ee672bbabcfe45f1d99182ca1ad1b015f7` contains complete build instructions and device QA constraints. Do not modify old Native12/HUD8 or rerun feature-merge before Gate1 acceptance.
+
+
+
 ## 2026-10-02 — phát hành DuoDash gốc + adapter qua Sileo
 
 Yêu cầu hiện tại: DEB phải xuất hiện trong nguồn Sileo

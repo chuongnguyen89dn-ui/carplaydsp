@@ -275,13 +275,14 @@ jobs:
           assert p['Filter']['Executables']==['CarPlay'],p
           print('DUOFACE_FIRSTPARTY_GATE_ONLY_CARPLAY_PASS')
           PY
-          HOST_FILE='com.duoface.carplay.nativescenehost_0.0.1~scenehost1_iphoneos-arm64.deb'
-          HOST_SHA='eb3551a0bbee5a6d140af7c34b4f9ecc60e99e937958f729833a10f5c5704b9b'
+          HOST_FILE='com.duoface.carplay.nativescenehost_0.0.4~template1_iphoneos-arm64.deb'
+          HOST_SHA='d634261de9ea2f1b95a21255add9647d85c6aa37fdf56718dbf20fe8336ea573'
           HOST_DEB="repo/debs/$HOST_FILE"
-          curl -fLsS --retry 4 "$SOURCE/$HOST_FILE" -o "$HOST_DEB"
+          HOST_SOURCE='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/07b112376dc8ec4f1d765a980013790a7278845e/sideplay/duoface-native-scene-host/packages/com.duoface.carplay.nativescenehost_0.0.4~template1_iphoneos-arm64.deb'
+          curl -fLsS --retry 4 "$HOST_SOURCE" -o "$HOST_DEB"
           printf '%s  %s\n' "$HOST_SHA" "$HOST_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$HOST_DEB" Package)" = 'com.duoface.carplay.nativescenehost'
-          test "$(dpkg-deb -f "$HOST_DEB" Version)" = '0.0.1~scenehost1'
+          test "$(dpkg-deb -f "$HOST_DEB" Version)" = '0.0.4~template1'
           test "$(dpkg-deb -f "$HOST_DEB" Architecture)" = iphoneos-arm64
           ! dpkg-deb -f "$HOST_DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
           mkdir -p "$RUNNER_TEMP/df-firstparty-host"
@@ -295,7 +296,10 @@ jobs:
           assert d['CFBundleIdentifier']=='com.duoface.native.scenehost',d
           roles=d['UIApplicationSceneManifest']['UISceneConfigurations']
           assert 'UIWindowSceneSessionRoleCarPlay' in roles,roles
-          print('DUOFACE_FIRSTPARTY_HOST_SCENE_ROLE_PASS')
+          template=roles['CPTemplateApplicationSceneSessionRoleApplication'][0]
+          assert template['UISceneClassName']=='CPTemplateApplicationScene',template
+          assert template['UISceneDelegateClassName']=='DFNativeHostTemplateSceneDelegate',template
+          print('DUOFACE_FIRSTPARTY_HOST_CPTEMPLATE_AND_NATIVE_SCENE_ROLE_PASS')
           PY
           echo DUOFACE_FIRSTPARTY_ADMISSION_CANDIDATES_PINNED_NO_AUTOMATIC_ACTIVATION
 
@@ -1184,7 +1188,7 @@ jobs:
           assert 'com.duoface.carplay.nativescenehost (>= 0.0.1~scenehost1)' in a['Depends'],a
           for pkg,version,sha in (
             ('com.duoface.carplay.firstpartyadmission','0.0.5~ready1','a801a165da651948735e1c0f1de9302762236b5a95ed4b6b61b7d0116635104d'),
-            ('com.duoface.carplay.nativescenehost','0.0.1~scenehost1','eb3551a0bbee5a6d140af7c34b4f9ecc60e99e937958f729833a10f5c5704b9b')):
+            ('com.duoface.carplay.nativescenehost','0.0.4~template1','d634261de9ea2f1b95a21255add9647d85c6aa37fdf56718dbf20fe8336ea573')):
             entries=pkgs.get(pkg,[])
             assert len(entries)==1,entries
             actual=entries[0]
@@ -1222,8 +1226,8 @@ jobs:
           curl -fLsS --retry 4 "$SITE/debs/com.duoface.carplay.firstpartyadmission_0.0.5~ready1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-firstparty-public.deb"
           printf '%s  %s\n' 'a801a165da651948735e1c0f1de9302762236b5a95ed4b6b61b7d0116635104d' "$RUNNER_TEMP/duoface-firstparty-public.deb" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-firstparty-public.deb" Package)" = 'com.duoface.carplay.firstpartyadmission'
-          curl -fLsS --retry 4 "$SITE/debs/com.duoface.carplay.nativescenehost_0.0.1~scenehost1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-firstparty-host-public.deb"
-          printf '%s  %s\n' 'eb3551a0bbee5a6d140af7c34b4f9ecc60e99e937958f729833a10f5c5704b9b' "$RUNNER_TEMP/duoface-firstparty-host-public.deb" | shasum -a 256 -c -
+          curl -fLsS --retry 4 "$SITE/debs/com.duoface.carplay.nativescenehost_0.0.4~template1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-firstparty-host-public.deb"
+          printf '%s  %s\n' 'd634261de9ea2f1b95a21255add9647d85c6aa37fdf56718dbf20fe8336ea573' "$RUNNER_TEMP/duoface-firstparty-host-public.deb" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-firstparty-host-public.deb" Package)" = 'com.duoface.carplay.nativescenehost'
           mkdir -p "$RUNNER_TEMP/duoface-qa-app-verified"
           dpkg-deb -x "$RUNNER_TEMP/duoface-qa-app-public.deb" "$RUNNER_TEMP/duoface-qa-app-verified"
@@ -1237,7 +1241,7 @@ jobs:
             echo "PUBLIC_SOURCE=$SITE/"
             echo "APP_DEB_SHA256=$SHA"
             echo 'FIRSTPARTY_GATE_SHA256=a801a165da651948735e1c0f1de9302762236b5a95ed4b6b61b7d0116635104d'
-            echo 'FIRSTPARTY_HOST_SHA256=eb3551a0bbee5a6d140af7c34b4f9ecc60e99e937958f729833a10f5c5704b9b'
+            echo 'FIRSTPARTY_HOST_SHA256=d634261de9ea2f1b95a21255add9647d85c6aa37fdf56718dbf20fe8336ea573'
             echo 'FIRSTPARTY_GATE_DEFAULT_OFF=true'
             echo 'SPRINGBOARD_INJECTION_NEW_PACKAGE=false'
             echo 'CARPLAY_DEVICE_ADMISSION_VERIFIED=false'

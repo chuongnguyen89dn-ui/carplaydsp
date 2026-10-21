@@ -602,10 +602,10 @@ jobs:
                   stanzas.append(fields)
           assert len(stanzas)==1,stanzas
           entry=stanzas[0]
-          assert entry['Version']=='1.0.3-omnicar10-recovery',entry
+          assert entry['Version']=='1.0.3-omnicar11-native-solo-timer',entry
           assert entry['Architecture']=='iphoneos-arm64',entry
-          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar10-recovery_iphoneos-arm64.deb',entry
-          assert entry['SHA256']=='e8399a706b8b69f399a85f9cb7bc1c22dc729b45e2bb6ffc4b8d5b99a3e26fa4',entry
+          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar11-native-solo-timer_iphoneos-arm64.deb',entry
+          assert entry['SHA256']=='44c5133cfd687ce437bde4ca503c897796e0bee72f1dbc607adf8a51706d0ed7',entry
           assert len([s for s in p.split('\n') if s=='Package: com.duoface.independent'])==1
           assert len([s for s in p.split('\n') if s=='Package: com.duonavi.app'])==1
           print('OMNICAR_SINGLE_APT_ENTRY_AND_EXISTING_DUOFACE_ENTRIES_PASS')

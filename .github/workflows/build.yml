@@ -609,8 +609,48 @@ jobs:
           echo 'DUOFACE_NATIVE_OWNERPROBE_DEB_PINNED_SHA_SEPARATE_PACKAGE_PASS'
 
 
+          # One independently authored DuoFace rootless package in ONE Sileo entry.
+          # Immutable artifact from the green DuoFace GitHub CI; clearly marked
+          # beta because hardware CarPlay/media parity is not yet established.
+          DUOFACE_FINAL_FILE='com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb'
+          DUOFACE_FINAL_SHA='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e'
+          DUOFACE_FINAL_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/1f5cb998aabffa2691e8cd9c5b209471415733af/sideplay/jb-embedded-appbridge/evidence/runs/39692161273/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb'
+          DUOFACE_FINAL_DEB="repo/debs/$DUOFACE_FINAL_FILE"
+          mkdir -p repo/debs
+          curl -fLsS --retry 4 "$DUOFACE_FINAL_URL" -o "$DUOFACE_FINAL_DEB"
+          printf '%s  %s\n' "$DUOFACE_FINAL_SHA" "$DUOFACE_FINAL_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DUOFACE_FINAL_DEB" Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f "$DUOFACE_FINAL_DEB" Version)" = '0.0.23~hold3s1'
+          test "$(dpkg-deb -f "$DUOFACE_FINAL_DEB" Architecture)" = 'iphoneos-arm64'
+          test "$(dpkg-deb -f "$DUOFACE_FINAL_DEB" Name)" = 'DuoFace Independent (Integrated CarPlay Beta)'
+          dpkg-deb -c "$DUOFACE_FINAL_DEB" | grep -F '/DuoFaceNativeHost.app/DuoFaceNativeHost'
+          test "$(dpkg-deb -f "$DUOFACE_FINAL_DEB" Depends)" != ''
+          ! dpkg-deb -f "$DUOFACE_FINAL_DEB" Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
+          echo 'DUOFACE_INTEGRATED_ONE_DEB_ROOTLESS_SHA_VERSION_AND_METADATA_PASS'
+
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
+          # One and only one Sileo record for the newly integrated independent DuoFace package.
+          python3 - <<'PY'
+          from pathlib import Path
+          stanzas=Path('Packages').read_text().split('\n\n')
+          parsed=[]
+          for stanza in stanzas:
+              d={}
+              for line in stanza.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1);d[k]=v
+              if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
+          assert len(parsed)==1,parsed
+          a=parsed[0]
+          assert a.get('Version')=='0.0.23~hold3s1',a
+          assert a.get('Architecture')=='iphoneos-arm64',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',a
+          assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
+          assert 'carbridge' not in a.get('Depends','').lower(),a
+          print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
+          PY
           # Verify the new OmniCar entry is Sileo-visible once, preserving existing APT entries.
           python3 - <<'PY'
           from pathlib import Path
@@ -803,6 +843,59 @@ jobs:
       - name: Deploy Sileo repo to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-duoface-integrated-pages:
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify public Sileo entry, SHA256 and exact signed integrated DuoFace DEB
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          PKG='com.duoface.jb.embedded'
+          VER='0.0.23~hold3s1'
+          FILE='com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb'
+          SHA='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e'
+          for attempt in $(seq 1 20); do
+            if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
+              if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&
+                 grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/duoface-packages"; then
+                 break
+              fi
+            fi
+            echo "Awaiting DuoFace Sileo Pages CDN: $attempt/20"
+            sleep 15
+          done
+          SITE="$SITE" PKG="$PKG" VER="$VER" FILE="$FILE" SHA="$SHA" python3 - <<'PY'
+          import os
+          from pathlib import Path
+          all_stanzas=Path(os.environ['RUNNER_TEMP'],'duoface-packages').read_text().split('\n\n')
+          hits=[]
+          for block in all_stanzas:
+              d={}
+              for line in block.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1);d[k]=v
+              if d.get('Package')==os.environ['PKG']:hits.append(d)
+          assert len(hits)==1,hits
+          d=hits[0]
+          assert d['Version']==os.environ['VER'],d
+          assert d['SHA256']==os.environ['SHA'],d
+          assert d['Filename']=='debs/'+os.environ['FILE'],d
+          assert d['Architecture']=='iphoneos-arm64',d
+          assert d['Name']=='DuoFace Independent (Integrated CarPlay Beta)',d
+          print('DUOFACE_ONE_PACKAGE_PUBLIC_SILEO_INDEX_VERIFIED')
+          PY
+          curl -fLsS --retry 4 "$SITE/Release" -o "$RUNNER_TEMP/duoface-release"
+          grep -F 'SHA256:' "$RUNNER_TEMP/duoface-release"
+          curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duoface-public.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duoface-public.deb" | sha256sum -c -
+          echo 'DUOFACE_PUBLIC_SILEO_DEB_DOWNLOAD_AND_CHECKSUM_VERIFIED'
 
   verify-qa11-pages:
     # Verify exactly what Sileo can retrieve, not only the uploaded Pages artifact.

@@ -1,5 +1,14 @@
 # Tiếp tục dự án CarPlay Split
 
+## 2026-10-21 — Gate1 0.0.5~roster1 Sileo live VERIFIED (device icon still UNVERIFIED)
+
+- New isolated Gate1-only pin in `.github/workflows/build.yml` at commit `d9aef6857c525bd0a8c600759ac952632248e400`. Source repo `chuongnguyen89dn-ui/Duoface`, implementation commit `3c6613bc268d5ce82d3a126da7e44d023784c945`, CI [39541588347](https://github.com/chuongnguyen89dn-ui/Duoface/actions/runs/39541588347) completed SUCCESS; source binary saver HEAD `e00891cf9f65fa32fb3bf52482054e3fdf628d4c`.
+- Version `0.0.5~roster1`, package `com.duoface.carplay.gate1smoke`, exact source DEB `sideplay/carplay-gate1-smoke/packages/com.duoface.carplay.gate1smoke_0.0.5~roster1_iphoneos-arm64.deb`, SHA256 `781ccc1baefcde3d4374bcbd7ec609e7ade7b90c0248d20e90f3bf756e23c752`.
+- Publisher [Actions 39541812741](https://github.com/chuongnguyen89dn-ui/carplaydsp/actions/runs/39541812741) build/deploy/live `verify-qa11-pages` **completed SUCCESS**; live verifier job **119031942866**, stdout includes `GATE1_PUBLIC_SILEO_SINGLE_ISOLATED_APT_ENTRY_PASS`, `/home/runner/work/_temp/gate1-public.deb: OK`, `GATE1_PUBLIC_SILEO_BINARY_SHA256_PASS_NO_DEVICE_CARPLAY_PROOF`, and stable QA regression. Workflow YAML validator [39541812669](https://github.com/chuongnguyen89dn-ui/carplaydsp/actions/runs/39541812669) completed success.
+- Public APT source `https://chuongnguyen89dn-ui.github.io/carplaydsp/`. Public binary `https://chuongnguyen89dn-ui.github.io/carplaydsp/debs/com.duoface.carplay.gate1smoke_0.0.5~roster1_iphoneos-arm64.deb`. Verifier fetched actual live Packages and DEB with exact version/hash; this is **NOT proof the Home icon or UIKit scene works on physical DiPlay**.
+- Scope: Sileo Gate1 stanza only; packages Native12/HUD8/stable QA untouched. Test only when parked: update Gate1 via Sileo, explicitly enable as needed, ensure actual CarPlay Home visible, then use new phone button **THỬ HIỆN TRÊN CARPLAY** and read `Result`. Old **KIỂM TRA ĐĂNG KÝ** still only read-only. Error `DASHBOARD_CONTROLLER_NOT_LOADED` means live Dashboard class unavailable on that process at that time, not rejection of entitlement. Do not claim success until icon+scene+Dock tested.
+
+
 ## 2026-10-21 — Gate1 0.0.4~runtimeaudit1 live Sileo verified (read-only CarPlay roster diagnostics; NOT app acceptance)
 
 - User requires a thoroughly verified end-to-end iOS16 jailbreak CarPlay Home registration before feature merge; physical Gate1 `0.0.3~enablefix1` reported `GATE1_ENABLED=YES` but **NO CarPlay Home icon**. Do not claim a working DuoFace.

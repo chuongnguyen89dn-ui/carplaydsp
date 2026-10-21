@@ -565,6 +565,10 @@ jobs:
           ! dpkg-deb -c "$SIDEPLAY_QA_DEB" | grep -Eq 'SidePlay.dylib|SidePlay.app|DuoFaceDashboard.dylib'
           echo 'DUOFACE_NATIVE12_DOCK_QA11_LOGO_DRAG_AND_APPDOCK_SHA256_AND_PAYLOAD_PASS'
 
+      - name: Complete APT repository index and Release (additional independent packages)
+        shell: bash
+        run: |
+          set -euo pipefail
           # MyTweak Stable V1BC Emergency Recovery DIAGNOSTIC ONLY; independent package ID, no SidePlay or Native12 replacement.
           # Proven DuoFace artifact commit; pinned SHA256 prevents accidental branch drift.
           MYTWEAK_RECOVERY1_FILE='com.duoface.mytweak.v1a.preflight_0.2.6~recovery1_iphoneos-arm64.deb'

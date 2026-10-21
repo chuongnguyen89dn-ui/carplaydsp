@@ -1,5 +1,12 @@
 # Tiếp tục dự án CarPlay Split
 
+## 2026-10-21 — Gate1 0.0.6~fbsrefresh1 Sileo live verified (real car icon NOT TESTED)
+
+- Isolated source `chuongnguyen89dn-ui/Duoface`, feature code commit `2b4ab01130e21a928a125cbb992d171dd04d9a81`, [CI 39544048176](https://github.com/chuongnguyen89dn-ui/Duoface/actions/runs/39544048176) completed PASS, artifact saver head `a56535446a4d8500479575ae9ebdfa060d3cc70e`. Exact DEB `sideplay/carplay-gate1-smoke/packages/com.duoface.carplay.gate1smoke_0.0.6~fbsrefresh1_iphoneos-arm64.deb`; SHA256 `f9fdd47aecd3ff691aa3581a6f2ab474cf19b7ae9cff9bb865cd91145ce94803`.
+- Sileo build workflow pin commit `87e29155a94174cda375f9c940edbca45a1d7c1f`; release [run 39544255308](https://github.com/chuongnguyen89dn-ui/carplaydsp/actions/runs/39544255308) build SUCCESS / GitHub Pages deploy SUCCESS / `verify-qa11-pages` SUCCESS. Verification job ID `119039648025` downloaded live `/Packages` and exact public DEB and logged `GATE1_PUBLIC_SILEO_SINGLE_ISOLATED_APT_ENTRY_PASS`, `gate1-public.deb: OK`, `GATE1_PUBLIC_SILEO_BINARY_SHA256_PASS_NO_DEVICE_CARPLAY_PROOF`; YAML validation run `39544255314` SUCCESS. Public source `https://chuongnguyen89dn-ui.github.io/carplaydsp/`; DEB `https://chuongnguyen89dn-ui.github.io/carplaydsp/debs/com.duoface.carplay.gate1smoke_0.0.6~fbsrefresh1_iphoneos-arm64.deb`.
+- This isolated Gate1 package upgrade DOES NOT replace/update Native12/HUD8 or stable QA package. New FBS fallback and last-line UI result address user photo's 0.0.5 `DASHBOARD_CONTROLLER_NOT_LOADED`, but **CarPlay Home icon, UIKit external scene, user physical iPhone test of 0.0.6 remain NOT VERIFIED**. Next step is device test once vehicle parked using Gate1 **THỬ HIỆN TRÊN CARPLAY** after explicit enable. New result codes can show FBS re-enumeration attempt, not acceptance. User can disable safely via existing kill switch.
+
+
 ## 2026-10-21 — Gate1 0.0.5~roster1 Sileo live VERIFIED (device icon still UNVERIFIED)
 
 - New isolated Gate1-only pin in `.github/workflows/build.yml` at commit `d9aef6857c525bd0a8c600759ac952632248e400`. Source repo `chuongnguyen89dn-ui/Duoface`, implementation commit `3c6613bc268d5ce82d3a126da7e44d023784c945`, CI [39541588347](https://github.com/chuongnguyen89dn-ui/Duoface/actions/runs/39541588347) completed SUCCESS; source binary saver HEAD `e00891cf9f65fa32fb3bf52482054e3fdf628d4c`.

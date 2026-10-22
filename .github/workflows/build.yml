@@ -769,16 +769,16 @@ jobs:
           ! dpkg-deb -f "$DUOFACE_STEP8_DEB" Depends | grep -Eiq "carbridge|duodash|duonavi|sideplay"
           echo 'DUOFACE_STAGE8_ORIGINAL_NATIVE12_NINE_PREVIEW_FOUR_QUADRANTS_DEB_SHA_PASS'
 
-          # Stage9 — user-authorized one-package CarPlay Zoom/Dock TEST only.
+          # Stage10 — user-authorized signed 0.0.38 current Native12 source TEST only; Speed8 HUD not linked.
           # Preserve all earlier signed DEBs for direct rollback; no other app changes.
-          DUOFACE_STEP9_FILE='com.duoface.jb.embedded_0.0.37~native12dockzoom1_iphoneos-arm64.deb'
-          DUOFACE_STEP9_SHA='2b6f274e684e5a6f1008dac960c87ff51744fddb5342ce42fcd74e5c61314beb'
-          DUOFACE_STEP9_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/77f938bf6ac5fa21566eaf0d1ae60b94f7ed7f93/sideplay/jb-embedded-appbridge/evidence/runs/39748923126/com.duoface.jb.embedded_0.0.37~native12dockzoom1_iphoneos-arm64.deb'
+          DUOFACE_STEP9_FILE='com.duoface.jb.embedded_0.0.38~native12sourcehost49_iphoneos-arm64.deb'
+          DUOFACE_STEP9_SHA='2055200d75d48495d0e4d55abd0b8caabb976498e19442e2fb5ab8c76eed5e7e'
+          DUOFACE_STEP9_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/125b8146fd6c6c5f5f3dda3ba9f8f694ff999757/sideplay/jb-embedded-appbridge/evidence/runs/39871335334/com.duoface.jb.embedded_0.0.38~native12sourcehost49_iphoneos-arm64.deb'
           DUOFACE_STEP9_DEB="repo/debs/$DUOFACE_STEP9_FILE"
           curl -fLsS --retry 4 "$DUOFACE_STEP9_URL" -o "$DUOFACE_STEP9_DEB"
           printf '%s  %s\n' "$DUOFACE_STEP9_SHA" "$DUOFACE_STEP9_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_STEP9_DEB" Package)" = 'com.duoface.jb.embedded'
-          test "$(dpkg-deb -f "$DUOFACE_STEP9_DEB" Version)" = '0.0.37~native12dockzoom1'
+          test "$(dpkg-deb -f "$DUOFACE_STEP9_DEB" Version)" = '0.0.38~native12sourcehost49'
           test "$(dpkg-deb -f "$DUOFACE_STEP9_DEB" Architecture)" = 'iphoneos-arm64'
           test "$(dpkg-deb -f "$DUOFACE_STEP9_DEB" Name)" = 'DuoFace Independent (Integrated CarPlay Beta)'
           ! dpkg-deb -f "$DUOFACE_STEP9_DEB" Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
@@ -812,7 +812,7 @@ jobs:
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
           assert len(hits)==10,hits
-          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.37~native12dockzoom1'},hits
+          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.38~native12sourcehost49'},hits
           old=[x for x in hits if x.get('Version')=='0.0.23~hold3s1'][0]
           assert old.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',old
           assert old.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',old
@@ -846,10 +846,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.37~native12dockzoom1',a
+          assert a.get('Version')=='0.0.38~native12sourcehost49',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.37~native12dockzoom1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='2b6f274e684e5a6f1008dac960c87ff51744fddb5342ce42fcd74e5c61314beb',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.38~native12sourcehost49_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='2055200d75d48495d0e4d55abd0b8caabb976498e19442e2fb5ab8c76eed5e7e',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1061,9 +1061,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.37~native12dockzoom1'
-          FILE='com.duoface.jb.embedded_0.0.37~native12dockzoom1_iphoneos-arm64.deb'
-          SHA='2b6f274e684e5a6f1008dac960c87ff51744fddb5342ce42fcd74e5c61314beb'
+          VER='0.0.38~native12sourcehost49'
+          FILE='com.duoface.jb.embedded_0.0.38~native12sourcehost49_iphoneos-arm64.deb'
+          SHA='2055200d75d48495d0e4d55abd0b8caabb976498e19442e2fb5ab8c76eed5e7e'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

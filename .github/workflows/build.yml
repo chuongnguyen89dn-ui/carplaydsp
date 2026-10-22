@@ -732,6 +732,24 @@ jobs:
           ! dpkg-deb -f "$DUOFACE_STEP6_DEB" Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
           echo 'DUOFACE_STEP6_NATIVE12_EIGHT_STYLE_ONE_ROW_UI_SIGNED_BINARY_PASS'
 
+          # Stage7: literal Native12 three-EQUAL-column startup geometry is
+          # now tested by compiling the actual source over 600 CGRect cases;
+          # independent signed QA only. Zoom Dock, video and device tests remain NO-GO.
+          # Preserve immutable Stage6 and all earlier binaries.
+          DUOFACE_STEP7_FILE='com.duoface.jb.embedded_0.0.30~native12equal3test1_iphoneos-arm64.deb'
+          DUOFACE_STEP7_SHA='dab6b7c3cd7e9b6d9b5fff703a37416f668803f360cfbf8c783d17e7926ffe35'
+          DUOFACE_STEP7_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/475547ae6e3e2a3f6452ab24675f84a6fcae67bd/sideplay/jb-embedded-appbridge/evidence/runs/39720659962/com.duoface.jb.embedded_0.0.30~native12equal3test1_iphoneos-arm64.deb'
+          DUOFACE_STEP7_DEB="repo/debs/$DUOFACE_STEP7_FILE"
+          curl -fLsS --retry 4 "$DUOFACE_STEP7_URL" -o "$DUOFACE_STEP7_DEB"
+          printf '%s  %s\n' "$DUOFACE_STEP7_SHA" "$DUOFACE_STEP7_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DUOFACE_STEP7_DEB" Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f "$DUOFACE_STEP7_DEB" Version)" = '0.0.30~native12equal3test1'
+          test "$(dpkg-deb -f "$DUOFACE_STEP7_DEB" Architecture)" = 'iphoneos-arm64'
+          test "$(dpkg-deb -f "$DUOFACE_STEP7_DEB" Name)" = 'DuoFace Independent (Integrated CarPlay Beta)'
+          dpkg-deb -c "$DUOFACE_STEP7_DEB" | grep -F '/DuoFaceNativeHost.app/DuoFaceNativeHost'
+          ! dpkg-deb -f "$DUOFACE_STEP7_DEB" Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
+          echo 'DUOFACE_STEP7_NATIVE12_EXECUTED_EQUAL_THIRDS_SIGNED_BINARY_PASS'
+
 
 
 
@@ -753,8 +771,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==7,hits
-          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1'},hits
+          assert len(hits)==8,hits
+          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1'},hits
           old=[x for x in hits if x.get('Version')=='0.0.23~hold3s1'][0]
           assert old.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',old
           assert old.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',old
@@ -769,11 +787,11 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1')
+              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1')
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
-          print('DUOFACE_STEP6_APT_ONLY_LATEST_PREVIOUS_023_TO_028_BINARIES_RETAINED_PASS')
+          print('DUOFACE_STEP7_APT_ONLY_LATEST_PREVIOUS_023_TO_029_BINARIES_RETAINED_PASS')
           PY
           # One and only one Sileo record for the newly integrated independent DuoFace package.
           python3 - <<'PY'
@@ -788,10 +806,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.29~native12ui8test1',a
+          assert a.get('Version')=='0.0.30~native12equal3test1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.29~native12ui8test1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='912cf46fb84bfcdf5a0a843df85514bb888fc0ad437570d980f7da734c5cffd6',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.30~native12equal3test1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='dab6b7c3cd7e9b6d9b5fff703a37416f668803f360cfbf8c783d17e7926ffe35',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1003,9 +1021,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.29~native12ui8test1'
-          FILE='com.duoface.jb.embedded_0.0.29~native12ui8test1_iphoneos-arm64.deb'
-          SHA='912cf46fb84bfcdf5a0a843df85514bb888fc0ad437570d980f7da734c5cffd6'
+          VER='0.0.30~native12equal3test1'
+          FILE='com.duoface.jb.embedded_0.0.30~native12equal3test1_iphoneos-arm64.deb'
+          SHA='dab6b7c3cd7e9b6d9b5fff703a37416f668803f360cfbf8c783d17e7926ffe35'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&
@@ -1060,6 +1078,10 @@ jobs:
           curl -fLsS --retry 4 "$SITE/debs/com.duoface.jb.embedded_0.0.28~mediascene1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-frozen-028.deb"
           printf '%s  %s\n' '8f2088931a004ee8bfae8ef5b2f254a5f1b9cdf05dcb1020973f910fd384cc2a' "$RUNNER_TEMP/duoface-frozen-028.deb" | sha256sum -c -
           echo 'DUOFACE_FROZEN_028_PUBLIC_BINARY_CHECKSUM_UNCHANGED_PASS'
+          # The 0.0.29 QA test binary was also archived immutably.
+          curl -fLsS --retry 4 "$SITE/debs/com.duoface.jb.embedded_0.0.29~native12ui8test1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-frozen-029.deb"
+          printf '%s  %s\n' '912cf46fb84bfcdf5a0a843df85514bb888fc0ad437570d980f7da734c5cffd6' "$RUNNER_TEMP/duoface-frozen-029.deb" | sha256sum -c -
+          echo 'DUOFACE_FROZEN_029_PUBLIC_BINARY_CHECKSUM_UNCHANGED_PASS'
 
   verify-qa11-pages:
     # Verify exactly what Sileo can retrieve, not only the uploaded Pages artifact.

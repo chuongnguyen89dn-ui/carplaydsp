@@ -367,20 +367,20 @@ jobs:
           PY
           echo DUOFACE_TEST_APP_PINNED_IN_SILEO
 
-      - name: Publish SHA-pinned OmniCar QA14 YouTube stable-orientation beta, preserve native Solo Zoom Swap timer
+      - name: Publish SHA-pinned OmniCar QA15 native reference-size orientation test, preserve Solo Zoom Swap timer
         shell: bash
         run: |
           set -euo pipefail
-          # User's QA13 device photos show inverted YouTube player; QA14 pins first landscape per YouTube ABPane (device verification pending).
-          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar14-youtube-orientation_iphoneos-arm64.deb'
-          OMNI_SHA='b29108a568b96ed7447a2000bc26d451d3399c16175a966a08d3b8d09fb808ac'
-          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/50e4a1e51472fe1f9507327786209dbfbae0a36f/dist/candidates/omnicar-qa14-youtube-orientation/$OMNI_FILE"
+          # QA14 user-device orientation FAIL. QA15 replaces first-landscape lock with original DuoFace native reference-size/content orientation calls. DEVICE UNTESTED.
+          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar15-native-reference_iphoneos-arm64.deb'
+          OMNI_SHA='8ced924b6a5a5930977e15f67e47867547b300f84c1c56ebbc8a7bde4835e0c7'
+          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/5715c340c118207121f4387bfc52b560f87929a8/dist/candidates/omnicar-qa15-native-reference/$OMNI_FILE"
           mkdir -p repo/debs
           OMNI_PATH="repo/debs/$OMNI_FILE"
           curl -fLsS --retry 4 --connect-timeout 20 "$OMNI_URL" -o "$OMNI_PATH"
           printf '%s  %s\n' "$OMNI_SHA" "$OMNI_PATH" | shasum -a 256 --check
           test "$(dpkg-deb -f "$OMNI_PATH" Package)" = 'com.anlai.omnicar'
-          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar14-youtube-orientation'
+          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar15-native-reference'
           test "$(dpkg-deb -f "$OMNI_PATH" Architecture)" = 'iphoneos-arm64'
           # Exactly one Sileo version, without touching any other package family.
           find repo/debs -maxdepth 1 -type f -name 'com.anlai.omnicar_*.deb' ! -name "$OMNI_FILE" -delete
@@ -392,13 +392,13 @@ jobs:
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarDoubleTapFullscreen.plist')" -eq 1
           for banned in OmniCarIdleControls OmniCarSoloThreeDots OmniCarGraphiteTitanium OmniCarDuoActivityIdle; do
             if printf '%s\n' "$OMNI_LIST" | grep -F "/$banned."; then
-              echo "Refuse experimental Solo/Idle module $banned in QA14" >&2
+              echo "Refuse experimental Solo/Idle module $banned in QA15" >&2
               exit 1
             fi
           done
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeScene.dylib')" -eq 1
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeScene.plist')" -eq 1
-          echo 'OMNICAR_QA14_YOUTUBE_ORIENTATION_BETA_SILEO_SHA256_BASE_PRESERVED_PASS__DEVICE_UNTESTED'
+          echo 'OMNICAR_QA15_NATIVE_REFERENCE_BETA_SILEO_SHA256_BASE_PRESERVED_PASS__DEVICE_UNTESTED'
 
       - name: Pin distinct DuoFace Gate1 smoke package (no stable QA replacement)
         shell: bash
@@ -1095,10 +1095,10 @@ jobs:
                   stanzas.append(fields)
           assert len(stanzas)==1,stanzas
           entry=stanzas[0]
-          assert entry['Version']=='1.0.3-omnicar14-youtube-orientation',entry
+          assert entry['Version']=='1.0.3-omnicar15-native-reference',entry
           assert entry['Architecture']=='iphoneos-arm64',entry
-          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar14-youtube-orientation_iphoneos-arm64.deb',entry
-          assert entry['SHA256']=='b29108a568b96ed7447a2000bc26d451d3399c16175a966a08d3b8d09fb808ac',entry
+          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar15-native-reference_iphoneos-arm64.deb',entry
+          assert entry['SHA256']=='8ced924b6a5a5930977e15f67e47867547b300f84c1c56ebbc8a7bde4835e0c7',entry
           assert len([s for s in p.split('\n') if s=='Package: com.duoface.independent'])==1
           assert len([s for s in p.split('\n') if s=='Package: com.duonavi.app'])==1
           print('OMNICAR_SINGLE_APT_ENTRY_AND_EXISTING_DUOFACE_ENTRIES_PASS')

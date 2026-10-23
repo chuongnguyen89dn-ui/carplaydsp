@@ -965,6 +965,32 @@ jobs:
           dpkg-deb -c "$DUOFACE_STEP18_DEB" | grep -F '/DuoFaceNativeHost.app/DuoFaceNativeHost'
           echo 'DUOFACE_STAGE18_SIGNED_SHARED_WINDOW_REQUIRES_PHYSICAL_CARPLAY_TEST'
 
+          # Stage19: original v12 arrows OUT/IN for menu Zoom, not text-only;
+          # .50 includes logo 3s touch-stream fix, still NOT device validated.
+          DUOFACE_STEP19_FILE='com.duoface.jb.embedded_0.0.50~zoomarrows1_iphoneos-arm64.deb'
+          DUOFACE_STEP19_SHA='93f847a23adb1abf8b3eb79f7e5ebde105feb0c479d0107660ada35a462de1e9'
+          DUOFACE_STEP19_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/0145623dd875b9bdbc87b4e40924b19f6953a4d8/sideplay/jb-embedded-appbridge/evidence/runs/39940512785/com.duoface.jb.embedded_0.0.50~zoomarrows1_iphoneos-arm64.deb'
+          DUOFACE_STEP19_DEB="repo/debs/$DUOFACE_STEP19_FILE"
+          curl -fLsS --retry 4 "$DUOFACE_STEP19_URL" -o "$DUOFACE_STEP19_DEB"
+          printf '%s  %s\n' "$DUOFACE_STEP19_SHA" "$DUOFACE_STEP19_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DUOFACE_STEP19_DEB" Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f "$DUOFACE_STEP19_DEB" Version)" = '0.0.50~zoomarrows1'
+          test "$(dpkg-deb -f "$DUOFACE_STEP19_DEB" Architecture)" = iphoneos-arm64
+          test "$(dpkg-deb -f "$DUOFACE_STEP19_DEB" Name)" = 'DuoFace Independent (Integrated CarPlay Beta)'
+          ! dpkg-deb -f "$DUOFACE_STEP19_DEB" Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
+          dpkg-deb -c "$DUOFACE_STEP19_DEB" | grep -F '/DFCarPlayDockOwner.dylib'
+          dpkg-deb -c "$DUOFACE_STEP19_DEB" | grep -F '/DFTouchOwnerProbe.dylib'
+          dpkg-deb -c "$DUOFACE_STEP19_DEB" | grep -F '/DuoFaceNativeHost.app/DuoFaceNativeHost'
+          mkdir -p "$RUNNER_TEMP/duoface-zoom50-verify"
+          dpkg-deb -x "$DUOFACE_STEP19_DEB" "$RUNNER_TEMP/duoface-zoom50-verify"
+          ZOOM_DYLIB="$RUNNER_TEMP/duoface-zoom50-verify/var/jb/Library/MobileSubstrate/DynamicLibraries/DFTouchOwnerProbe.dylib"
+          test -s "$ZOOM_DYLIB"
+          strings "$ZOOM_DYLIB" | grep -F 'native12-zoom-in-arrow-pressed-ack-pending'
+          strings "$ZOOM_DYLIB" | grep -F 'native12-zoom-out-arrow-pressed-ack-pending'
+          strings "$ZOOM_DYLIB" | grep -F 'arrow.up.left.and.arrow.down.right'
+          strings "$ZOOM_DYLIB" | grep -F 'arrow.down.right.and.arrow.up.left'
+          echo 'DUOFACE_STAGE19_REAL_SIGNED_ZOOM_IN_OUT_ARROW_SYMBOLS_AND_CALLBACK_PRESENT_TEST_ONLY'
+
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
@@ -982,8 +1008,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==19,hits
-          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1'},hits
+          assert len(hits)==20,hits
+          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1'},hits
           old=[x for x in hits if x.get('Version')=='0.0.23~hold3s1'][0]
           assert old.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',old
           assert old.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',old
@@ -998,7 +1024,7 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1')
+              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1')
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
@@ -1017,10 +1043,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.48~sharedwindow1',a
+          assert a.get('Version')=='0.0.50~zoomarrows1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.48~sharedwindow1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='0af21a8409d320f4e83e8ab219b51460539ba20e9e488d9c4778b90cae65590c',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.50~zoomarrows1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='93f847a23adb1abf8b3eb79f7e5ebde105feb0c479d0107660ada35a462de1e9',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1232,9 +1258,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.48~sharedwindow1'
-          FILE='com.duoface.jb.embedded_0.0.48~sharedwindow1_iphoneos-arm64.deb'
-          SHA='0af21a8409d320f4e83e8ab219b51460539ba20e9e488d9c4778b90cae65590c'
+          VER='0.0.50~zoomarrows1'
+          FILE='com.duoface.jb.embedded_0.0.50~zoomarrows1_iphoneos-arm64.deb'
+          SHA='93f847a23adb1abf8b3eb79f7e5ebde105feb0c479d0107660ada35a462de1e9'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

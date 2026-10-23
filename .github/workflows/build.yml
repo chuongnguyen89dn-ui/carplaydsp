@@ -367,20 +367,20 @@ jobs:
           PY
           echo DUOFACE_TEST_APP_PINNED_IN_SILEO
 
-      - name: Add SHA-pinned original OmniCar Solo + Zoom Swap + 4s timer (other packages unchanged)
+      - name: Publish SHA-pinned OmniCar QA13 YouTube scene test beta, existing native Solo Zoom Swap timer
         shell: bash
         run: |
           set -euo pipefail
-          # Original Solo preserved; approved Zoom/Swap two-action menu and cosmetic 4s timer present.
-          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar12-timer-zoom-swap_iphoneos-arm64.deb'
-          OMNI_SHA='f07c293a52882ab420aca49e4fe9e30d141d2cba412185938bf09ec9154685ba'
-          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/76e5252a1aae5387bed0b53d1fc3e8365f1ce709/dist/candidates/omnicar-original-1.0.3-omnicar12-timer-zoom-swap/$OMNI_FILE"
+          # User-requested Sileo QA13 beta. Based on byte-preserved original QA12; real iPhone/CarPlay behavior unverified.
+          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar13-youtube-scene_iphoneos-arm64.deb'
+          OMNI_SHA='7d6a61770fcaac27befa53f271cea865fb8e7106de9343d6ad48957ae091b577'
+          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/a514c166135ee679352989dd3c4473a87208e5ea/dist/candidates/omnicar-qa13-youtube-scene/$OMNI_FILE"
           mkdir -p repo/debs
           OMNI_PATH="repo/debs/$OMNI_FILE"
           curl -fLsS --retry 4 --connect-timeout 20 "$OMNI_URL" -o "$OMNI_PATH"
           printf '%s  %s\n' "$OMNI_SHA" "$OMNI_PATH" | shasum -a 256 --check
           test "$(dpkg-deb -f "$OMNI_PATH" Package)" = 'com.anlai.omnicar'
-          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar12-timer-zoom-swap'
+          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar13-youtube-scene'
           test "$(dpkg-deb -f "$OMNI_PATH" Architecture)" = 'iphoneos-arm64'
           # Exactly one Sileo version, without touching any other package family.
           find repo/debs -maxdepth 1 -type f -name 'com.anlai.omnicar_*.deb' ! -name "$OMNI_FILE" -delete
@@ -392,11 +392,13 @@ jobs:
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarDoubleTapFullscreen.plist')" -eq 1
           for banned in OmniCarIdleControls OmniCarSoloThreeDots OmniCarGraphiteTitanium OmniCarDuoActivityIdle; do
             if printf '%s\n' "$OMNI_LIST" | grep -F "/$banned."; then
-              echo "Refuse experimental Solo/Idle module $banned in QA12" >&2
+              echo "Refuse experimental Solo/Idle module $banned in QA13" >&2
               exit 1
             fi
           done
-          echo 'OMNICAR_QA12_SOLO_ZOOM_SWAP_TIMER_SHA256_PINNED_SILEO_PASS'
+          test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeScene.dylib')" -eq 1
+          test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeScene.plist')" -eq 1
+          echo 'OMNICAR_QA13_YOUTUBE_SCENE_BETA_SILEO_SHA256_AND_BASE_PRESERVED_PASS__DEVICE_UNTESTED'
 
       - name: Pin distinct DuoFace Gate1 smoke package (no stable QA replacement)
         shell: bash
@@ -1019,10 +1021,10 @@ jobs:
                   stanzas.append(fields)
           assert len(stanzas)==1,stanzas
           entry=stanzas[0]
-          assert entry['Version']=='1.0.3-omnicar12-timer-zoom-swap',entry
+          assert entry['Version']=='1.0.3-omnicar13-youtube-scene',entry
           assert entry['Architecture']=='iphoneos-arm64',entry
-          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar12-timer-zoom-swap_iphoneos-arm64.deb',entry
-          assert entry['SHA256']=='f07c293a52882ab420aca49e4fe9e30d141d2cba412185938bf09ec9154685ba',entry
+          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar13-youtube-scene_iphoneos-arm64.deb',entry
+          assert entry['SHA256']=='7d6a61770fcaac27befa53f271cea865fb8e7106de9343d6ad48957ae091b577',entry
           assert len([s for s in p.split('\n') if s=='Package: com.duoface.independent'])==1
           assert len([s for s in p.split('\n') if s=='Package: com.duonavi.app'])==1
           print('OMNICAR_SINGLE_APT_ENTRY_AND_EXISTING_DUOFACE_ENTRIES_PASS')

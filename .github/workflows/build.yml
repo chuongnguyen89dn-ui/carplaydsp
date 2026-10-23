@@ -1109,6 +1109,31 @@ jobs:
           strings "$CARD54_SB" | grep -F 'Zoom Out'
           echo 'DUOFACE_STAGE23_REAL_DEB_AUDITED_COMPLETE_CARD_SOURCE_AND_DOCK_COMMAND_IN_SIGNED_BINARY_NOT_DEVICE_VERIFIED'
 
+          # .55 independent QA candidate: immutable signed DEB, not proven
+          # Native12 equivalent on a real CarPlay screen. Keep old .54 intact.
+          DUOFACE_STEP24_FILE='com.duoface.jb.embedded_0.0.55~zoomgrip1_iphoneos-arm64.deb'
+          DUOFACE_STEP24_SHA='6084d2c56e9a4c5eba2bcf4b0b7ca445a37a5edeae34c0dfd72955321193923b'
+          DUOFACE_STEP24_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/00940cdb20a74231e3ffe6f52a3900973212736e/sideplay/jb-embedded-appbridge/evidence/runs/39966715114/com.duoface.jb.embedded_0.0.55~zoomgrip1_iphoneos-arm64.deb'
+          DUOFACE_STEP24_DEB="repo/debs/$DUOFACE_STEP24_FILE"
+          curl -fLsS --retry 4 "$DUOFACE_STEP24_URL" -o "$DUOFACE_STEP24_DEB"
+          printf '%s  %s\n' "$DUOFACE_STEP24_SHA" "$DUOFACE_STEP24_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DUOFACE_STEP24_DEB" Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f "$DUOFACE_STEP24_DEB" Version)" = '0.0.55~zoomgrip1'
+          test "$(dpkg-deb -f "$DUOFACE_STEP24_DEB" Architecture)" = iphoneos-arm64
+          test "$(dpkg-deb -f "$DUOFACE_STEP24_DEB" Name)" = 'DuoFace Independent (Integrated CarPlay Beta)'
+          ! dpkg-deb -f "$DUOFACE_STEP24_DEB" Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
+          mkdir -p "$RUNNER_TEMP/duoface-zoomgrip55-verify"
+          dpkg-deb -x "$DUOFACE_STEP24_DEB" "$RUNNER_TEMP/duoface-zoomgrip55-verify"
+          ZOOM55_SB="$RUNNER_TEMP/duoface-zoomgrip55-verify/var/jb/Library/MobileSubstrate/DynamicLibraries/DFTouchOwnerProbe.dylib"
+          DOCK55_CP="$RUNNER_TEMP/duoface-zoomgrip55-verify/var/jb/Library/MobileSubstrate/DynamicLibraries/DFCarPlayDockOwner.dylib"
+          test -s "$ZOOM55_SB" && test -s "$DOCK55_CP"
+          strings "$ZOOM55_SB" | grep -F 'logo-3s-hold-began-control-tracking'
+          strings "$ZOOM55_SB" | grep -F 'native12-zoom-in-arrow-pressed-ack-pending'
+          strings "$ZOOM55_SB" | grep -F 'native12-zoom-out-arrow-pressed-ack-pending'
+          strings "$ZOOM55_SB" | grep -F 'logo-prehold-drag-ignored-ratio-track-separate'
+          strings "$ZOOM55_SB" | grep -F 'native12-card-zoom-rejected-ui-retained'
+          echo 'DUOFACE_STAGE24_REAL_DEB_055_SIGNED_BINARY_AUDITED_NOT_DEVICE_PASS'
+
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
@@ -1126,8 +1151,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==24,hits
-          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1'},hits
+          assert len(hits)==25,hits
+          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1'},hits
           old=[x for x in hits if x.get('Version')=='0.0.23~hold3s1'][0]
           assert old.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',old
           assert old.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',old
@@ -1142,7 +1167,7 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1')
+              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1')
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
@@ -1161,10 +1186,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.54~nativecard1',a
+          assert a.get('Version')=='0.0.55~zoomgrip1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.54~nativecard1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='2c582c0227035c136c5f66fc4bb9268f459e68a5c777df7e2f787c11b90aa14d',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.55~zoomgrip1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='6084d2c56e9a4c5eba2bcf4b0b7ca445a37a5edeae34c0dfd72955321193923b',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1376,9 +1401,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.54~nativecard1'
-          FILE='com.duoface.jb.embedded_0.0.54~nativecard1_iphoneos-arm64.deb'
-          SHA='2c582c0227035c136c5f66fc4bb9268f459e68a5c777df7e2f787c11b90aa14d'
+          VER='0.0.55~zoomgrip1'
+          FILE='com.duoface.jb.embedded_0.0.55~zoomgrip1_iphoneos-arm64.deb'
+          SHA='6084d2c56e9a4c5eba2bcf4b0b7ca445a37a5edeae34c0dfd72955321193923b'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&
@@ -1414,6 +1439,11 @@ jobs:
           curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duoface-public.deb"
           printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duoface-public.deb" | sha256sum -c -
           echo 'DUOFACE_PUBLIC_SILEO_DEB_DOWNLOAD_AND_CHECKSUM_VERIFIED'
+          # Preserve the exact public .54 rollback file even though apt now
+          # advertises exactly one latest .55 integrated DuoFace entry.
+          curl -fLsS --retry 4 "$SITE/debs/com.duoface.jb.embedded_0.0.54~nativecard1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-frozen-054.deb"
+          printf '%s  %s\n' '2c582c0227035c136c5f66fc4bb9268f459e68a5c777df7e2f787c11b90aa14d' "$RUNNER_TEMP/duoface-frozen-054.deb" | sha256sum -c -
+          echo 'DUOFACE_FROZEN_054_PUBLIC_BINARY_CHECKSUM_UNCHANGED_PASS'
           # Preserve exactly the prior 0.0.23 direct URL and its binary SHA.
           curl -fLsS --retry 4 "$SITE/debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-frozen-023.deb"
           printf '%s  %s\n' '296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e' "$RUNNER_TEMP/duoface-frozen-023.deb" | sha256sum -c -

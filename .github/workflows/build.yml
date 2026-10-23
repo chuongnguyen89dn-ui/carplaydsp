@@ -769,7 +769,7 @@ jobs:
           ! dpkg-deb -f "$DUOFACE_STEP8_DEB" Depends | grep -Eiq "carbridge|duodash|duonavi|sideplay"
           echo 'DUOFACE_STAGE8_ORIGINAL_NATIVE12_NINE_PREVIEW_FOUR_QUADRANTS_DEB_SHA_PASS'
 
-          # Stage10 — user-authorized signed 0.0.38 current Native12 source TEST only; Speed8 HUD not linked.
+          # Stage9 — frozen signed .39 Native12 menu header; keep available for rollback. .40 is a separate next stage.
           # Preserve all earlier signed DEBs for direct rollback; no other app changes.
           DUOFACE_STEP9_FILE='com.duoface.jb.embedded_0.0.39~native12menuheader1_iphoneos-arm64.deb'
           DUOFACE_STEP9_SHA='08183c187d0aeb2e68e721531cc599c32edb4e4981c208cb26a031c1b9467317'
@@ -787,6 +787,25 @@ jobs:
           dpkg-deb -c "$DUOFACE_STEP9_DEB" | grep -F '/DFTouchOwnerProbe.dylib'
           dpkg-deb -c "$DUOFACE_STEP9_DEB" | grep -F '/DuoFaceNativeHost.app/DuoFaceNativeHost'
           echo 'DUOFACE_STAGE9_REAL_DOCK_ZOOM_BRIDGE_SIGNED_TEST_BUILD_PASS_NOT_DEVICE_VERIFIED'
+
+          
+          # Stage10 — user-authorized signed .40 current Native12 regression candidate.
+          # .39 is kept immutable at its original public URL for direct rollback.
+          DUOFACE_STEP10_FILE='com.duoface.jb.embedded_0.0.40~native12regression1_iphoneos-arm64.deb'
+          DUOFACE_STEP10_SHA='e4911c1fa880941fbe6cf9b33b085f10deb47047cf8040f9c1e2d41bbfa94b0a'
+          DUOFACE_STEP10_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/6c8b1afcdf026b9fa275c5b1d64eefff05129ae5/sideplay/jb-embedded-appbridge/evidence/runs/39878805467/com.duoface.jb.embedded_0.0.40~native12regression1_iphoneos-arm64.deb'
+          DUOFACE_STEP10_DEB="repo/debs/$DUOFACE_STEP10_FILE"
+          curl -fLsS --retry 4 "$DUOFACE_STEP10_URL" -o "$DUOFACE_STEP10_DEB"
+          printf '%s  %s\n' "$DUOFACE_STEP10_SHA" "$DUOFACE_STEP10_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DUOFACE_STEP10_DEB" Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f "$DUOFACE_STEP10_DEB" Version)" = '0.0.40~native12regression1'
+          test "$(dpkg-deb -f "$DUOFACE_STEP10_DEB" Architecture)" = 'iphoneos-arm64'
+          test "$(dpkg-deb -f "$DUOFACE_STEP10_DEB" Name)" = 'DuoFace Independent (Integrated CarPlay Beta)'
+          ! dpkg-deb -f "$DUOFACE_STEP10_DEB" Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
+          dpkg-deb -c "$DUOFACE_STEP10_DEB" | grep -F '/DFCarPlayDockOwner.dylib'
+          dpkg-deb -c "$DUOFACE_STEP10_DEB" | grep -F '/DFTouchOwnerProbe.dylib'
+          dpkg-deb -c "$DUOFACE_STEP10_DEB" | grep -F '/DuoFaceNativeHost.app/DuoFaceNativeHost'
+          echo 'DUOFACE_STAGE10_NATIVE12_REGRESSION_SIGNED_TEST_BUILD_PASS_NOT_DEVICE_VERIFIED'
 
 
 
@@ -811,8 +830,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==10,hits
-          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1'},hits
+          assert len(hits)==11,hits
+          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1'},hits
           old=[x for x in hits if x.get('Version')=='0.0.23~hold3s1'][0]
           assert old.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',old
           assert old.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',old
@@ -827,7 +846,7 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1')
+              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1')
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
@@ -846,10 +865,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.39~native12menuheader1',a
+          assert a.get('Version')=='0.0.40~native12regression1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.39~native12menuheader1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='08183c187d0aeb2e68e721531cc599c32edb4e4981c208cb26a031c1b9467317',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.40~native12regression1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='e4911c1fa880941fbe6cf9b33b085f10deb47047cf8040f9c1e2d41bbfa94b0a',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1061,9 +1080,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.39~native12menuheader1'
-          FILE='com.duoface.jb.embedded_0.0.39~native12menuheader1_iphoneos-arm64.deb'
-          SHA='08183c187d0aeb2e68e721531cc599c32edb4e4981c208cb26a031c1b9467317'
+          VER='0.0.40~native12regression1'
+          FILE='com.duoface.jb.embedded_0.0.40~native12regression1_iphoneos-arm64.deb'
+          SHA='e4911c1fa880941fbe6cf9b33b085f10deb47047cf8040f9c1e2d41bbfa94b0a'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

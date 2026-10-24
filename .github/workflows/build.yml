@@ -367,20 +367,20 @@ jobs:
           PY
           echo DUOFACE_TEST_APP_PINNED_IN_SILEO
 
-      - name: Publish SHA-pinned OmniCar QA15 native reference-size orientation test, preserve Solo Zoom Swap timer
+      - name: Publish QA16 original YouTube player and native AppBridge 4s three-dot idle beta, preserve Solo Zoom Swap
         shell: bash
         run: |
           set -euo pipefail
-          # QA14 user-device orientation FAIL. QA15 replaces first-landscape lock with original DuoFace native reference-size/content orientation calls. DEVICE UNTESTED.
-          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar15-native-reference_iphoneos-arm64.deb'
-          OMNI_SHA='8ced924b6a5a5930977e15f67e47867547b300f84c1c56ebbc8a7bde4835e0c7'
-          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/5715c340c118207121f4387bfc52b560f87929a8/dist/candidates/omnicar-qa15-native-reference/$OMNI_FILE"
+          # QA13-15 rotation scene user-device FAIL. QA16 restores original SHA-locked QA12 YouTube player and adds ONLY scoped native ABPane 4s visual idle; device QA pending.
+          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar16-youtube-handle-idle_iphoneos-arm64.deb'
+          OMNI_SHA='1500f43c7a9ee6fe0f513569c804abdec8e6647321ddaf89e655ed9787fe9145'
+          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/87e6d4177262d4f149c811c5e52c0b433571bb65/dist/candidates/omnicar-qa16-youtube-handle-idle/$OMNI_FILE"
           mkdir -p repo/debs
           OMNI_PATH="repo/debs/$OMNI_FILE"
           curl -fLsS --retry 4 --connect-timeout 20 "$OMNI_URL" -o "$OMNI_PATH"
           printf '%s  %s\n' "$OMNI_SHA" "$OMNI_PATH" | shasum -a 256 --check
           test "$(dpkg-deb -f "$OMNI_PATH" Package)" = 'com.anlai.omnicar'
-          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar15-native-reference'
+          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar16-youtube-handle-idle'
           test "$(dpkg-deb -f "$OMNI_PATH" Architecture)" = 'iphoneos-arm64'
           # Exactly one Sileo version, without touching any other package family.
           find repo/debs -maxdepth 1 -type f -name 'com.anlai.omnicar_*.deb' ! -name "$OMNI_FILE" -delete
@@ -390,15 +390,15 @@ jobs:
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarNativeSoloTimer.plist')" -eq 1
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarDoubleTapFullscreen.dylib')" -eq 1
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarDoubleTapFullscreen.plist')" -eq 1
-          for banned in OmniCarIdleControls OmniCarSoloThreeDots OmniCarGraphiteTitanium OmniCarDuoActivityIdle; do
+          for banned in OmniCarIdleControls OmniCarSoloThreeDots OmniCarGraphiteTitanium OmniCarDuoActivityIdle OmniCarYouTubeScene; do
             if printf '%s\n' "$OMNI_LIST" | grep -F "/$banned."; then
-              echo "Refuse experimental Solo/Idle module $banned in QA15" >&2
+              echo "Refuse experimental Solo/Idle/old YouTube scene module $banned in QA16" >&2
               exit 1
             fi
           done
-          test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeScene.dylib')" -eq 1
-          test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeScene.plist')" -eq 1
-          echo 'OMNICAR_QA15_NATIVE_REFERENCE_BETA_SILEO_SHA256_BASE_PRESERVED_PASS__DEVICE_UNTESTED'
+          test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeHandleIdle.dylib')" -eq 1
+          test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeHandleIdle.plist')" -eq 1
+          echo 'OMNICAR_QA16_ORIGINAL_PLAYER_HANDLE_IDLE_SILEO_SHA256_BASE_PRESERVED_PASS__DEVICE_UNTESTED'
 
       - name: Pin distinct DuoFace Gate1 smoke package (no stable QA replacement)
         shell: bash
@@ -1369,10 +1369,10 @@ jobs:
                   stanzas.append(fields)
           assert len(stanzas)==1,stanzas
           entry=stanzas[0]
-          assert entry['Version']=='1.0.3-omnicar15-native-reference',entry
+          assert entry['Version']=='1.0.3-omnicar16-youtube-handle-idle',entry
           assert entry['Architecture']=='iphoneos-arm64',entry
-          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar15-native-reference_iphoneos-arm64.deb',entry
-          assert entry['SHA256']=='8ced924b6a5a5930977e15f67e47867547b300f84c1c56ebbc8a7bde4835e0c7',entry
+          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar16-youtube-handle-idle_iphoneos-arm64.deb',entry
+          assert entry['SHA256']=='1500f43c7a9ee6fe0f513569c804abdec8e6647321ddaf89e655ed9787fe9145',entry
           assert len([s for s in p.split('\n') if s=='Package: com.duoface.independent'])==1
           assert len([s for s in p.split('\n') if s=='Package: com.duonavi.app'])==1
           print('OMNICAR_SINGLE_APT_ENTRY_AND_EXISTING_DUOFACE_ENTRIES_PASS')

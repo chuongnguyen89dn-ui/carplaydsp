@@ -1294,12 +1294,12 @@ jobs:
           strings "$CANDIDATE_CP" | grep -F 'historic-ios16-chrome-candidate'
           echo 'DUOFACE_STAGE30_TOUCH_ELAPSED_SOURCE_MARKERS_NOT_DEVICE_PASS'
 
-          # Stage31 .62 is an independent raw UIResponder circular-logo touch
+          # Stage31 .62 is a signed rebuilt raw UIResponder circular-logo touch
           # owner candidate, never hardware-proven by macOS compilation alone.
           # Preserve every historic .61 and earlier binary for rollback.
           DUOFACE_STEP31_FILE='com.duoface.jb.embedded_0.0.62~rawgrip1_iphoneos-arm64.deb'
-          DUOFACE_STEP31_SHA='4899757790e10f490c9b42fb0b2fd8a6f32b6631809070352e2ce6a9befa20a9'
-          DUOFACE_STEP31_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/91ed01b62107ec9ebece01d458122ecacafc7eb8/sideplay/jb-embedded-appbridge/evidence/runs/40052974461/com.duoface.jb.embedded_0.0.62~rawgrip1_iphoneos-arm64.deb'
+          DUOFACE_STEP31_SHA='2a2589e2fa39fcf272890b55d0cdf02c9a91ff5df5f8ea6c47acd85b4eef9627'
+          DUOFACE_STEP31_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/9404eabe0506f70855677a39f274c08c88a8cf59/sideplay/jb-embedded-appbridge/evidence/runs/40053489952/com.duoface.jb.embedded_0.0.62~rawgrip1_iphoneos-arm64.deb'
           DUOFACE_STEP31_DEB="repo/debs/$DUOFACE_STEP31_FILE"
           curl -fLsS --retry 4 "$DUOFACE_STEP31_URL" -o "$DUOFACE_STEP31_DEB"
           printf '%s  %s\n' "$DUOFACE_STEP31_SHA" "$DUOFACE_STEP31_DEB" | shasum -a 256 -c -
@@ -1376,7 +1376,7 @@ jobs:
           assert a.get('Version')=='0.0.62~rawgrip1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
           assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.62~rawgrip1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='4899757790e10f490c9b42fb0b2fd8a6f32b6631809070352e2ce6a9befa20a9',a
+          assert a.get('SHA256')=='2a2589e2fa39fcf272890b55d0cdf02c9a91ff5df5f8ea6c47acd85b4eef9627',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1590,7 +1590,7 @@ jobs:
           PKG='com.duoface.jb.embedded'
           VER='0.0.62~rawgrip1'
           FILE='com.duoface.jb.embedded_0.0.62~rawgrip1_iphoneos-arm64.deb'
-          SHA='4899757790e10f490c9b42fb0b2fd8a6f32b6631809070352e2ce6a9befa20a9'
+          SHA='2a2589e2fa39fcf272890b55d0cdf02c9a91ff5df5f8ea6c47acd85b4eef9627'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

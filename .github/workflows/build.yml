@@ -1324,8 +1324,8 @@ jobs:
           # Stage32 .63: current-source independent reversible logo Ratio/Hold
           # state machine inside ONE integrated signed DEB; .62 remains
           # immutable on the server for downgrade. Device pass is unverified.
-          DUOFACE_STEP32_FILE='com.duoface.jb.embedded_0.0.64~nativegrip1_iphoneos-arm64.deb'
-          DUOFACE_STEP32_SHA='0eb67f7340665a7e194785c7db38cfa4e89b6b87a33a8f8613a607acf0ed1b96'
+          DUOFACE_STEP32_FILE='com.duoface.jb.embedded_0.0.63~gripstate1_iphoneos-arm64.deb'
+          DUOFACE_STEP32_SHA='ed0f0d784efccb3af50dbbeb4b44d7dab52df435e8ab8880f3b149e410f81563'
           DUOFACE_STEP32_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/6858d01660a479c95304bdbaeb437860e1694891/sideplay/jb-embedded-appbridge/evidence/runs/40160199015/com.duoface.jb.embedded_0.0.63~gripstate1_iphoneos-arm64.deb'
           DUOFACE_STEP32_DEB="repo/debs/$DUOFACE_STEP32_FILE"
           curl -fLsS --retry 4 "$DUOFACE_STEP32_URL" -o "$DUOFACE_STEP32_DEB"

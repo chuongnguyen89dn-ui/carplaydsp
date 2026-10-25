@@ -1356,7 +1356,7 @@ jobs:
           DUOFACE_STEP33_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/c52b86519121ead2126dff15ebc64e3e6f5615b8/sideplay/jb-embedded-appbridge/evidence/runs/40163564530/com.duoface.jb.embedded_0.0.64~nativegrip1_iphoneos-arm64.deb'
           DUOFACE_STEP33_DEB="repo/debs/$DUOFACE_STEP33_FILE"
           curl -fLsS --retry 4 "$DUOFACE_STEP33_URL" -o "$DUOFACE_STEP33_DEB"
-          printf '%s  %s\\n' "$DUOFACE_STEP33_SHA" "$DUOFACE_STEP33_DEB" | shasum -a 256 -c -
+          printf '%s  %s\n' "$DUOFACE_STEP33_SHA" "$DUOFACE_STEP33_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DUOFACE_STEP33_DEB" Package)" = 'com.duoface.jb.embedded'
           test "$(dpkg-deb -f "$DUOFACE_STEP33_DEB" Version)" = '0.0.64~nativegrip1'
           test "$(dpkg-deb -f "$DUOFACE_STEP33_DEB" Architecture)" = iphoneos-arm64

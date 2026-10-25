@@ -1324,8 +1324,8 @@ jobs:
           # Stage32 .63: current-source independent reversible logo Ratio/Hold
           # state machine inside ONE integrated signed DEB; .62 remains
           # immutable on the server for downgrade. Device pass is unverified.
-          DUOFACE_STEP32_FILE='com.duoface.jb.embedded_0.0.63~gripstate1_iphoneos-arm64.deb'
-          DUOFACE_STEP32_SHA='ed0f0d784efccb3af50dbbeb4b44d7dab52df435e8ab8880f3b149e410f81563'
+          DUOFACE_STEP32_FILE='com.duoface.jb.embedded_0.0.64~nativegrip1_iphoneos-arm64.deb'
+          DUOFACE_STEP32_SHA='0eb67f7340665a7e194785c7db38cfa4e89b6b87a33a8f8613a607acf0ed1b96'
           DUOFACE_STEP32_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/6858d01660a479c95304bdbaeb437860e1694891/sideplay/jb-embedded-appbridge/evidence/runs/40160199015/com.duoface.jb.embedded_0.0.63~gripstate1_iphoneos-arm64.deb'
           DUOFACE_STEP32_DEB="repo/debs/$DUOFACE_STEP32_FILE"
           curl -fLsS --retry 4 "$DUOFACE_STEP32_URL" -o "$DUOFACE_STEP32_DEB"
@@ -1348,6 +1348,34 @@ jobs:
           strings "$CANDIDATE_CP" | grep -F 'historic-ios16-chrome-candidate'
           echo 'DUOFACE_STAGE32_INTEGRATED_RECONCILED_GRIP_NOT_DEVICE_PASS'
 
+          # Stage33 .64 signed ONE-DEB independent original-grip blink/single
+          # primary divider candidate; direct user-ordered source correction.
+          # A macOS green test does NOT mean CarPlay hardware/YouTube safe.
+          DUOFACE_STEP33_FILE='com.duoface.jb.embedded_0.0.64~nativegrip1_iphoneos-arm64.deb'
+          DUOFACE_STEP33_SHA='0eb67f7340665a7e194785c7db38cfa4e89b6b87a33a8f8613a607acf0ed1b96'
+          DUOFACE_STEP33_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/c52b86519121ead2126dff15ebc64e3e6f5615b8/sideplay/jb-embedded-appbridge/evidence/runs/40163564530/com.duoface.jb.embedded_0.0.64~nativegrip1_iphoneos-arm64.deb'
+          DUOFACE_STEP33_DEB="repo/debs/$DUOFACE_STEP33_FILE"
+          curl -fLsS --retry 4 "$DUOFACE_STEP33_URL" -o "$DUOFACE_STEP33_DEB"
+          printf '%s  %s\\n' "$DUOFACE_STEP33_SHA" "$DUOFACE_STEP33_DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DUOFACE_STEP33_DEB" Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f "$DUOFACE_STEP33_DEB" Version)" = '0.0.64~nativegrip1'
+          test "$(dpkg-deb -f "$DUOFACE_STEP33_DEB" Architecture)" = iphoneos-arm64
+          test "$(dpkg-deb -f "$DUOFACE_STEP33_DEB" Name)" = 'DuoFace Independent (Integrated CarPlay Beta)'
+          ! dpkg-deb -f "$DUOFACE_STEP33_DEB" Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
+          dpkg-deb -f "$DUOFACE_STEP33_DEB" Conflicts | grep -F 'com.duoface.independent'
+          dpkg-deb -f "$DUOFACE_STEP33_DEB" Conflicts | grep -F 'com.duonavi.app'
+          mkdir -p "$RUNNER_TEMP/duoface-nativegrip64"
+          dpkg-deb -x "$DUOFACE_STEP33_DEB" "$RUNNER_TEMP/duoface-nativegrip64"
+          CANDIDATE_SB="$RUNNER_TEMP/duoface-nativegrip64/var/jb/Library/MobileSubstrate/DynamicLibraries/DFTouchOwnerProbe.dylib"
+          CANDIDATE_CP="$RUNNER_TEMP/duoface-nativegrip64/var/jb/Library/MobileSubstrate/DynamicLibraries/DFCarPlayDockOwner.dylib"
+          test -s "$CANDIDATE_SB" && test -s "$CANDIDATE_CP"
+          strings "$CANDIDATE_SB" | grep -F 'grip-native12-scale-pulse-start-visual-1.18'
+          strings "$CANDIDATE_SB" | grep -F 'logo-3s-hold-began-real-touch-timer'
+          strings "$CANDIDATE_SB" | grep -F 'logo-3s-moved-position='
+          strings "$CANDIDATE_SB" | grep -F 'logo-ratio-candidate-entered'
+          strings "$CANDIDATE_SB" | grep -F 'build=0.0.64~nativegrip1'
+          echo 'DUOFACE_STAGE33_ONE_DEB_NATIVE_GRIP_BLINK_AND_SINGLE_PRIMARY_STROKE_NOT_DEVICE_PASS'
+
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
@@ -1365,8 +1393,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==33,hits
-          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1'},hits
+          assert len(hits)==34,hits
+          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1','0.0.64~nativegrip1'},hits
           old=[x for x in hits if x.get('Version')=='0.0.23~hold3s1'][0]
           assert old.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',old
           assert old.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',old
@@ -1381,7 +1409,7 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1')
+              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1')
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
@@ -1400,10 +1428,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.63~gripstate1',a
+          assert a.get('Version')=='0.0.64~nativegrip1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.63~gripstate1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='ed0f0d784efccb3af50dbbeb4b44d7dab52df435e8ab8880f3b149e410f81563',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.64~nativegrip1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='0eb67f7340665a7e194785c7db38cfa4e89b6b87a33a8f8613a607acf0ed1b96',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1615,7 +1643,7 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.63~gripstate1'
+          VER='0.0.64~nativegrip1'
           FILE='com.duoface.jb.embedded_0.0.63~gripstate1_iphoneos-arm64.deb'
           SHA='ed0f0d784efccb3af50dbbeb4b44d7dab52df435e8ab8880f3b149e410f81563'
           for attempt in $(seq 1 20); do

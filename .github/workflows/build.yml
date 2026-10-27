@@ -1714,10 +1714,10 @@ jobs:
                   stanzas.append(fields)
           assert len(stanzas)==1,stanzas
           entry=stanzas[0]
-          assert entry['Version']=='1.0.3-omnicar19-app-process-wake',entry
+          assert entry['Version']=='1.0.3-omnicar20-divider-knob-idle',entry
           assert entry['Architecture']=='iphoneos-arm64',entry
-          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar19-app-process-wake_iphoneos-arm64.deb',entry
-          assert entry['SHA256']=='af6585d750504c1194a756f6b7b3ea8244d53271d115a046380f63c607bde16b',entry
+          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar20-divider-knob-idle_iphoneos-arm64.deb',entry
+          assert entry['SHA256']=='405faaafad91948796cf2578b5d8238a1466cd6f4fe3a5c3888a500ca8c6eb19',entry
           assert len([s for s in p.split('\n') if s=='Package: com.duoface.independent'])==1
           assert len([s for s in p.split('\n') if s=='Package: com.duonavi.app'])==1
           print('OMNICAR_SINGLE_APT_ENTRY_AND_EXISTING_DUOFACE_ENTRIES_PASS')

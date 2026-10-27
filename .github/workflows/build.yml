@@ -1617,6 +1617,12 @@ jobs:
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
+          # RECALL .75 2026-10-27: device user confirms content boxed AND
+          # still SpringBoard-crashing; do NOT advertise untested framegate.
+          # Retain immutable .75 binary for forensics but publish .74 as
+          # temporary geometry rollback. .74 itself has known SpringBoard
+          # SIGABRT+440 and is NOT device-stable. Do not claim crash fixed.
+          # Sileo package index cannot auto-downgrade an installed .75.
           # Keep both immutable DEB files online but advertise only latest
           # version in Sileo. dpkg-scanpackages -m otherwise creates 2 entries.
           python3 - <<'PY'
@@ -1647,7 +1653,7 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') != '0.0.75~framegate1'
+              and fields(b).get('Version') != '0.0.74~media37host1'
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
@@ -1666,10 +1672,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.75~framegate1',a
+          assert a.get('Version')=='0.0.74~media37host1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.75~framegate1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='1d3b7301b71c1cdeeaeb80ec83282f5a6efc1d8da7b802cb362b7d0d47501c3e',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.74~media37host1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='5db93e7f4cfafb318dffd29b4e407122cb0235938353663a61c8e70c86e96034',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1881,9 +1887,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.75~framegate1'
-          FILE='com.duoface.jb.embedded_0.0.75~framegate1_iphoneos-arm64.deb'
-          SHA='1d3b7301b71c1cdeeaeb80ec83282f5a6efc1d8da7b802cb362b7d0d47501c3e'
+          VER='0.0.74~media37host1'
+          FILE='com.duoface.jb.embedded_0.0.74~media37host1_iphoneos-arm64.deb'
+          SHA='5db93e7f4cfafb318dffd29b4e407122cb0235938353663a61c8e70c86e96034'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

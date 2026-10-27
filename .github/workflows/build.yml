@@ -367,20 +367,20 @@ jobs:
           PY
           echo DUOFACE_TEST_APP_PINNED_IN_SILEO
 
-      - name: Publish QA18 DuoFace Native12 single-tap GLOBAL wake all original OmniCar and YouTube controls
+      - name: Publish QA19 test passive hosted-app touch relay for ALL OmniCar controls
         shell: bash
         run: |
           set -euo pipefail
-          # QA16 YT four-second auto-hide user PASS; QA17 owner window first tap user FAIL. QA18 keeps QA12 original YouTube/player/Zoom/Swap/Solo and uses ORIGINAL DuoFace Native12 hitTest activity model, with ONLY 2 SHA-verified replacement dylibs and cross-process wake. Await parked-device touch QA.
-          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar18-duoface-unified-wake_iphoneos-arm64.deb'
-          OMNI_SHA='06c7ae70ebc518e2a6f9dbd3ff181ecb1461329005d74b6ff78b27dbcb4135cf'
-          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/0b4adf72367927fd53d326c400f9224eadc4bba8/dist/candidates/omnicar-qa18-duoface-unified-wake-r2/$OMNI_FILE"
+          # QA18 one-tap device FAIL. QA19 passively observes app-owned touches via original UIApplication.sendEvent, broadcasts native+host visibility, preserves 4s idle/YT original player/Zoom/Swap/Solo, only 2 changed dylibs. Device validation still required.
+          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar19-app-process-wake_iphoneos-arm64.deb'
+          OMNI_SHA='af6585d750504c1194a756f6b7b3ea8244d53271d115a046380f63c607bde16b'
+          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/c7a347324190575a11f73cb863a834f37702898a/dist/candidates/omnicar-qa19-app-process-touch-relay/$OMNI_FILE"
           mkdir -p repo/debs
           OMNI_PATH="repo/debs/$OMNI_FILE"
           curl -fLsS --retry 4 --connect-timeout 20 "$OMNI_URL" -o "$OMNI_PATH"
           printf '%s  %s\n' "$OMNI_SHA" "$OMNI_PATH" | shasum -a 256 --check
           test "$(dpkg-deb -f "$OMNI_PATH" Package)" = 'com.anlai.omnicar'
-          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar18-duoface-unified-wake'
+          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar19-app-process-wake'
           test "$(dpkg-deb -f "$OMNI_PATH" Architecture)" = 'iphoneos-arm64'
           # Exactly one Sileo version, without touching any other package family.
           find repo/debs -maxdepth 1 -type f -name 'com.anlai.omnicar_*.deb' ! -name "$OMNI_FILE" -delete
@@ -392,13 +392,13 @@ jobs:
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarDoubleTapFullscreen.plist')" -eq 1
           for banned in OmniCarIdleControls OmniCarSoloThreeDots OmniCarGraphiteTitanium OmniCarDuoActivityIdle OmniCarYouTubeScene; do
             if printf '%s\n' "$OMNI_LIST" | grep -F "/$banned."; then
-              echo "Refuse experimental Solo/Idle/old YouTube scene module $banned in QA18" >&2
+              echo "Refuse experimental Solo/Idle/old YouTube scene module $banned in QA19" >&2
               exit 1
             fi
           done
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeHandleIdle.dylib')" -eq 1
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeHandleIdle.plist')" -eq 1
-          echo 'OMNICAR_QA18_DUOFACE_ONE_TAP_ALL_CONTROLS_SILEO_SHA256_BASE_PRESERVED_PASS__DEVICE_UNTESTED'
+          echo 'OMNICAR_QA19_PASSIVE_APP_TOUCH_RELAY_SILEO_SHA256_BASE_PRESERVED_PASS__DEVICE_UNTESTED'
 
       - name: Pin distinct DuoFace Gate1 smoke package (no stable QA replacement)
         shell: bash
@@ -1710,10 +1710,10 @@ jobs:
                   stanzas.append(fields)
           assert len(stanzas)==1,stanzas
           entry=stanzas[0]
-          assert entry['Version']=='1.0.3-omnicar18-duoface-unified-wake',entry
+          assert entry['Version']=='1.0.3-omnicar19-app-process-wake',entry
           assert entry['Architecture']=='iphoneos-arm64',entry
-          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar18-duoface-unified-wake_iphoneos-arm64.deb',entry
-          assert entry['SHA256']=='06c7ae70ebc518e2a6f9dbd3ff181ecb1461329005d74b6ff78b27dbcb4135cf',entry
+          assert entry['Filename']=='debs/com.anlai.omnicar_1.0.3-omnicar19-app-process-wake_iphoneos-arm64.deb',entry
+          assert entry['SHA256']=='af6585d750504c1194a756f6b7b3ea8244d53271d115a046380f63c607bde16b',entry
           assert len([s for s in p.split('\n') if s=='Package: com.duoface.independent'])==1
           assert len([s for s in p.split('\n') if s=='Package: com.duonavi.app'])==1
           print('OMNICAR_SINGLE_APT_ENTRY_AND_EXISTING_DUOFACE_ENTRIES_PASS')

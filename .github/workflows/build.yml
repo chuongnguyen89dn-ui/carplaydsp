@@ -1587,6 +1587,11 @@ jobs:
           test -s "$RUNNER_TEMP/duoface-scenecontract73/var/jb/Library/MobileSubstrate/DynamicLibraries/DFCarPlayDockOwner.dylib"
           strings "$RUNNER_TEMP/duoface-scenecontract73/var/jb/Library/MobileSubstrate/DynamicLibraries/DFTouchOwnerProbe.dylib" | grep -F 'build=0.0.73~scenecontract1'
           echo 'DUOFACE_STAGE41_ORIGINAL_ARM64_GROUNDED_SIGNED_BETA_NOT_DEVICE_PASS'
+          # User-authorized full .37 rollback: immutable original four-module DEB.
+          RESTORE37='repo/debs/com.duoface.jb.embedded_0.0.37~native12dockzoom1_iphoneos-arm64.deb'
+          curl -fLsS --retry 4 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/d70d6b43c0775751bfa7f2cac1ac91ecda7e61df/sideplay/jb-embedded-appbridge/evidence/runs/39748923126/com.duoface.jb.embedded_0.0.37~native12dockzoom1_iphoneos-arm64.deb' -o "$RESTORE37"
+          printf '%s  %s\n' '2b6f274e684e5a6f1008dac960c87ff51744fddb5342ce42fcd74e5c61314beb' "$RESTORE37" | sha256sum -c -
+          test "$(dpkg-deb -f "$RESTORE37" Version)" = '0.0.37~native12dockzoom1'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
@@ -1604,8 +1609,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==42,hits
-          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1','0.0.64~nativegrip1','0.0.65~holdgrip1','0.0.67~scenediag1','0.0.68~viewport1','0.0.69~media37restore1','0.0.70~ytorient1','0.0.71~v37windows1','0.0.72~appscene1','0.0.73~scenecontract1'},hits
+          assert len(hits)==43,hits
+          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1','0.0.64~nativegrip1','0.0.65~holdgrip1','0.0.67~scenediag1','0.0.68~viewport1','0.0.69~media37restore1','0.0.70~ytorient1','0.0.71~v37windows1','0.0.72~appscene1','0.0.73~scenecontract1','0.0.37~native12dockzoom1'},hits
           old=[x for x in hits if x.get('Version')=='0.0.23~hold3s1'][0]
           assert old.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',old
           assert old.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',old
@@ -1620,7 +1625,7 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') in ('0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1','0.0.64~nativegrip1','0.0.65~holdgrip1','0.0.67~scenediag1','0.0.68~viewport1','0.0.69~media37restore1','0.0.70~ytorient1','0.0.71~v37windows1','0.0.72~appscene1')
+              and fields(b).get('Version') != '0.0.37~native12dockzoom1'
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
@@ -1639,10 +1644,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.73~scenecontract1',a
+          assert a.get('Version')=='0.0.37~native12dockzoom1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.73~scenecontract1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='69f1c1e1aee82e56ab66b3284b4c11322ec4f74e61bd71de6570dd4e5e20938b',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.37~native12dockzoom1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='2b6f274e684e5a6f1008dac960c87ff51744fddb5342ce42fcd74e5c61314beb',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1854,9 +1859,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.73~scenecontract1'
-          FILE='com.duoface.jb.embedded_0.0.73~scenecontract1_iphoneos-arm64.deb'
-          SHA='69f1c1e1aee82e56ab66b3284b4c11322ec4f74e61bd71de6570dd4e5e20938b'
+          VER='0.0.37~native12dockzoom1'
+          FILE='com.duoface.jb.embedded_0.0.37~native12dockzoom1_iphoneos-arm64.deb'
+          SHA='2b6f274e684e5a6f1008dac960c87ff51744fddb5342ce42fcd74e5c61314beb'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

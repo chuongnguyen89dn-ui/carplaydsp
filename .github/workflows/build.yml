@@ -1640,7 +1640,7 @@ jobs:
           test "$(dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.79~nativeocclusion1_iphoneos-arm64.deb' Version)" = '0.0.79~nativeocclusion1'
           test "$(dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.79~nativeocclusion1_iphoneos-arm64.deb' Package)" = 'com.duoface.jb.embedded'
           # .80 contains the first-party AppBridge lifecycle-order change and read-only scene foreground tracing.
-          # Keep all older signed packages byte-identical for manual rollback, but only advertise .80 in Packages.
+          # Keep all older signed packages byte-identical for manual rollback, but only advertise .81 in Packages.
           # iPhone video/SpringBoard stability is UNVERIFIED; never treat Pages deployment as device PASS.
           curl -fLsS --retry 4 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/5c44abe7a58a3b7a2abed6d64acf4ffd0b3329e3/sideplay/jb-embedded-appbridge/evidence/runs/40497436374/com.duoface.jb.embedded_0.0.80~lifecycleorder1_iphoneos-arm64.deb' -o 'repo/debs/com.duoface.jb.embedded_0.0.80~lifecycleorder1_iphoneos-arm64.deb'
           printf '%s  %s\n' '17b8feda02e5a9f21d004fa16d07d61c2666dedf1c06935ad82087010d7551c7' 'repo/debs/com.duoface.jb.embedded_0.0.80~lifecycleorder1_iphoneos-arm64.deb' | sha256sum -c -
@@ -1651,7 +1651,18 @@ jobs:
           ! dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.80~lifecycleorder1_iphoneos-arm64.deb' Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
           # Record package migration explicitly in DEB metadata; Sileo decides conflicts at install, not at publication.
           dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.80~lifecycleorder1_iphoneos-arm64.deb' Conflicts | grep -F 'com.duoface.app'
-          echo 'DUOFACE_080_SIGNED_ROOTLESS_PACKAGE_SHA_AND_ID_PASS'
+
+          # .81 extends the guarded Live scene settings contract, preserving all UI.
+          # This is code/build-only, NOT evidence of an on-device crash fix.
+          curl -fLsS --retry 4 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/0134edbec92fa4879e1a2a7fb6ccd1fbba9884f6/sideplay/jb-embedded-appbridge/evidence/runs/40512981348/com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb' -o 'repo/debs/com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb'
+          printf '%s  %s\n' 'e03d5b268c6f91ffc40192f45541f8c3e236d98cd731c1e5ed633b8d663604b1' 'repo/debs/com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb' | sha256sum -c -
+          test "$(dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb' Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb' Version)" = '0.0.81~foregroundcontract1'
+          test "$(dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb' Architecture)" = 'iphoneos-arm64'
+          test "$(dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb' Depends)" != ''
+          ! dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb' Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
+          dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb' Conflicts | grep -F 'com.duoface.app'
+          echo 'DUOFACE_081_SIGNED_ROOTLESS_PACKAGE_SHA_AND_ID_PASS'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
@@ -1677,8 +1688,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==50,hits
-          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1','0.0.64~nativegrip1','0.0.65~holdgrip1','0.0.67~scenediag1','0.0.68~viewport1','0.0.69~media37restore1','0.0.70~ytorient1','0.0.71~v37windows1','0.0.72~appscene1','0.0.73~scenecontract1','0.0.37~native12dockzoom1','0.0.74~media37host1','0.0.75~framegate1','0.0.76~reason1','0.0.77~mode2frame1','0.0.78~scenegeneration1','0.0.79~nativeocclusion1','0.0.80~lifecycleorder1'},hits
+          assert len(hits)==51,hits
+          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1','0.0.64~nativegrip1','0.0.65~holdgrip1','0.0.67~scenediag1','0.0.68~viewport1','0.0.69~media37restore1','0.0.70~ytorient1','0.0.71~v37windows1','0.0.72~appscene1','0.0.73~scenecontract1','0.0.37~native12dockzoom1','0.0.74~media37host1','0.0.75~framegate1','0.0.76~reason1','0.0.77~mode2frame1','0.0.78~scenegeneration1','0.0.79~nativeocclusion1','0.0.80~lifecycleorder1','0.0.81~foregroundcontract1'},hits
           old=[x for x in hits if x.get('Version')=='0.0.23~hold3s1'][0]
           assert old.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',old
           assert old.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',old
@@ -1693,7 +1704,7 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') != '0.0.80~lifecycleorder1'
+              and fields(b).get('Version') != '0.0.81~foregroundcontract1'
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
@@ -1712,10 +1723,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.80~lifecycleorder1',a
+          assert a.get('Version')=='0.0.81~foregroundcontract1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.80~lifecycleorder1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='17b8feda02e5a9f21d004fa16d07d61c2666dedf1c06935ad82087010d7551c7',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='e03d5b268c6f91ffc40192f45541f8c3e236d98cd731c1e5ed633b8d663604b1',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1927,9 +1938,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.80~lifecycleorder1'
-          FILE='com.duoface.jb.embedded_0.0.80~lifecycleorder1_iphoneos-arm64.deb'
-          SHA='17b8feda02e5a9f21d004fa16d07d61c2666dedf1c06935ad82087010d7551c7'
+          VER='0.0.81~foregroundcontract1'
+          FILE='com.duoface.jb.embedded_0.0.81~foregroundcontract1_iphoneos-arm64.deb'
+          SHA='e03d5b268c6f91ffc40192f45541f8c3e236d98cd731c1e5ed633b8d663604b1'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

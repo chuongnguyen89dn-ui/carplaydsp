@@ -367,20 +367,20 @@ jobs:
           PY
           echo DUOFACE_TEST_APP_PINNED_IN_SILEO
 
-      - name: Publish QA19 test passive hosted-app touch relay for ALL OmniCar controls
+      - name: Publish QA20 original center divider knob four-second hide preserving QA19 wake
         shell: bash
         run: |
           set -euo pipefail
-          # QA18 one-tap device FAIL. QA19 passively observes app-owned touches via original UIApplication.sendEvent, broadcasts native+host visibility, preserves 4s idle/YT original player/Zoom/Swap/Solo, only 2 changed dylibs. Device validation still required.
-          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar19-app-process-wake_iphoneos-arm64.deb'
-          OMNI_SHA='af6585d750504c1194a756f6b7b3ea8244d53271d115a046380f63c607bde16b'
-          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/c7a347324190575a11f73cb863a834f37702898a/dist/candidates/omnicar-qa19-app-process-touch-relay/$OMNI_FILE"
+          # QA19 USER DEVICE: wake improved, menus hide, center divider knob NOT hidden. QA20 paints actual native SCPCarDividerView.knob with SAME 4s timer; QA19 app/YouTube host byte-identical, only native timer dylib replaced. Device QA20 still unverified.
+          OMNI_FILE='com.anlai.omnicar_1.0.3-omnicar20-divider-knob-idle_iphoneos-arm64.deb'
+          OMNI_SHA='405faaafad91948796cf2578b5d8238a1466cd6f4fe3a5c3888a500ca8c6eb19'
+          OMNI_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Omnicar/f02ca28ec0dfa40dae92eba52d0d50d4a726e745/dist/candidates/omnicar-qa20-divider-knob-idle/$OMNI_FILE"
           mkdir -p repo/debs
           OMNI_PATH="repo/debs/$OMNI_FILE"
           curl -fLsS --retry 4 --connect-timeout 20 "$OMNI_URL" -o "$OMNI_PATH"
           printf '%s  %s\n' "$OMNI_SHA" "$OMNI_PATH" | shasum -a 256 --check
           test "$(dpkg-deb -f "$OMNI_PATH" Package)" = 'com.anlai.omnicar'
-          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar19-app-process-wake'
+          test "$(dpkg-deb -f "$OMNI_PATH" Version)" = '1.0.3-omnicar20-divider-knob-idle'
           test "$(dpkg-deb -f "$OMNI_PATH" Architecture)" = 'iphoneos-arm64'
           # Exactly one Sileo version, without touching any other package family.
           find repo/debs -maxdepth 1 -type f -name 'com.anlai.omnicar_*.deb' ! -name "$OMNI_FILE" -delete
@@ -392,13 +392,13 @@ jobs:
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarDoubleTapFullscreen.plist')" -eq 1
           for banned in OmniCarIdleControls OmniCarSoloThreeDots OmniCarGraphiteTitanium OmniCarDuoActivityIdle OmniCarYouTubeScene; do
             if printf '%s\n' "$OMNI_LIST" | grep -F "/$banned."; then
-              echo "Refuse experimental Solo/Idle/old YouTube scene module $banned in QA19" >&2
+              echo "Refuse experimental Solo/Idle/old YouTube scene module $banned in QA20" >&2
               exit 1
             fi
           done
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeHandleIdle.dylib')" -eq 1
           test "$(printf '%s\n' "$OMNI_LIST" | grep -Fc '/OmniCarYouTubeHandleIdle.plist')" -eq 1
-          echo 'OMNICAR_QA19_PASSIVE_APP_TOUCH_RELAY_SILEO_SHA256_BASE_PRESERVED_PASS__DEVICE_UNTESTED'
+          echo 'OMNICAR_QA20_ORIGINAL_CENTER_KNOB_FOUR_SECOND_IDLE_ONE_NATIVE_DYLIB_SILEO_SHA256_PASS__DEVICE_UNTESTED'
 
       - name: Pin distinct DuoFace Gate1 smoke package (no stable QA replacement)
         shell: bash

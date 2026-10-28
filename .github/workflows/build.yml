@@ -1698,6 +1698,17 @@ jobs:
           ! dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.84~portraitpolicy1_iphoneos-arm64.deb' Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
           dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.84~portraitpolicy1_iphoneos-arm64.deb' Conflicts | grep -F 'com.duoface.app'
           echo 'DUOFACE_084_SIGNED_ROOTLESS_PACKAGE_SHA_AND_ID_PASS'
+          # .85 is independent DuoFace portrait-owner timing + map-only 80% viewport.
+          # Not yet tested on iPhone: native CarPlay CPWindow is a distinct map scene.
+          curl -fLsS --retry 4 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/ade2736903caa39efb7e336684fa759e5285853d/sideplay/jb-embedded-appbridge/evidence/runs/40626852244/com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb' -o 'repo/debs/com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb'
+          printf '%s  %s\n' 'd3f47cc420dec924e5e2ddb2e66c15ca461e341c189bf21a8db8e6ceab7afa1f' 'repo/debs/com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb' | sha256sum -c -
+          test "$(dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb' Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb' Version)" = '0.0.85~mapscene1'
+          test "$(dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb' Architecture)" = 'iphoneos-arm64'
+          test "$(dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb' Depends)" != ''
+          ! dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb' Depends | grep -Eiq 'carbridge|duodash|duonavi|sideplay'
+          dpkg-deb -f 'repo/debs/com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb' Conflicts | grep -F 'com.duoface.app'
+          echo 'DUOFACE_085_SIGNED_ROOTLESS_MAP_SCENE_SHA_AND_ID_PASS'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
@@ -1723,8 +1734,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==54,hits
-          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1','0.0.64~nativegrip1','0.0.65~holdgrip1','0.0.67~scenediag1','0.0.68~viewport1','0.0.69~media37restore1','0.0.70~ytorient1','0.0.71~v37windows1','0.0.72~appscene1','0.0.73~scenecontract1','0.0.37~native12dockzoom1','0.0.74~media37host1','0.0.75~framegate1','0.0.76~reason1','0.0.77~mode2frame1','0.0.78~scenegeneration1','0.0.79~nativeocclusion1','0.0.80~lifecycleorder1','0.0.81~foregroundcontract1','0.0.82~sceneowner1','0.0.83~manualobserver1','0.0.84~portraitpolicy1'},hits
+          assert len(hits)==55,hits
+          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1','0.0.64~nativegrip1','0.0.65~holdgrip1','0.0.67~scenediag1','0.0.68~viewport1','0.0.69~media37restore1','0.0.70~ytorient1','0.0.71~v37windows1','0.0.72~appscene1','0.0.73~scenecontract1','0.0.37~native12dockzoom1','0.0.74~media37host1','0.0.75~framegate1','0.0.76~reason1','0.0.77~mode2frame1','0.0.78~scenegeneration1','0.0.79~nativeocclusion1','0.0.80~lifecycleorder1','0.0.81~foregroundcontract1','0.0.82~sceneowner1','0.0.83~manualobserver1','0.0.84~portraitpolicy1','0.0.85~mapscene1'},hits
           old=[x for x in hits if x.get('Version')=='0.0.23~hold3s1'][0]
           assert old.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',old
           assert old.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',old
@@ -1739,7 +1750,7 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') != '0.0.84~portraitpolicy1'
+              and fields(b).get('Version') != '0.0.85~mapscene1'
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
@@ -1758,10 +1769,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.84~portraitpolicy1',a
+          assert a.get('Version')=='0.0.85~mapscene1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.84~portraitpolicy1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='8cfd377d295b2fb7d5e16f6b81fb03f4744205f0cd0cbfc253d96d7d678de107',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='d3f47cc420dec924e5e2ddb2e66c15ca461e341c189bf21a8db8e6ceab7afa1f',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1973,9 +1984,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.84~portraitpolicy1'
-          FILE='com.duoface.jb.embedded_0.0.84~portraitpolicy1_iphoneos-arm64.deb'
-          SHA='8cfd377d295b2fb7d5e16f6b81fb03f4744205f0cd0cbfc253d96d7d678de107'
+          VER='0.0.85~mapscene1'
+          FILE='com.duoface.jb.embedded_0.0.85~mapscene1_iphoneos-arm64.deb'
+          SHA='d3f47cc420dec924e5e2ddb2e66c15ca461e341c189bf21a8db8e6ceab7afa1f'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&
@@ -2015,6 +2026,10 @@ jobs:
           curl -fLsS --retry 4 "$SITE/debs/com.duoface.jb.embedded_0.0.83~manualobserver1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-frozen-083.deb"
           printf '%s  %s\n' 'ced5f42db8b9a3285ccf159386f25e8e5ea0fa976e14c3b35ea24dd625534c9b' "$RUNNER_TEMP/duoface-frozen-083.deb" | sha256sum -c -
           echo 'DUOFACE_FROZEN_083_PLAYBACK_BASELINE_UNCHANGED_PASS'
+          # .84 also remains SHA-identical and publicly downloadable.
+          curl -fLsS --retry 4 "$SITE/debs/com.duoface.jb.embedded_0.0.84~portraitpolicy1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-frozen-084.deb"
+          printf '%s  %s\n' '8cfd377d295b2fb7d5e16f6b81fb03f4744205f0cd0cbfc253d96d7d678de107' "$RUNNER_TEMP/duoface-frozen-084.deb" | sha256sum -c -
+          echo 'DUOFACE_FROZEN_084_ROTATION_CANDIDATE_UNCHANGED_PASS'
           # Preserve previous .72 as a byte-identical public rollback binary.
           curl -fLsS --retry 4 "$SITE/debs/com.duoface.jb.embedded_0.0.72~appscene1_iphoneos-arm64.deb" -o "$RUNNER_TEMP/duoface-frozen-072.deb"
           printf '%s  %s\n' '8f8e3e02630df7b69a6f9c6479858ecdf203fd02b8a251f6ab7c67a15a9e9f55' "$RUNNER_TEMP/duoface-frozen-072.deb" | sha256sum -c -

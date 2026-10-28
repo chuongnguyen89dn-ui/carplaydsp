@@ -220,6 +220,28 @@ jobs:
           PY
           echo NATIVE_CARPLAY_SCENE_PROBE_PINNED_SHA_PASS
 
+      - name: Pin independent read-only native Maps owner snapshot file exporter for iPhone
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p repo/debs
+          FILE='com.duoface.carplay.mapownerexport_0.0.1~jsonl1_iphoneos-arm64.deb'
+          SHA='33c65f89c5cd6b2e0d3df340c43ef7780fc1dcf98cd64c03e12bc84e21a0ff8e'
+          URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/d1cab52877634f12d380d2a65c698adf3abe9a0e/sideplay/test-artifacts/native-map-owner-export-v6/$FILE"
+          DEB="repo/debs/$FILE"
+          curl -fLsS --retry 4 "$URL" -o "$DEB"
+          printf '%s  %s\n' "$SHA" "$DEB" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DEB" Package)" = 'com.duoface.carplay.mapownerexport'
+          test "$(dpkg-deb -f "$DEB" Version)" = '0.0.1~jsonl1'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64'
+          ! dpkg-deb -f "$DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
+          mkdir -p "$RUNNER_TEMP/duoface-mapowner-export"
+          dpkg-deb -x "$DEB" "$RUNNER_TEMP/duoface-mapowner-export"
+          APP="$RUNNER_TEMP/duoface-mapowner-export/var/jb/Applications/DuoFaceMapLog.app"
+          test -s "$APP/DFMapOwnerExport"
+          ldid -e "$APP/DFMapOwnerExport" | grep -F 'com.apple.private.security.no-container'
+          echo MAPS_OWNER_INDEPENDENT_JSONL_EXPORTER_SIGNATURE_VERIFIED
+
       - name: Pin independent SpringBoard-only OFF-by-default admission ABI probe
         shell: bash
         run: |
@@ -2513,6 +2535,12 @@ jobs:
           assert len(pkgs.get('com.duoface.carplay.nativejoinprobe',[]))==1
           assert pkgs['com.duoface.carplay.nativejoinprobe'][0]['Version']=='0.0.4~mapowner1'
           assert pkgs['com.duoface.carplay.nativejoinprobe'][0]['SHA256']=='b6ec4ec654cfc1d0f38d3f2361bf0fc45cb33b626df897fbaae75dbf9606609f'
+          assert len(pkgs.get('com.duoface.carplay.mapownerexport',[]))==1
+          export=pkgs['com.duoface.carplay.mapownerexport'][0]
+          assert export['Version']=='0.0.1~jsonl1',export
+          assert export['SHA256']=='33c65f89c5cd6b2e0d3df340c43ef7780fc1dcf98cd64c03e12bc84e21a0ff8e',export
+          assert export['Architecture']=='iphoneos-arm64',export
+          assert not any(export.get(field) for field in ('Conflicts','Replaces','Breaks')),export
           assert not any(a.get(k) for k in ('Conflicts','Replaces','Breaks')),a
           assert len(pkgs.get('com.duoface.carplay.nativebridgeqa',[]))==1
           assert pkgs['com.duoface.carplay.nativebridgeqa'][0]['Version']=='0.0.6~dockcrop1'

@@ -191,19 +191,19 @@ jobs:
           print('NATIVE_BRIDGEQA_FILZA_FREE_CONF_HELPER_EXPLICIT_OPTIN_VERIFIED')
           PY
 
-      - name: Pin separate read-only native CarPlay scene / Dock ABI diagnostic
+      - name: Pin V6 read-only CarPlay controller sceneHostView Maps owner diagnostic
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p repo/debs
-          FILE='com.duoface.carplay.nativejoinprobe_0.0.3~rosterabi1_iphoneos-arm64.deb'
-          SHA='67b8ace2f1733996accc7a251de80813df95756725f98118669b06f9a01a520a'
-          URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/ccc0ee911088b5e0ee817e2779dc68bedc6dcb9b/sideplay/test-artifacts/native-carplay-scene-v1/$FILE"
+          FILE='com.duoface.carplay.nativejoinprobe_0.0.4~mapowner1_iphoneos-arm64.deb'
+          SHA='b6ec4ec654cfc1d0f38d3f2361bf0fc45cb33b626df897fbaae75dbf9606609f'
+          URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/d438c52f0b4a26dd0248c3f53a45210fcb1e7618/sideplay/test-artifacts/native-map-owner-v6/$FILE"
           DEB="repo/debs/$FILE"
           curl -fLsS --retry 4 "$URL" -o "$DEB"
           printf '%s  %s\n' "$SHA" "$DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$DEB" Package)" = com.duoface.carplay.nativejoinprobe
-          test "$(dpkg-deb -f "$DEB" Version)" = '0.0.3~rosterabi1'
+          test "$(dpkg-deb -f "$DEB" Version)" = '0.0.4~mapowner1'
           test "$(dpkg-deb -f "$DEB" Architecture)" = iphoneos-arm64
           ! dpkg-deb -f "$DEB" | grep -E '^(Conflicts|Replaces|Breaks):'
           dpkg-deb -c "$DEB" | grep -F '/DFNativeSceneJoinProbe.dylib'
@@ -2511,7 +2511,8 @@ jobs:
           assert x['Architecture']=='iphoneos-arm64',x
           assert not any(x.get(k) for k in ('Conflicts','Replaces','Breaks')),x
           assert len(pkgs.get('com.duoface.carplay.nativejoinprobe',[]))==1
-          assert pkgs['com.duoface.carplay.nativejoinprobe'][0]['Version']=='0.0.3~rosterabi1'
+          assert pkgs['com.duoface.carplay.nativejoinprobe'][0]['Version']=='0.0.4~mapowner1'
+          assert pkgs['com.duoface.carplay.nativejoinprobe'][0]['SHA256']=='b6ec4ec654cfc1d0f38d3f2361bf0fc45cb33b626df897fbaae75dbf9606609f'
           assert not any(a.get(k) for k in ('Conflicts','Replaces','Breaks')),a
           assert len(pkgs.get('com.duoface.carplay.nativebridgeqa',[]))==1
           assert pkgs['com.duoface.carplay.nativebridgeqa'][0]['Version']=='0.0.6~dockcrop1'

@@ -2126,8 +2126,8 @@ jobs:
           # .115 keeps .114 as a frozen QA rollback; fixes independently verified
           # stale-host reselect and one-at-a-time reconnect restore gate source paths.
           # Hardware behavior still unverified. Immutable archive run 40860494881.
-          DUOFACE_115_FILE='com.duoface.jb.embedded_0.0.117~dock-wake1_iphoneos-arm64.deb'
-          DUOFACE_115_SHA='8b3c521be791ea7b5f7f65123d6b03559f5dbf4ac3977c1403d4d5adecbb7262'
+          DUOFACE_115_FILE='com.duoface.jb.embedded_0.0.115~app-recover1_iphoneos-arm64.deb'
+          DUOFACE_115_SHA='bf7f636acb68b777ec177b2357d20ddb2495660a76e988edd1a0b0622e77d09c'
           DUOFACE_115_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/9dafcc8bef42d922d18f45415d80ad7d8f8752c4/sideplay/jb-embedded-appbridge/evidence/runs/40860494881/com.duoface.jb.embedded_0.0.115~app-recover1_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$DUOFACE_115_URL" -o "repo/debs/$DUOFACE_115_FILE"
           printf '%s  %s\n' "$DUOFACE_115_SHA" "repo/debs/$DUOFACE_115_FILE" | sha256sum -c -

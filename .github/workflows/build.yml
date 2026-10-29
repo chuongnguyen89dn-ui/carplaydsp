@@ -2183,6 +2183,12 @@ jobs:
           test "$DUOFACE_117_FILE" != "$DUOFACE_116_FILE"
           test "$DUOFACE_117_SHA" != "$DUOFACE_116_SHA"
           curl -fLsS --retry 4 "$DUOFACE_117_URL" -o "repo/debs/$DUOFACE_117_FILE"
+          echo "DUOFACE117_DIAGNOSTIC_IMMUTABLE_URL=$DUOFACE_117_URL"
+          echo "DUOFACE117_DIAGNOSTIC_EXPECTED_SHA=$DUOFACE_117_SHA"
+          echo "DUOFACE117_DIAGNOSTIC_OBSERVED_SHA"
+          shasum -a 256 "repo/debs/$DUOFACE_117_FILE"
+          wc -c "repo/debs/$DUOFACE_117_FILE"
+          file "repo/debs/$DUOFACE_117_FILE"
           printf '%s  %s\n' "$DUOFACE_117_SHA" "repo/debs/$DUOFACE_117_FILE" | sha256sum -c -
           test "$(dpkg-deb -f "repo/debs/$DUOFACE_117_FILE" Package)" = 'com.duoface.jb.embedded'
           test "$(dpkg-deb -f "repo/debs/$DUOFACE_117_FILE" Version)" = '0.0.117~dock-wake1'

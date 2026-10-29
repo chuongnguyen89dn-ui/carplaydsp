@@ -1,0 +1,32 @@
+name: DuoFace 116 macOS raw SHA mismatch diagnosis
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/duoface-116-macos-download-diagnosis.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  raw-sha:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Diagnose downloaded .116 bytes on the same platform as the failing publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          REF='eaad4d45d8b6fbb6d41b32a04c632592d6f8d3a7'
+          EXPECT='fc87ceb4a8492469563246c00a9a205b838498f7652f8515bb08b9ca356285a8'
+          REL='sideplay/jb-embedded-appbridge/evidence/runs/40870166155/com.duoface.jb.embedded_0.0.116~pane-trace1_iphoneos-arm64.deb'
+          URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/$REF/$REL"
+          mkdir -p repo/debs
+          curl -fLsS --retry 4 "$URL" -o repo/debs/com.duoface.jb.embedded_0.0.116~pane-trace1_iphoneos-arm64.deb
+          OUT='repo/debs/com.duoface.jb.embedded_0.0.116~pane-trace1_iphoneos-arm64.deb'
+          echo 'Observed macOS raw bytes SHA:'
+          shasum -a 256 "$OUT"
+          wc -c "$OUT"
+          file "$OUT"
+          printf '%s  %s\n' "$EXPECT" "$OUT" | shasum -a 256 -c -
+          echo 'DuoFace macOS public immutable SHA verified'

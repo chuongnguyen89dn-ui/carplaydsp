@@ -2156,6 +2156,13 @@ jobs:
           DUOFACE_116_SHA='fc87ceb4a8492469563246c00a9a205b838498f7652f8515bb08b9ca356285a8'
           DUOFACE_116_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/eaad4d45d8b6fbb6d41b32a04c632592d6f8d3a7/sideplay/jb-embedded-appbridge/evidence/runs/40870166155/com.duoface.jb.embedded_0.0.116~pane-trace1_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$DUOFACE_116_URL" -o "repo/debs/$DUOFACE_116_FILE"
+          echo "DUOFACE_116_DEBUG_EXPECTED=$DUOFACE_116_SHA"
+          echo "DUOFACE_116_DEBUG_FILE=repo/debs/$DUOFACE_116_FILE"
+          echo "DUOFACE_116_DEBUG_URL=$DUOFACE_116_URL"
+          wc -c "repo/debs/$DUOFACE_116_FILE"
+          shasum -a 256 "repo/debs/$DUOFACE_116_FILE"
+          sha256sum "repo/debs/$DUOFACE_116_FILE"
+          file "repo/debs/$DUOFACE_116_FILE"
           printf '%s  %s\n' "$DUOFACE_116_SHA" "repo/debs/$DUOFACE_116_FILE" | sha256sum -c -
           test "$(dpkg-deb -f "repo/debs/$DUOFACE_116_FILE" Package)" = 'com.duoface.jb.embedded'
           test "$(dpkg-deb -f "repo/debs/$DUOFACE_116_FILE" Version)" = '0.0.116~pane-trace1'

@@ -2507,8 +2507,8 @@ jobs:
           assert item['SHA256']=='8ce0178492f5439cb4e1d2151e1adcfa846c91fbf3c7e3c9283157db45afd74c',item
           assert not any(item.get(k) for k in ('Replaces','Conflicts','Breaks')),item
           live=[r for r in records if r.get('Package')=='com.duoface.jb.embedded']
-          assert len(live)==1 and live[0]['Version']=='0.0.124~inactivelife1',live
-          print('DUONAVI_OBSERVER_SINGLE_INDEPENDENT_APT_ENTRY_AND_DUOFACE_QA124_UNCHANGED_PASS')
+          assert len(live)==1 and live[0]['Version']=='0.0.125~lockabi1',live
+          print('DUONAVI_OBSERVER_SINGLE_INDEPENDENT_APT_ENTRY_AND_DUOFACE_QA125_SELECTED_PASS')
           PY
           python3 ../scripts/label-duodash-baseline.py Packages
           # Sileo icon is APT metadata; iPhone app icons do not populate it.
@@ -2716,8 +2716,8 @@ jobs:
           assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb',item
           assert item['Architecture']=='iphoneos-arm64',item
           others=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(others)==1 and others[0]['Version']=='0.0.124~inactivelife1',others
-          print('DUONAVI_OBSERVER_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA124_UNCHANGED')
+          assert len(others)==1 and others[0]['Version']=='0.0.125~lockabi1',others
+          print('DUONAVI_OBSERVER_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA125_SELECTED')
           PY
           curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duonavi-observer-public.deb"
           printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duonavi-observer-public.deb" | sha256sum -c -

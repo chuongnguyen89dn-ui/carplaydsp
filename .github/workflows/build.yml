@@ -2580,8 +2580,8 @@ jobs:
           # an unrelated official CarPlay app (e.g. GOFA) is visible.
           # Signed code passes original QA128 GOFA geometry and physically
           # accepted QA132 BKS source byte-parity. Real GOFA device QA pending.
-          DUOFACE_134_FILE='com.duoface.jb.embedded_0.0.135~homeabi1_iphoneos-arm64.deb'
-          DUOFACE_134_SHA='4ad7452c43db2a6989e74affb89623b964ad0988c33aeba1534cca49a3263bee'
+          DUOFACE_134_FILE='com.duoface.jb.embedded_0.0.134~gofaowner1_iphoneos-arm64.deb'
+          DUOFACE_134_SHA='31cdeb80998005caa14d51a6fb6829c99869868233bc5963725fd706ee68edac'
           DUOFACE_134_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/8e2cb1df24cea1639a07e3de90204b926359f752/sideplay/jb-embedded-appbridge/evidence/runs/41083203912/com.duoface.jb.embedded_0.0.134~gofaowner1_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$DUOFACE_134_URL" -o "repo/debs/$DUOFACE_134_FILE"
           printf '%s  %s\n' "$DUOFACE_134_SHA" "repo/debs/$DUOFACE_134_FILE" | sha256sum -c -
@@ -2979,8 +2979,8 @@ jobs:
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
           VER='0.0.135~homeabi1'
-          FILE='com.duoface.jb.embedded_0.0.134~gofaowner1_iphoneos-arm64.deb'
-          SHA='31cdeb80998005caa14d51a6fb6829c99869868233bc5963725fd706ee68edac'
+          FILE='com.duoface.jb.embedded_0.0.135~homeabi1_iphoneos-arm64.deb'
+          SHA='4ad7452c43db2a6989e74affb89623b964ad0988c33aeba1534cca49a3263bee'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

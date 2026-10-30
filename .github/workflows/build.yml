@@ -2356,6 +2356,23 @@ jobs:
           assert info['CFBundleShortVersionString']=='0.1.124',info
           print('DUOFACE_124_SIGNED_INACTIVE_LIFECYCLE_QA_SHA_VERIFIED_DEVICE_PENDING')
           PY
+          # Separate read-only DuoNavi original runtime observer. Do NOT
+          # replace or downgrade DuoFace QA124 or include vendor binaries.
+          DUONAVI_OBSERVER_FILE='com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb'
+          DUONAVI_OBSERVER_SHA='8ce0178492f5439cb4e1d2151e1adcfa846c91fbf3c7e3c9283157db45afd74c'
+          DUONAVI_OBSERVER_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/bbee68a60a4532768017463ea70a0b1dccf44cec/sideplay/duonavi-observer/packages/com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb'
+          curl -fLsS --retry 4 "$DUONAVI_OBSERVER_URL" -o "repo/debs/$DUONAVI_OBSERVER_FILE"
+          printf '%s  %s\n' "$DUONAVI_OBSERVER_SHA" "repo/debs/$DUONAVI_OBSERVER_FILE" | sha256sum -c -
+          test "$(dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" Package)" = 'com.duoface.qa.duonaviobserver'
+          test "$(dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" Version)" = '0.0.1~passive1'
+          test "$(dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" Architecture)" = 'iphoneos-arm64'
+          ! dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" | grep -E '^(Conflicts|Replaces|Breaks):'
+          test -z "$(dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" Depends | grep -Eio 'com.duoface.jb.embedded|com.duonavi.app' || true)"
+          mkdir -p "$RUNNER_TEMP/duonavi-observer-payload"
+          dpkg-deb -x "repo/debs/$DUONAVI_OBSERVER_FILE" "$RUNNER_TEMP/duonavi-observer-payload"
+          test -s "$RUNNER_TEMP/duonavi-observer-payload/var/jb/Library/MobileSubstrate/DynamicLibraries/DuoNaviObserver.dylib"
+          test -s "$RUNNER_TEMP/duonavi-observer-payload/var/jb/Applications/DuoNaviObserver.app/DNObserverExport"
+          echo 'DUONAVI_OBSERVER_SIGNED_SEPARATE_PACKAGE_SHA_VERIFIED'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
@@ -2446,6 +2463,28 @@ jobs:
           assert len([s for s in p.split('\n') if s=='Package: com.duoface.independent'])==1
           assert len([s for s in p.split('\n') if s=='Package: com.duonavi.app'])==1
           print('OMNICAR_SINGLE_APT_ENTRY_AND_EXISTING_DUOFACE_ENTRIES_PASS')
+          PY
+          # Independent observer MUST be one distinct package, QA124 remains.
+          python3 - <<'PY'
+          from pathlib import Path
+          records=[]
+          for block in Path('Packages').read_text().split('\n\n'):
+              fields={}
+              for line in block.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1)
+                      fields[k]=v
+              if fields:records.append(fields)
+          hits=[r for r in records if r.get('Package')=='com.duoface.qa.duonaviobserver']
+          assert len(hits)==1,hits
+          item=hits[0]
+          assert item['Version']=='0.0.1~passive1',item
+          assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb',item
+          assert item['SHA256']=='8ce0178492f5439cb4e1d2151e1adcfa846c91fbf3c7e3c9283157db45afd74c',item
+          assert not any(item.get(k) for k in ('Replaces','Conflicts','Breaks')),item
+          live=[r for r in records if r.get('Package')=='com.duoface.jb.embedded']
+          assert len(live)==1 and live[0]['Version']=='0.0.124~inactivelife1',live
+          print('DUONAVI_OBSERVER_SINGLE_INDEPENDENT_APT_ENTRY_AND_DUOFACE_QA124_UNCHANGED_PASS')
           PY
           python3 ../scripts/label-duodash-baseline.py Packages
           # Sileo icon is APT metadata; iPhone app icons do not populate it.
@@ -2616,6 +2655,50 @@ jobs:
       - name: Deploy Sileo repo to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-duonavi-observer-pages:
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Verify public standalone observer record and exact signed package
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          FILE='com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb'
+          SHA='8ce0178492f5439cb4e1d2151e1adcfa846c91fbf3c7e3c9283157db45afd74c'
+          for attempt in $(seq 1 24); do
+            curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duonavi-observer-Packages" || true
+            if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/duonavi-observer-Packages" 2>/dev/null; then break; fi
+            sleep 10
+          done
+          python3 - "$RUNNER_TEMP/duonavi-observer-Packages" <<'PY'
+          from pathlib import Path
+          import sys
+          p=Path(sys.argv[1]).read_text()
+          entries=[]
+          for block in p.split('\n\n'):
+              record={}
+              for line in block.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1);record[k]=v
+              if record:entries.append(record)
+          hits=[x for x in entries if x.get('Package')=='com.duoface.qa.duonaviobserver']
+          assert len(hits)==1,hits
+          item=hits[0]
+          assert item['Version']=='0.0.1~passive1',item
+          assert item['SHA256']=='8ce0178492f5439cb4e1d2151e1adcfa846c91fbf3c7e3c9283157db45afd74c',item
+          assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb',item
+          assert item['Architecture']=='iphoneos-arm64',item
+          others=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
+          assert len(others)==1 and others[0]['Version']=='0.0.124~inactivelife1',others
+          print('DUONAVI_OBSERVER_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA124_UNCHANGED')
+          PY
+          curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duonavi-observer-public.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duonavi-observer-public.deb" | sha256sum -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/duonavi-observer-public.deb" Package)" = 'com.duoface.qa.duonaviobserver'
+          echo DUONAVI_OBSERVER_PUBLIC_SILEO_SIGNED_DEB_VERIFIED
 
   verify-duoface-integrated-pages:
     needs: [build, deploy]

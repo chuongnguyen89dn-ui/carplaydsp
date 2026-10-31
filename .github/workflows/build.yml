@@ -2606,8 +2606,8 @@ jobs:
           # QA135 is a read-only genuine CarPlay Home ABI diagnostic, NOT a
           # claim that third-party Home icons were published or launch correctly.
           # Preserve SHA-pinned QA134 and QA128 as immutable rollback files.
-          DUOFACE_135_FILE='com.duoface.jb.embedded_0.0.136~nativehome1_iphoneos-arm64.deb'
-          DUOFACE_135_SHA='9fb08f6e4e8f8c8b9d7b1876c1d66794b44bff57427e1be8a054f46836a8c49a'
+          DUOFACE_135_FILE='com.duoface.jb.embedded_0.0.135~homeabi1_iphoneos-arm64.deb'
+          DUOFACE_135_SHA='4ad7452c43db2a6989e74affb89623b964ad0988c33aeba1534cca49a3263bee'
           DUOFACE_135_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/0167d5a6a64bc4b687fbaf184b2e117926e7d317/sideplay/jb-embedded-appbridge/evidence/runs/41089867414/com.duoface.jb.embedded_0.0.135~homeabi1_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$DUOFACE_135_URL" -o "repo/debs/$DUOFACE_135_FILE"
           printf '%s  %s\n' "$DUOFACE_135_SHA" "repo/debs/$DUOFACE_135_FILE" | sha256sum -c -

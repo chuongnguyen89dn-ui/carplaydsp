@@ -3186,6 +3186,71 @@ jobs:
           EOF
           touch .nojekyll
 
+      - name: Stage QA155 in ISOLATED Sileo beta subdirectory (leave main APT unchanged)
+        shell: bash
+        run: |
+          set -euo pipefail
+          QA_DIR='repo/qa155'
+          mkdir -p "$QA_DIR/debs"
+          QA_FILE='com.duoface.jb.embedded_0.0.155~appack1_iphoneos-arm64.deb'
+          QA_SHA='24143b1893f464a1d56b57bf60956bc4503bcafe57f8d8e4675bd64bbda3ff74'
+          curl -fLsS --retry 4 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/8f3ce45fcf0af601b8b2556e5354c53a93fb0b3e/sideplay/jb-embedded-appbridge/evidence/runs/41236376760/com.duoface.jb.embedded_0.0.155~appack1_iphoneos-arm64.deb' -o "$QA_DIR/debs/$QA_FILE"
+          printf '%s  %s\n' "$QA_SHA" "$QA_DIR/debs/$QA_FILE" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA_FILE" Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA_FILE" Version)" = '0.0.155~appack1'
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA_FILE" Architecture)" = 'iphoneos-arm64'
+          mkdir -p "$RUNNER_TEMP/qa155-verify"
+          dpkg-deb -x "$QA_DIR/debs/$QA_FILE" "$RUNNER_TEMP/qa155-verify"
+          ROOT="$RUNNER_TEMP/qa155-verify/var/jb"
+          ldid -e "$ROOT/Library/MobileSubstrate/DynamicLibraries/DF155GeneralAppStateRelay.dylib" >/dev/null
+          QA_ROOT="$ROOT" python3 - <<'PY'
+          import os,plistlib
+          from pathlib import Path
+          root=Path(os.environ['QA_ROOT'])
+          info=plistlib.loads((root/'Applications/DuoFaceNativeHost.app/Info.plist').read_bytes())
+          assert info['CFBundleVersion']=='155',info
+          libs=root/'Library/MobileSubstrate/DynamicLibraries'
+          assert plistlib.loads((libs/'DF155GeneralAppStateRelay.plist').read_bytes())=={
+             'Filter':{'Bundles':['com.apple.mobilesafari','org.videolan.vlc-ios']}}
+          assert (libs/'DFYouTubeOrientationRelay.dylib').is_file()
+          assert (libs/'DFGofaMapResize141.dylib').is_file()
+          assert (libs/'DFCarPlayDockOwner.dylib').is_file()
+          assert b'qa155-app-side-ack' in (libs/'DFTouchOwnerProbe.dylib').read_bytes()
+          assert b'DF155AckNotification' not in (libs/'DFCarPlayDockOwner.dylib').read_bytes()
+          print('QA155_PRIVATE_APP_ACK_DLL_FILTER_DOCK_YT_GOFA_PRESERVED')
+          PY
+          ( cd "$QA_DIR" && dpkg-scanpackages -m debs /dev/null > Packages )
+          QA_DIR="$QA_DIR" QA_FILE="$QA_FILE" QA_SHA="$QA_SHA" python3 - <<'PY'
+          import os,hashlib,gzip,bz2,lzma,email.utils,datetime
+          from pathlib import Path
+          root=Path(os.environ['QA_DIR'])
+          pkg=(root/'Packages').read_text()
+          assert pkg.count('Package: com.duoface.jb.embedded\n')==1,pkg
+          assert 'Version: 0.0.155~appack1\n' in pkg,pkg
+          assert 'Filename: debs/'+os.environ['QA_FILE'] in pkg,pkg
+          (root/'Packages.gz').write_bytes(gzip.compress(pkg.encode(),compresslevel=9,mtime=0))
+          (root/'Packages.bz2').write_bytes(bz2.compress(pkg.encode(),compresslevel=9))
+          (root/'Packages.xz').write_bytes(lzma.compress(pkg.encode(),format=lzma.FORMAT_XZ,preset=6))
+          names=('Packages','Packages.gz','Packages.bz2','Packages.xz')
+          records=['Origin: DuoFace Independent QA (unreleased)',
+                   'Label: DuoFace QA155 One-Car Trial',
+                   'Suite: testing','Codename: qa155',
+                   'Architectures: iphoneos-arm64',
+                   'Components: main',
+                   'Date: '+email.utils.format_datetime(datetime.datetime.now(datetime.timezone.utc))]
+          for label,algo in [('SHA256','sha256'),('SHA512','sha512')]:
+           records.append(label+':')
+           for name in names:
+            content=(root/name).read_bytes()
+            records.append(' '+hashlib.new(algo,content).hexdigest()+' '+str(len(content))+' '+name)
+          (root/'Release').write_text('\n'.join(records)+'\n')
+          (root/'index.html').write_text('<!doctype html><meta charset="utf-8"><title>DuoFace QA155 ONLY</title><h1>DuoFace QA155 beta — not an official release</h1><p>Parked iPhone X CarPlay hardware experiment. Add https://chuongnguyen89dn-ui.github.io/carplaydsp/qa155/ to Sileo only for this test. Keep rollback available.</p>')
+          assert hashlib.sha256((root/'debs'/os.environ['QA_FILE']).read_bytes()).hexdigest()==os.environ['QA_SHA']
+          print('QA155_ISOLATED_SILEO_SOURCE_OFFICIAL_MAIN_UNCHANGED')
+          PY
+          test -s repo/Packages
+          ! grep -Fqx 'Version: 0.0.155~appack1' repo/Packages
+
       - name: Upload deb artifact
         uses: actions/upload-artifact@v4
         with:
@@ -3990,3 +4055,31 @@ jobs:
           test "$(dpkg-deb -f "$RUNNER_TEMP/gate1-public.deb" Package)" = "$PKG"
           test "$(dpkg-deb -f "$RUNNER_TEMP/gate1-public.deb" Version)" = "$VER"
           echo 'GATE1_PUBLIC_SILEO_BINARY_SHA256_PASS_NO_DEVICE_CARPLAY_PROOF'
+
+  verify-qa155-pages:
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Verify LIVE isolated QA155 Sileo APT and exact real DEB
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp/qa155'
+          FILE='com.duoface.jb.embedded_0.0.155~appack1_iphoneos-arm64.deb'
+          SHA='24143b1893f464a1d56b57bf60956bc4503bcafe57f8d8e4675bd64bbda3ff74'
+          for attempt in $(seq 1 22); do
+            if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/qa155-Packages" &&
+               grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/qa155-Packages"; then break; fi
+            sleep 8
+          done
+          grep -Fqx 'Package: com.duoface.jb.embedded' "$RUNNER_TEMP/qa155-Packages"
+          grep -Fqx 'Version: 0.0.155~appack1' "$RUNNER_TEMP/qa155-Packages"
+          grep -Fqx "Filename: debs/$FILE" "$RUNNER_TEMP/qa155-Packages"
+          test "$(grep -c '^Package:' "$RUNNER_TEMP/qa155-Packages")" -eq 1
+          curl -fLsS --retry 4 "$SITE/Release" -o "$RUNNER_TEMP/qa155-Release"
+          grep -Fq 'SHA256:' "$RUNNER_TEMP/qa155-Release"
+          curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/qa155-public.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/qa155-public.deb" | sha256sum -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/qa155-public.deb" Version)" = '0.0.155~appack1'
+          echo 'QA155_ISOLATED_SILEO_LIVE_SHA_VERIFIED_NO_DEVICE_CARPLAY_PROOF'

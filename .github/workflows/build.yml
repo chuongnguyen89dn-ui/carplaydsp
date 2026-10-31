@@ -3199,8 +3199,8 @@ jobs:
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
           VER='0.0.142~homeabi1'
-          FILE='com.duoface.jb.embedded_0.0.141~declmap1_iphoneos-arm64.deb'
-          SHA='7aa43717a19b2a94ae66e25650f0078185bb9e1e7618c3909844657d567aef19'
+          FILE='com.duoface.jb.embedded_0.0.142~homeabi1_iphoneos-arm64.deb'
+          SHA='9f8c35435538f5b80822f2c072260ca3b4cc55b10777d130559fef6e4d1e8329'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

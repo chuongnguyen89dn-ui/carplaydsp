@@ -1,0 +1,68 @@
+name: Promote signed DuoFace QA143 Home-scene bridge into Sileo publisher
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/promote-duoface-qa143.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: duoface-qa143-promote
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Verify exact signed immutable DuoFace QA143 input before promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/e475878b2fe93dde2e62f66f5f8c2d1217798618/sideplay/jb-embedded-appbridge/evidence/runs/41177472190/com.duoface.jb.embedded_0.0.143~homebridge1_iphoneos-arm64.deb'
+          SHA='db9019a708c4905602d00ed500878c01f208b26655e42ee079dacf30d925c39c'
+          curl -fLsS --retry 3 --max-time 100 "$URL" -o "$RUNNER_TEMP/qa143.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/qa143.deb" | sha256sum -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/qa143.deb" Package)" = com.duoface.jb.embedded
+          test "$(dpkg-deb -f "$RUNNER_TEMP/qa143.deb" Version)" = '0.0.143~homebridge1'
+          test "$(dpkg-deb -f "$RUNNER_TEMP/qa143.deb" Architecture)" = iphoneos-arm64
+          mkdir -p "$RUNNER_TEMP/qa143-unpacked"
+          dpkg-deb -x "$RUNNER_TEMP/qa143.deb" "$RUNNER_TEMP/qa143-unpacked"
+          python3 - <<'PY'
+          import os,plistlib,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'qa143-unpacked/var/jb'
+          info=plistlib.loads((p/'Applications/DuoFaceNativeHost.app/Info.plist').read_bytes())
+          assert info['CFBundleVersion']=='143',info
+          assert info['CFBundleShortVersionString']=='0.1.143',info
+          dock=(p/'Library/MobileSubstrate/DynamicLibraries/DFCarPlayDockOwner.dylib').read_bytes()
+          assert b'DuoFaceHomeLaunch143.log' in dock
+          assert b'DuoFaceHomeAdmission141.log' in dock
+          assert b'home143-request.plist' in dock
+          print('QA143_IMMUTABLE_SIGNED_SOURCE_SHA_AND_COMPONENTS_PASS')
+          PY
+      - name: Strictly patch Sileo workflow metadata; preserve QA142 rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          git checkout main
+          git pull --ff-only origin main
+          python3 -m py_compile scripts/promote-duoface-qa143.py
+          python3 scripts/promote-duoface-qa143.py .github/workflows/build.yml --check-only
+          python3 scripts/promote-duoface-qa143.py .github/workflows/build.yml
+          git diff --check
+          test "$(git diff --name-only | wc -l | tr -d ' ')" = 1
+          test "$(git diff --name-only)" = .github/workflows/build.yml
+          grep -Fq "DUOFACE_142_FILE=" .github/workflows/build.yml
+          grep -Fq "DUOFACE_143_FILE=" .github/workflows/build.yml
+          grep -Fq "assert len(hits)==97,hits" .github/workflows/build.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/build.yml
+          git commit -m 'sileo(qa143): promote verified signed Home-scene bridge, retain QA142 rollback'
+          git push origin main
+          echo QA143_SILEO_PUBLISHER_METADATA_COMMITTED_BUILD_WORKFLOW_NEXT

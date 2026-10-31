@@ -54,7 +54,6 @@ def patch(s):
           assert b'home143-request.plist' in car
           assert b'home143-request.plist' in host
           assert b'DuoFaceHomeLaunch143.log' in app
-          assert b'DFGofaMapResize141' not in b'' # source guard, not device pass
           print('QA143_SIGNED_REAL_SCENE_BRIDGE_COMPONENTS_VERIFIED_DEVICE_PENDING')
           PY
 """

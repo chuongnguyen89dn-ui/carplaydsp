@@ -2786,7 +2786,7 @@ jobs:
           PY
           # QA141 actual missing DB declaration completion and scoped GOFA canvas resize.
           # Preserve immutable QA140 rollback, reentry guard and existing Home140 consent.
-          DUOFACE_141_FILE='com.duoface.jb.embedded_0.0.142~homeabi1_iphoneos-arm64.deb'
+          DUOFACE_141_FILE='com.duoface.jb.embedded_0.0.141~declmap1_iphoneos-arm64.deb'
           DUOFACE_141_SHA='7aa43717a19b2a94ae66e25650f0078185bb9e1e7618c3909844657d567aef19'
           DUOFACE_141_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/3414bca0aeb7a0391ea2413ba940674a11081f3c/sideplay/jb-embedded-appbridge/evidence/runs/41169218555/com.duoface.jb.embedded_0.0.141~declmap1_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$DUOFACE_141_URL" -o "repo/debs/$DUOFACE_141_FILE"

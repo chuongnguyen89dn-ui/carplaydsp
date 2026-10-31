@@ -2358,13 +2358,13 @@ jobs:
           PY
           # Separate read-only DuoNavi original runtime observer. Do NOT
           # replace or downgrade DuoFace QA124 or include vendor binaries.
-          DUONAVI_OBSERVER_FILE='com.duoface.qa.duonaviobserver_0.0.2~dockabi1_iphoneos-arm64.deb'
-          DUONAVI_OBSERVER_SHA='bcf33a88d9f46b5a5fc240b493788338bec84b6fa83c688077fcef96f989eb99'
-          DUONAVI_OBSERVER_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/9168f7f7e5ed4da5cb294c239d71e4154799fff7/sideplay/duonavi-observer/packages/com.duoface.qa.duonaviobserver_0.0.2~dockabi1_iphoneos-arm64.deb'
+          DUONAVI_OBSERVER_FILE='com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb'
+          DUONAVI_OBSERVER_SHA='8ce0178492f5439cb4e1d2151e1adcfa846c91fbf3c7e3c9283157db45afd74c'
+          DUONAVI_OBSERVER_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/bbee68a60a4532768017463ea70a0b1dccf44cec/sideplay/duonavi-observer/packages/com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$DUONAVI_OBSERVER_URL" -o "repo/debs/$DUONAVI_OBSERVER_FILE"
           printf '%s  %s\n' "$DUONAVI_OBSERVER_SHA" "repo/debs/$DUONAVI_OBSERVER_FILE" | sha256sum -c -
           test "$(dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" Package)" = 'com.duoface.qa.duonaviobserver'
-          test "$(dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" Version)" = '0.0.2~dockabi1'
+          test "$(dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" Version)" = '0.0.1~passive1'
           test "$(dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" Architecture)" = 'iphoneos-arm64'
           ! dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" | grep -E '^(Conflicts|Replaces|Breaks):'
           test -z "$(dpkg-deb -f "repo/debs/$DUONAVI_OBSERVER_FILE" Depends | grep -Eio 'com.duoface.jb.embedded|com.duonavi.app' || true)"
@@ -2991,9 +2991,9 @@ jobs:
           hits=[r for r in records if r.get('Package')=='com.duoface.qa.duonaviobserver']
           assert len(hits)==1,hits
           item=hits[0]
-          assert item['Version']=='0.0.2~dockabi1',item
-          assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.2~dockabi1_iphoneos-arm64.deb',item
-          assert item['SHA256']=='bcf33a88d9f46b5a5fc240b493788338bec84b6fa83c688077fcef96f989eb99',item
+          assert item['Version']=='0.0.1~passive1',item
+          assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb',item
+          assert item['SHA256']=='8ce0178492f5439cb4e1d2151e1adcfa846c91fbf3c7e3c9283157db45afd74c',item
           assert not any(item.get(k) for k in ('Replaces','Conflicts','Breaks')),item
           live=[r for r in records if r.get('Package')=='com.duoface.jb.embedded']
           assert len(live)==1 and live[0]['Version']=='0.0.146~native-home-release1',live
@@ -3185,8 +3185,8 @@ jobs:
         run: |
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
-          FILE='com.duoface.qa.duonaviobserver_0.0.2~dockabi1_iphoneos-arm64.deb'
-          SHA='bcf33a88d9f46b5a5fc240b493788338bec84b6fa83c688077fcef96f989eb99'
+          FILE='com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb'
+          SHA='8ce0178492f5439cb4e1d2151e1adcfa846c91fbf3c7e3c9283157db45afd74c'
           for attempt in $(seq 1 24); do
             curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duonavi-observer-Packages" || true
             if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/duonavi-observer-Packages" 2>/dev/null; then break; fi
@@ -3206,9 +3206,9 @@ jobs:
           hits=[x for x in entries if x.get('Package')=='com.duoface.qa.duonaviobserver']
           assert len(hits)==1,hits
           item=hits[0]
-          assert item['Version']=='0.0.2~dockabi1',item
-          assert item['SHA256']=='bcf33a88d9f46b5a5fc240b493788338bec84b6fa83c688077fcef96f989eb99',item
-          assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.2~dockabi1_iphoneos-arm64.deb',item
+          assert item['Version']=='0.0.1~passive1',item
+          assert item['SHA256']=='8ce0178492f5439cb4e1d2151e1adcfa846c91fbf3c7e3c9283157db45afd74c',item
+          assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.1~passive1_iphoneos-arm64.deb',item
           assert item['Architecture']=='iphoneos-arm64',item
           others=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
           assert len(others)==1 and others[0]['Version']=='0.0.146~native-home-release1',others

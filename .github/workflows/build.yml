@@ -3300,7 +3300,7 @@ jobs:
               assert item in spring and item in source,item
           native=(libs/'DFCarPlayDockOwner.dylib').read_bytes()
           assert b'com.duoface.speedhud.v1.gofa' in native
-          assert b'[DuoFaceSpeed8] QA164 native owner attached' in native
+          assert b'[DuoFaceSpeed8] QA163 native owner attached' in native
           native_filter=plistlib.loads((libs/'DFCarPlayDockOwner.plist').read_bytes())
           assert 'com.apple.CarPlayApp' in native_filter['Filter']['Bundles']
           assert 'com.apple.dashboard' in native_filter['Filter']['Bundles']

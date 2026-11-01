@@ -3300,7 +3300,13 @@ jobs:
               assert item in spring and item in source,item
           native=(libs/'DFCarPlayDockOwner.dylib').read_bytes()
           assert b'com.duoface.speedhud.v1.gofa' in native
-          assert b'[DuoFaceSpeed8] QA163 native owner attached' in native
+          if b'[DuoFaceSpeed8] QA163 native owner attached' not in native:
+              loc=native.find(b'DuoFaceSpeed8')
+              loc2=native.find(b'QA163')
+              raise AssertionError(
+                  'QA164_NATIVE_OWNER_MARKER_MISSING '
+                  f'len={len(native)} loc_prefix={loc} loc_qa163={loc2} '
+                  f'excerpt={native[max(0,loc2-40):loc2+105]!r}')
           native_filter=plistlib.loads((libs/'DFCarPlayDockOwner.plist').read_bytes())
           assert 'com.apple.CarPlayApp' in native_filter['Filter']['Bundles']
           assert 'com.apple.dashboard' in native_filter['Filter']['Bundles']

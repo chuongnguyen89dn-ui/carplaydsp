@@ -3114,7 +3114,7 @@ jobs:
           )]
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.qa.duonaviobserver'
-              and fields(b).get('Version') != '0.0.3~homeflow1'
+              and fields(b).get('Version') != '0.0.4~ownerflow1'
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
@@ -3178,13 +3178,13 @@ jobs:
           hits=[r for r in records if r.get('Package')=='com.duoface.qa.duonaviobserver']
           assert len(hits)==1,hits
           item=hits[0]
-          assert item['Version']=='0.0.3~homeflow1',item
-          assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.3~homeflow1_iphoneos-arm64.deb',item
-          assert item['SHA256']=='1dd94e842bb82e5fefc6c0fe7af862d6b15a9169290ea82bf9ac96e31d7c9e64',item
+          assert item['Version']=='0.0.4~ownerflow1',item
+          assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.4~ownerflow1_iphoneos-arm64.deb',item
+          assert item['SHA256']=='1e3ad076be86300fecac4dfdf868481dd6e5a2d7950d26ab36ba7dbea265888e',item
           assert not any(item.get(k) for k in ('Replaces','Conflicts','Breaks')),item
           live=[r for r in records if r.get('Package')=='com.duoface.jb.embedded']
           assert len(live)==1 and live[0]['Version']=='0.0.157~solopicker1',live
-          print('DUONAVI_OBSERVER_SINGLE_INDEPENDENT_APT_ENTRY_AND_DUOFACE_QA135_SELECTED_PASS')
+          print('DUONAVI_OBSERVER4_SINGLE_APT_ENTRY_AND_DUOFACE_QA157_SELECTED_PASS')
           PY
           python3 ../scripts/label-duodash-baseline.py Packages
           # Sileo icon is APT metadata; iPhone app icons do not populate it.
@@ -3372,8 +3372,8 @@ jobs:
         run: |
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
-          FILE='com.duoface.qa.duonaviobserver_0.0.3~homeflow1_iphoneos-arm64.deb'
-          SHA='1dd94e842bb82e5fefc6c0fe7af862d6b15a9169290ea82bf9ac96e31d7c9e64'
+          FILE='com.duoface.qa.duonaviobserver_0.0.4~ownerflow1_iphoneos-arm64.deb'
+          SHA='1e3ad076be86300fecac4dfdf868481dd6e5a2d7950d26ab36ba7dbea265888e'
           for attempt in $(seq 1 24); do
             curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duonavi-observer-Packages" || true
             if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/duonavi-observer-Packages" 2>/dev/null; then break; fi
@@ -3393,17 +3393,22 @@ jobs:
           hits=[x for x in entries if x.get('Package')=='com.duoface.qa.duonaviobserver']
           assert len(hits)==1,hits
           item=hits[0]
-          assert item['Version']=='0.0.3~homeflow1',item
-          assert item['SHA256']=='1dd94e842bb82e5fefc6c0fe7af862d6b15a9169290ea82bf9ac96e31d7c9e64',item
-          assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.3~homeflow1_iphoneos-arm64.deb',item
+          assert item['Version']=='0.0.4~ownerflow1',item
+          assert item['SHA256']=='1e3ad076be86300fecac4dfdf868481dd6e5a2d7950d26ab36ba7dbea265888e',item
+          assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.4~ownerflow1_iphoneos-arm64.deb',item
           assert item['Architecture']=='iphoneos-arm64',item
           others=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
           assert len(others)==1 and others[0]['Version']=='0.0.157~solopicker1',others
-          print('DUONAVI_OBSERVER_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA135_SELECTED')
+          print('DUONAVI_OBSERVER4_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA157_SELECTED')
           PY
           curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duonavi-observer-public.deb"
           printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duonavi-observer-public.deb" | sha256sum -c -
           test "$(dpkg-deb -f "$RUNNER_TEMP/duonavi-observer-public.deb" Package)" = 'com.duoface.qa.duonaviobserver'
+          # Previous 0.0.3 remains downloadable for rollback, but is NOT
+          # separately advertised in the single latest-version APT stanza.
+          PREVIOUS='com.duoface.qa.duonaviobserver_0.0.3~homeflow1_iphoneos-arm64.deb'
+          curl -fLsS --retry 4 "$SITE/debs/$PREVIOUS" -o "$RUNNER_TEMP/observer3-rollback.deb"
+          printf '%s  %s\n' '1dd94e842bb82e5fefc6c0fe7af862d6b15a9169290ea82bf9ac96e31d7c9e64' "$RUNNER_TEMP/observer3-rollback.deb" | sha256sum -c -
           OLD='com.duoface.qa.duonaviobserver_0.0.2~dockabi2_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$SITE/debs/$OLD" -o "$RUNNER_TEMP/observer2-rollback.deb"
           printf '%s  %s\n' 'f3e3e04b74ef76b09f529954e708ae0521f13d139313405f18b1390b28999f40' "$RUNNER_TEMP/observer2-rollback.deb" | sha256sum -c -

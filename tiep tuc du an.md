@@ -1,3 +1,9 @@
+## 2026-11-01 — DuoFace nativebridge2 original Sileo release verified
+
+Published com.duoface.jb.embedded 0.0.156~nativebridge2 through existing source https://chuongnguyen89dn-ui.github.io/carplaydsp/ ; exact SHA256 b64d78e9678cd36f05ab9a5a4512559254b044de61d2bd5f5e22e2da8225eb17. Publisher workflow commit3a1539847cd585adf28fe3c28cba030e78b91a08; validator41261185836 SUCCESS; publication run41261185823 SUCCESS all5 jobs, completed2026-11-01T01:31:46Z. Actual live Packages and downloaded DEB checked; nativebridge1/QA155/QA147 rollback binaries re-downloaded unchanged,101 archived integrated versions and one live APT entry. No new source or same-version overwrite.
+Canonical project handoff/evidence: chuongnguyen89dn-ui/Duoface feature/duoface-qa146-native-home-exit-20261031 commitce27e40b34b401fb3edd36b7652ea51fc2f6ac55, sideplay/tiep tuc du an.md and sideplay/audit/qa155-vehicle-gate-20261101/NATIVEBRIDGE2_ORIGINAL_SILEO_LIVE_20261101.md.
+Device test NOT performed: next refresh existing Sileo, upgrade exact revision/respring then native Home Safari+second supported app, touch/Home/Dock and app-side ACK/restore trace. Source IPC transport passed macOS runtime and iOS compile/sign, not physical CarPlay acceptance.
+
 # Tiếp tục dự án CarPlay Split
 
 ## 2026-10-21 — DuoFace Native Host 0.0.4 template scene public Sileo verified; headunit UNTESTED

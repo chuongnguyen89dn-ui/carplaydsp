@@ -1,3 +1,9 @@
+## 2026-11-01 — Safari Home gate repair nativebridge3 live verified
+
+Original source now advertises com.duoface.jb.embedded 0.0.156~nativebridge3; SHA256 b3a89cfa4b6afd53ec555c16474023de1ce4e97e4e69e62e640d3d917b0355ef. Publisher commit d823d1c78a33c5904eb22a528540f819e54b9e31; validator 41263504872 SUCCESS; publication 41263505018 all5jobs SUCCESS, 2026-11-01 09:05:45 ICT. Actual public Packages and binary verified; nativebridge1/2 and QA155/147 immutable rollback downloads unchanged. 102 archived integrated versions, exactly1 live APT entry. No new source.
+Reason: user reported selected Safari absent again; source had recommended-only LS gate + all-Apple FBS exclusion despite click-handler Safari allowance. Both repaired, actual source roster/declaration/notify integration PASS before signed build41263222402. Source f7e75cce0ae1bb32da3348c118f1b4dfa30a39d3, archive9e14e54b65ef126a39b5c6f1a1096ad135202f32. No physical Safari icon/launch proof.
+Canonical handoff Duoface/sideplay/tiep tuc du an.md commit 9f738e6475f4de07127b6065a3d0cae6cd930459, audit sideplay/audit/qa155-vehicle-gate-20261101/SAFARI_HOME_FIX_RELEASE_VERIFIED_20261101.md. Next exact Sileo revision3 upgrade/respring retaining existing selection/Home settings, verify visible Safari before further launch/ACK test.
+
 ## 2026-11-01 — DuoFace nativebridge2 original Sileo release verified
 
 Published com.duoface.jb.embedded 0.0.156~nativebridge2 through existing source https://chuongnguyen89dn-ui.github.io/carplaydsp/ ; exact SHA256 b64d78e9678cd36f05ab9a5a4512559254b044de61d2bd5f5e22e2da8225eb17. Publisher workflow commit3a1539847cd585adf28fe3c28cba030e78b91a08; validator41261185836 SUCCESS; publication run41261185823 SUCCESS all5 jobs, completed2026-11-01T01:31:46Z. Actual live Packages and downloaded DEB checked; nativebridge1/QA155/QA147 rollback binaries re-downloaded unchanged,101 archived integrated versions and one live APT entry. No new source or same-version overwrite.

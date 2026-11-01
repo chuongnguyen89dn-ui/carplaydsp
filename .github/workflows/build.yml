@@ -2386,6 +2386,33 @@ jobs:
           print('DUONAVI_HOMEFLOW3_REAL_SIGNED_PAYLOAD_MARKERS_PASS')
           PY
           echo 'DUONAVI_OBSERVER_SIGNED_SEPARATE_PACKAGE_SHA_VERIFIED'
+          # Separate non-invasive read-only observer 0.0.4; preserves 0.0.3
+          # rollback and current DuoFace QA157. Source/build pin checked in
+          # original project repo, never copy original vendor binary/license.
+          OWNER_OBSERVER_FILE='com.duoface.qa.duonaviobserver_0.0.4~ownerflow1_iphoneos-arm64.deb'
+          OWNER_OBSERVER_SHA='1e3ad076be86300fecac4dfdf868481dd6e5a2d7950d26ab36ba7dbea265888e'
+          OWNER_OBSERVER_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/478c21173b2c7ccc6548c05600282169276f0e32/sideplay/duonavi-observer/packages/com.duoface.qa.duonaviobserver_0.0.4~ownerflow1_iphoneos-arm64.deb'
+          test "$OWNER_OBSERVER_FILE" != "$DUONAVI_OBSERVER_FILE"
+          test "$OWNER_OBSERVER_SHA" != "$DUONAVI_OBSERVER_SHA"
+          curl -fLsS --retry 4 "$OWNER_OBSERVER_URL" -o "repo/debs/$OWNER_OBSERVER_FILE"
+          printf '%s  %s\n' "$OWNER_OBSERVER_SHA" "repo/debs/$OWNER_OBSERVER_FILE" | sha256sum -c -
+          test "$(dpkg-deb -f "repo/debs/$OWNER_OBSERVER_FILE" Package)" = 'com.duoface.qa.duonaviobserver'
+          test "$(dpkg-deb -f "repo/debs/$OWNER_OBSERVER_FILE" Version)" = '0.0.4~ownerflow1'
+          test "$(dpkg-deb -f "repo/debs/$OWNER_OBSERVER_FILE" Architecture)" = 'iphoneos-arm64'
+          ! dpkg-deb -f "repo/debs/$OWNER_OBSERVER_FILE" | grep -E '^(Conflicts|Replaces|Breaks):'
+          mkdir -p "$RUNNER_TEMP/duonavi-ownerflow4"
+          dpkg-deb -x "repo/debs/$OWNER_OBSERVER_FILE" "$RUNNER_TEMP/duonavi-ownerflow4"
+          test -s "$RUNNER_TEMP/duonavi-ownerflow4/var/jb/Library/MobileSubstrate/DynamicLibraries/DuoNaviObserver.dylib"
+          test -s "$RUNNER_TEMP/duonavi-ownerflow4/var/jb/Applications/DuoNaviObserver.app/DNObserverExport"
+          python3 - "$RUNNER_TEMP/duonavi-ownerflow4" <<'PY'
+          import pathlib,sys
+          root=pathlib.Path(sys.argv[1])/'var/jb'
+          binary=(root/'Library/MobileSubstrate/DynamicLibraries/DuoNaviObserver.dylib').read_bytes()
+          for marker in (b'0.0.4~ownerflow1',b'appForBundleIdentifier:frame:',
+                         b'showAppPickerForSlot:',b'factory-return',b'bridge_owner'):
+              assert marker in binary,marker
+          print('DUONAVI_OWNERFLOW4_SIGNED_VERIFIED_NOT_DEVICE_TESTED')
+          PY
           # QA125 first-party one-selector ABI fix; retain QA124 rollback.
           DUOFACE_125_FILE='com.duoface.jb.embedded_0.0.125~lockabi1_iphoneos-arm64.deb'
           DUOFACE_125_SHA='1914f4e2c6e8dce0fadb5035166c0869966759fb74eb1c89424712dcf71cbe93'

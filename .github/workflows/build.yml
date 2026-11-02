@@ -3696,7 +3696,7 @@ jobs:
           for i,block in enumerate(blocks):
               if block.startswith('Package: com.duoface.jb.embedded\n'):
                   lines=[line for line in block.splitlines() if not line.startswith('Description: ')]
-                  lines.append('Description: QA170 EXPERIMENTAL USER-REPORTED SPEED8 FIX. Transparent clipped 44pt circular red X in DuoFace/CarPlay Home (no black square), durable dismiss and iPhone restore, plus real CoreLocation km/h fallback with GOFA's existing GPS authorization when passive native callback has no speed. Real CarPlay visual/GPS tests pending, GOFA need be running and authorized. No fabricated limits, cameras or turns. QA169/168/167 signed rollbacks retained.')
+                  lines.append('Description: QA170 EXPERIMENTAL USER-REPORTED SPEED8 FIX. Transparent clipped 44pt circular red X in DuoFace/CarPlay Home (no black square), durable dismiss and iPhone restore, plus real CoreLocation km/h fallback with existing GOFA GPS authorization when passive native callback has no speed. Real CarPlay visual/GPS tests pending, GOFA need be running and authorized. No fabricated limits, cameras or turns. QA169/168/167 signed rollbacks retained.')
                   blocks[i]='\n'.join(lines)
           # Explicit G1/G2 QA-only listing; device testing is pending.
           visual12qa=0

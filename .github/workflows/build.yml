@@ -3515,8 +3515,8 @@ jobs:
           # circular layer and re-enables *genuine GOFA authorized GPS* when
           # passive callback has no speed. Device/vehicle proof still required.
           QA170_FILE='com.duoface.jb.embedded_0.0.170~transparentxgps1_iphoneos-arm64.deb'
-          QA170_SHA='ba3d210ed0bda088b7dc94e07fd0ab741d47da15480c6e7d75c02e7d81249675'
-          QA170_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/ade04144ce48697d4f6641c5568a65740ab557c4/sideplay/jb-embedded-appbridge/evidence/runs/41376891575/com.duoface.jb.embedded_0.0.170~transparentxgps1_iphoneos-arm64.deb'
+          QA170_SHA='541eec2466e00233c2257d71499a5c1da404ef03d420b1bc3c440672b8cbef73'
+          QA170_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/a3c6f007fbbbe25b82e4d07a053b08537aadbd6e/sideplay/jb-embedded-appbridge/evidence/runs/41377783058/com.duoface.jb.embedded_0.0.170~transparentxgps1_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$QA170_URL" -o "$QA_DIR/debs/$QA170_FILE"
           printf '%s  %s\n' "$QA170_SHA" "$QA_DIR/debs/$QA170_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$QA_DIR/debs/$QA170_FILE" Package)" = 'com.duoface.jb.embedded'
@@ -3616,7 +3616,7 @@ jobs:
           assert a.get('Version')=='0.0.170~transparentxgps1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
           assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.170~transparentxgps1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='ba3d210ed0bda088b7dc94e07fd0ab741d47da15480c6e7d75c02e7d81249675',a
+          assert a.get('SHA256')=='541eec2466e00233c2257d71499a5c1da404ef03d420b1bc3c440672b8cbef73',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -3911,7 +3911,7 @@ jobs:
           PKG='com.duoface.jb.embedded'
           VER='0.0.170~transparentxgps1'
           FILE='com.duoface.jb.embedded_0.0.170~transparentxgps1_iphoneos-arm64.deb'
-          SHA='ba3d210ed0bda088b7dc94e07fd0ab741d47da15480c6e7d75c02e7d81249675'
+          SHA='541eec2466e00233c2257d71499a5c1da404ef03d420b1bc3c440672b8cbef73'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

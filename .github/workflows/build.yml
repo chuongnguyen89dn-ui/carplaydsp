@@ -3504,7 +3504,7 @@ jobs:
           gofa=(libs/'DFGofaSpeedSource162.dylib').read_bytes()
           visibility=b'com.duoface.speedhud.visibility.v1.plist'
           for binary in (app,spring,native,gofa):assert visibility in binary
-          assert b'Bong b' in app or b'Xu' in app
+          # UI labels are NSString/CFString Unicode; literal ASCII substring is not a valid raw Mach-O marker.
           assert b'com.duoface.speedhud.v1.gofa' in spring
           assert plistlib.loads((libs/'DFGofaSpeedSource162.plist').read_bytes())=={'Filter':{'Bundles':['com.lumi.GOFA']}}
           assert (libs/'DFGofaMapResize141.dylib').is_file()

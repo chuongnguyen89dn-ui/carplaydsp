@@ -3844,12 +3844,6 @@ jobs:
           assert b'allWindowsIncludingInternalWindows' in relay
           print('QA178_SIGNED_KBDIAG3_HUDHOLD_STATIC_PASS_NO_DEVICE_PROOF')
           PY
-          cd repo
-          dpkg-scanpackages -m debs /dev/null > Packages
-
-          # .76 diagnostic with original .74 unboxed media restored.
-          # Uncaught exception recorder only; crash stability untested.
-          # RECALL .75 2026-10-27: device user confirms content boxed AND
           # QA179 = QA178 content plus the minimal keyboard fit for
           # Google Maps + Waze (at keyboard DidShow, when the hosted
           # app window differs from the phone screen, the remote
@@ -3857,11 +3851,10 @@ jobs:
           # and restored at DidHide; flag KeyboardFit179, absent = on)
           # plus qa179-kbfit measurements and a read-only
           # selector-ownership probe (qa179-selprobe).
-          # handover, Retiring published before the other windows hide).
           QA179_FILE='com.duoface.jb.embedded_0.0.179~kbfit1_iphoneos-arm64.deb'
           QA179_SHA='9e83b36c9e381575fa3704da308170b5f79f91d998b422ac545ad7ac6f0b22a6'
           QA179_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/c3ad59ff1b5e511e2812e4752cc20ef0a4e55fb4/sideplay/jb-embedded-appbridge/evidence/runs/41562273711/com.duoface.jb.embedded_0.0.179~kbfit1_iphoneos-arm64.deb'
-          curl -fLsS --retry 4 "$QA179_URL" -o "$QA_DIR/debs/$QA179_FILE"
+          curl -fLsS --retry 6 --retry-all-errors "$QA179_URL" -o "$QA_DIR/debs/$QA179_FILE"
           printf '%s  %s\n' "$QA179_SHA" "$QA_DIR/debs/$QA179_FILE" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$QA_DIR/debs/$QA179_FILE" Package)" = 'com.duoface.jb.embedded'
           test "$(dpkg-deb -f "$QA_DIR/debs/$QA179_FILE" Version)" = '0.0.179~kbfit1'

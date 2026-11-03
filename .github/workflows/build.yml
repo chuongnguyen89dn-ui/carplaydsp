@@ -4028,7 +4028,7 @@ jobs:
           test -s "$QA_DIR/debs/$QA175_FILE"
           mkdir -p "$RUNNER_TEMP/qa182-verify"
           dpkg-deb -x "$QA_DIR/debs/$QA182_FILE" "$RUNNER_TEMP/qa182-verify"
-          QA182_ROOT="$RUNNER_TEMP/qa179-verify/var/jb" python3 - <<'PY'
+          QA182_ROOT="$RUNNER_TEMP/qa182-verify/var/jb" python3 - <<'PY'
           import os,plistlib
           from pathlib import Path
           root=Path(os.environ['QA182_ROOT'])

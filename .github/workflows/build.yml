@@ -4204,6 +4204,77 @@ jobs:
           assert b'qa183-kbsuite' in touch
           print('QA183S2_SIGNED_KBSUITE_STATIC_PASS_NO_DEVICE_PROOF')
           PY
+          # QA184 = QA183 content plus fit layer 2, the final
+          # Maps keyboard round: inside the existing QA179 fit,
+          # on applied/already-fit captures the keyboard window
+          # relayouts, UIInputSetContainerView takes the window
+          # bounds and UIInputSetHostView takes the window width
+          # bottom-anchored (steps a/b/c logged per step in
+          # kbfit as f2=); a deep class@width measure rides
+          # kbfit at the first/last cycle beats; a conditional
+          # horizontal stretch (d) runs on odd shows only when
+          # the deepest key view measures >8pt narrower than
+          # the host view (profile=d/nod in kbfit, restored at
+          # DidHide); kill switch KbFit2_184 absent = on. The
+          # QA183 suite (groups B-E) is closed and defaults OFF
+          # (KbSuite183 absent = off). R2 carries hw=; QA182
+          # hook counts ride the alive road as stage R3.
+          QA184_FILE='com.duoface.jb.embedded_0.0.184~fit2_iphoneos-arm64.deb'
+          QA184_SHA='9c9f643b61ffa20d6c794c0bb7a2be26065e97f5849d8c08ba2358cedf7da727'
+          QA184_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/ea8eacc48d130f8594d3fd33e0f1f9385e111d1e/sideplay/jb-embedded-appbridge/evidence/runs/41608140048/com.duoface.jb.embedded_0.0.184~fit2_iphoneos-arm64.deb'
+          curl -fLsS --retry 6 --retry-all-errors "$QA184_URL" -o "$QA_DIR/debs/$QA184_FILE"
+          printf '%s  %s\n' "$QA184_SHA" "$QA_DIR/debs/$QA184_FILE" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA184_FILE" Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA184_FILE" Version)" = '0.0.184~fit2'
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA184_FILE" Architecture)" = 'iphoneos-arm64'
+          test -s "$QA_DIR/debs/$QA175_FILE"
+          mkdir -p "$RUNNER_TEMP/qa184-verify"
+          dpkg-deb -x "$QA_DIR/debs/$QA184_FILE" "$RUNNER_TEMP/qa184-verify"
+          QA184_ROOT="$RUNNER_TEMP/qa184-verify/var/jb" python3 - <<'PY'
+          import os,plistlib
+          from pathlib import Path
+          root=Path(os.environ['QA184_ROOT'])
+          info=plistlib.loads((root/'Applications/DuoFaceNativeHost.app/Info.plist').read_bytes())
+          assert str(info['CFBundleVersion'])=='184',info
+          libs=root/'Library/MobileSubstrate/DynamicLibraries'
+          gofa=(libs/'DFGofaSpeedSource162.dylib').read_bytes()
+          touch=(libs/'DFTouchOwnerProbe.dylib').read_bytes()
+          relay=(libs/'DF155GeneralAppStateRelay.dylib').read_bytes()
+          dock=(libs/'DFCarPlayDockOwner.dylib').read_bytes()
+          host=(root/'Applications/DuoFaceNativeHost.app/DuoFaceNativeHost').read_bytes()
+          assert b'[DuoFaceDecoder172]' in gofa
+          assert b'com.duoface.trafficnav.v2.gofa.decoder' in gofa
+          assert b'qa175-divider-visibility' in touch
+          assert b'qa176-hud-owner' in touch
+          assert b'com.duoface.speedhud.lease176.chrome.plist' in touch
+          assert b'qa176-kbdiag' in touch
+          assert b'qa177-app-touch' in touch
+          assert b'qa177-hud-handover' in touch
+          assert b'com.duoface.ipc.v177.apptouch' in relay
+          assert b'qa177-overlay attach' in dock
+          assert b'[DF176KBDiag]' in relay
+          assert b'com.duoface.ipc.v176.kbdiag' in relay
+          assert b'yield=Overlay163 winner=Chrome' in dock
+          assert b'RootTouchPassThrough' in touch
+          assert b'com.duoface.speedhud.v1.gofa' in touch
+          assert b'QA172 decoder shadow event=' in host
+          assert plistlib.loads((libs/'DFGofaSpeedSource162.plist').read_bytes())=={'Filter':{'Bundles':['com.lumi.GOFA']}}
+          assert (libs/'DFGofaMapResize141.dylib').is_file()
+          assert (libs/'DFYouTubeOrientationRelay.dylib').is_file()
+          assert b'qa178-hud-gate' in touch
+          assert b'qa178-kbdiag2' in touch
+          assert b'allWindowsIncludingInternalWindows' in relay
+          assert b'qa182-kbhook' in relay
+          assert b'DF182HookFire' in relay
+          assert b'qa182-hookfire' in touch
+          assert b'DF183Suite' in relay
+          assert b'traitsWithScreen:orientation:' in relay
+          assert b'qa183-kbsuite' in touch
+          assert b'KbFit2_184' in relay
+          assert b'stage=R3' in relay
+          assert b'f2=on profile=' in relay
+          print('QA184_SIGNED_FIT2_STATIC_PASS_NO_DEVICE_PROOF')
+          PY
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
@@ -4229,8 +4300,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==130,hits
-          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1','0.0.64~nativegrip1','0.0.65~holdgrip1','0.0.67~scenediag1','0.0.68~viewport1','0.0.69~media37restore1','0.0.70~ytorient1','0.0.71~v37windows1','0.0.72~appscene1','0.0.73~scenecontract1','0.0.37~native12dockzoom1','0.0.74~media37host1','0.0.75~framegate1','0.0.76~reason1','0.0.77~mode2frame1','0.0.78~scenegeneration1','0.0.79~nativeocclusion1','0.0.80~lifecycleorder1','0.0.81~foregroundcontract1','0.0.82~sceneowner1','0.0.83~manualobserver1','0.0.84~portraitpolicy1','0.0.85~mapscene1','0.0.86~nativeowner1','0.0.87~ythandshake1','0.0.88~uikitreflow1','0.0.89~splitscene1','0.0.90~nativegetters1','0.0.91~nativemapqa1','0.0.92~logo3s1','0.0.94~phoneapps1','0.0.106~duodash-disc10s1','0.0.108~ratio-disconnect-restore1','0.0.109~logo-vertical-restore1','0.0.110~duodash-managed-map1','0.0.111~home-reentry-youtube1','0.0.112~slot-memory1','0.0.113~reentry-queue1','0.0.114~pane-wake1','0.0.115~app-recover1','0.0.116~pane-trace1','0.0.117~dock-wake1','0.0.118~dock-rollback1','0.0.119~geometry-probe1','0.0.120~native-rail1','0.0.123~underlock1','0.0.124~inactivelife1','0.0.125~lockabi1','0.0.127~ownerreflow1','0.0.128~manualowner1','0.0.129~nativeowner1','0.0.130~sceneowner1','0.0.131~clockprobe1','0.0.132~ownedbks1','0.0.133~native12catalog1','0.0.134~gofaowner1','0.0.135~homeabi1','0.0.136~nativehome1','0.0.137~homeabi2','0.0.138~selectedlayout1','0.0.139~recovery1371','0.0.140~guardedhome1','0.0.141~declmap1','0.0.142~homeabi1','0.0.146~native-home-release1','0.0.147~native-dock-sync1','0.0.155~appack1','0.0.156~nativebridge1','0.0.156~nativebridge2','0.0.156~nativebridge3','0.0.156~nativebridge4','0.0.157~solopicker1','0.0.158~homeonly1','0.0.159~nativehome1','0.0.160~homegridprobe1','0.0.161~firstframe1','0.0.162~gofaspeed8test1','0.0.163~globalspeed8test1','0.0.164~globaldragtest1','0.0.165~nativegofahome1','0.0.166~trafficnavprobe1','0.0.167~gofaeventproof1','0.0.168~nativecpmaneuver1','0.0.169~bubblevisibility1','0.0.170~transparentxgps1','0.0.171~gofadiag1','0.0.172~gofadecoder1','0.0.173~touchlog1','0.0.175~touchfix1','0.0.176~recallhud1','0.0.177~apptouch1','0.0.178~kbhud1','0.0.179~kbfit1','0.0.180~kbcycle1','0.0.181~refhook1','0.0.182~kbhook1','0.0.183~kbsuite1','0.0.183~kbsuite2'},hits
+          assert len(hits)==131,hits
+          assert {x.get('Version') for x in hits}=={'0.0.23~hold3s1','0.0.24~twopanes1','0.0.25~panemenu1','0.0.26~stylepicker1','0.0.27~solo1','0.0.28~mediascene1','0.0.29~native12ui8test1','0.0.30~native12equal3test1','0.0.31~native12nine1','0.0.39~native12menuheader1','0.0.40~native12regression1','0.0.41~medialogo3s1','0.0.42~appmodal1','0.0.43~zoomtrace1','0.0.44~media37logo1','0.0.45~sceneowner1','0.0.46~sceneaudit3a1','0.0.47~gripscene1','0.0.48~sharedwindow1','0.0.50~zoomarrows1','0.0.51~zoomowner1','0.0.52~zoomtouch1','0.0.53~zoommenulive1','0.0.54~nativecard1','0.0.55~zoomgrip1','0.0.56~ratiozoom1','0.0.57~historicroutes1','0.0.58~deeptrace1','0.0.59~zoomgeofix1','0.0.60~logohold1','0.0.61~touchbackstop1','0.0.62~rawgrip1','0.0.63~gripstate1','0.0.64~nativegrip1','0.0.65~holdgrip1','0.0.67~scenediag1','0.0.68~viewport1','0.0.69~media37restore1','0.0.70~ytorient1','0.0.71~v37windows1','0.0.72~appscene1','0.0.73~scenecontract1','0.0.37~native12dockzoom1','0.0.74~media37host1','0.0.75~framegate1','0.0.76~reason1','0.0.77~mode2frame1','0.0.78~scenegeneration1','0.0.79~nativeocclusion1','0.0.80~lifecycleorder1','0.0.81~foregroundcontract1','0.0.82~sceneowner1','0.0.83~manualobserver1','0.0.84~portraitpolicy1','0.0.85~mapscene1','0.0.86~nativeowner1','0.0.87~ythandshake1','0.0.88~uikitreflow1','0.0.89~splitscene1','0.0.90~nativegetters1','0.0.91~nativemapqa1','0.0.92~logo3s1','0.0.94~phoneapps1','0.0.106~duodash-disc10s1','0.0.108~ratio-disconnect-restore1','0.0.109~logo-vertical-restore1','0.0.110~duodash-managed-map1','0.0.111~home-reentry-youtube1','0.0.112~slot-memory1','0.0.113~reentry-queue1','0.0.114~pane-wake1','0.0.115~app-recover1','0.0.116~pane-trace1','0.0.117~dock-wake1','0.0.118~dock-rollback1','0.0.119~geometry-probe1','0.0.120~native-rail1','0.0.123~underlock1','0.0.124~inactivelife1','0.0.125~lockabi1','0.0.127~ownerreflow1','0.0.128~manualowner1','0.0.129~nativeowner1','0.0.130~sceneowner1','0.0.131~clockprobe1','0.0.132~ownedbks1','0.0.133~native12catalog1','0.0.134~gofaowner1','0.0.135~homeabi1','0.0.136~nativehome1','0.0.137~homeabi2','0.0.138~selectedlayout1','0.0.139~recovery1371','0.0.140~guardedhome1','0.0.141~declmap1','0.0.142~homeabi1','0.0.146~native-home-release1','0.0.147~native-dock-sync1','0.0.155~appack1','0.0.156~nativebridge1','0.0.156~nativebridge2','0.0.156~nativebridge3','0.0.156~nativebridge4','0.0.157~solopicker1','0.0.158~homeonly1','0.0.159~nativehome1','0.0.160~homegridprobe1','0.0.161~firstframe1','0.0.162~gofaspeed8test1','0.0.163~globalspeed8test1','0.0.164~globaldragtest1','0.0.165~nativegofahome1','0.0.166~trafficnavprobe1','0.0.167~gofaeventproof1','0.0.168~nativecpmaneuver1','0.0.169~bubblevisibility1','0.0.170~transparentxgps1','0.0.171~gofadiag1','0.0.172~gofadecoder1','0.0.173~touchlog1','0.0.175~touchfix1','0.0.176~recallhud1','0.0.177~apptouch1','0.0.178~kbhud1','0.0.179~kbfit1','0.0.180~kbcycle1','0.0.181~refhook1','0.0.182~kbhook1','0.0.183~kbsuite1','0.0.183~kbsuite2','0.0.184~fit2'},hits
           old=[x for x in hits if x.get('Version')=='0.0.23~hold3s1'][0]
           assert old.get('SHA256')=='296fc26633e76690682f2fcfb77391ec6b729a3bdfbeb1defb6ce7999dcf699e',old
           assert old.get('Filename')=='debs/com.duoface.jb.embedded_0.0.23~hold3s1_iphoneos-arm64.deb',old
@@ -4245,7 +4316,7 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') != '0.0.183~kbsuite2'
+              and fields(b).get('Version') != '0.0.184~fit2'
           )]
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.qa.duonaviobserver'
@@ -4268,10 +4339,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.183~kbsuite2',a
+          assert a.get('Version')=='0.0.184~fit2',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.183~kbsuite2_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='bdb7dd0dc952b26dfe6fdf50d94f7b6b3e373400d7edc45f26db60381a148b65',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.184~fit2_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='9c9f643b61ffa20d6c794c0bb7a2be26065e97f5849d8c08ba2358cedf7da727',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -4318,7 +4389,7 @@ jobs:
           assert item['SHA256']=='1e3ad076be86300fecac4dfdf868481dd6e5a2d7950d26ab36ba7dbea265888e',item
           assert not any(item.get(k) for k in ('Replaces','Conflicts','Breaks')),item
           live=[r for r in records if r.get('Package')=='com.duoface.jb.embedded']
-          assert len(live)==1 and live[0]['Version']=='0.0.183~kbsuite2',live
+          assert len(live)==1 and live[0]['Version']=='0.0.184~fit2',live
           print('DUONAVI_OBSERVER4_SINGLE_APT_ENTRY_AND_DUOFACE_QA169_BUBBLE_BETA_SELECTED_PASS')
           PY
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -4533,7 +4604,7 @@ jobs:
           assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.4~ownerflow1_iphoneos-arm64.deb',item
           assert item['Architecture']=='iphoneos-arm64',item
           others=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(others)==1 and others[0]['Version']=='0.0.183~kbsuite2',others
+          assert len(others)==1 and others[0]['Version']=='0.0.184~fit2',others
           print('DUONAVI_OBSERVER4_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA173_SELECTED')
           PY
           curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duonavi-observer-public.deb"
@@ -4564,9 +4635,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.183~kbsuite2'
-          FILE='com.duoface.jb.embedded_0.0.183~kbsuite2_iphoneos-arm64.deb'
-          SHA='bdb7dd0dc952b26dfe6fdf50d94f7b6b3e373400d7edc45f26db60381a148b65'
+          VER='0.0.184~fit2'
+          FILE='com.duoface.jb.embedded_0.0.184~fit2_iphoneos-arm64.deb'
+          SHA='9c9f643b61ffa20d6c794c0bb7a2be26065e97f5849d8c08ba2358cedf7da727'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

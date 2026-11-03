@@ -3867,7 +3867,7 @@ jobs:
           from pathlib import Path
           root=Path(os.environ['QA179_ROOT'])
           info=plistlib.loads((root/'Applications/DuoFaceNativeHost.app/Info.plist').read_bytes())
-          assert str(info['CFBundleVersion'])=='178',info
+          assert str(info['CFBundleVersion'])=='179',info
           libs=root/'Library/MobileSubstrate/DynamicLibraries'
           gofa=(libs/'DFGofaSpeedSource162.dylib').read_bytes()
           touch=(libs/'DFTouchOwnerProbe.dylib').read_bytes()

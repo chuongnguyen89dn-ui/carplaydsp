@@ -4386,7 +4386,7 @@ jobs:
           assert last.get('Filename')=='debs/com.duoface.jb.embedded_0.0.26~stylepicker1_iphoneos-arm64.deb',last
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') != '0.0.185~destsize1'
+              and fields(b).get('Version') != '0.0.171~gofadiag1'
           )]
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.qa.duonaviobserver'
@@ -4409,10 +4409,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.185~destsize1',a
+          assert a.get('Version')=='0.0.171~gofadiag1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.185~destsize1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='3cf5aeb9ffb63f922ae64e041ab2f836e854182a0410266ac3866a5d83bac433',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.171~gofadiag1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='2315bfa7c6110905ff794615c11d801ad6dd3bca8a5106836344e8e6996f433f',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -4459,7 +4459,7 @@ jobs:
           assert item['SHA256']=='1e3ad076be86300fecac4dfdf868481dd6e5a2d7950d26ab36ba7dbea265888e',item
           assert not any(item.get(k) for k in ('Replaces','Conflicts','Breaks')),item
           live=[r for r in records if r.get('Package')=='com.duoface.jb.embedded']
-          assert len(live)==1 and live[0]['Version']=='0.0.185~destsize1',live
+          assert len(live)==1 and live[0]['Version']=='0.0.171~gofadiag1',live
           print('DUONAVI_OBSERVER4_SINGLE_APT_ENTRY_AND_DUOFACE_QA169_BUBBLE_BETA_SELECTED_PASS')
           PY
           python3 ../scripts/label-duodash-baseline.py Packages
@@ -4674,7 +4674,7 @@ jobs:
           assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.4~ownerflow1_iphoneos-arm64.deb',item
           assert item['Architecture']=='iphoneos-arm64',item
           others=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(others)==1 and others[0]['Version']=='0.0.185~destsize1',others
+          assert len(others)==1 and others[0]['Version']=='0.0.171~gofadiag1',others
           print('DUONAVI_OBSERVER4_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA173_SELECTED')
           PY
           curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duonavi-observer-public.deb"
@@ -4705,9 +4705,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.185~destsize1'
-          FILE='com.duoface.jb.embedded_0.0.185~destsize1_iphoneos-arm64.deb'
-          SHA='3cf5aeb9ffb63f922ae64e041ab2f836e854182a0410266ac3866a5d83bac433'
+          VER='0.0.171~gofadiag1'
+          FILE='com.duoface.jb.embedded_0.0.171~gofadiag1_iphoneos-arm64.deb'
+          SHA='2315bfa7c6110905ff794615c11d801ad6dd3bca8a5106836344e8e6996f433f'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&

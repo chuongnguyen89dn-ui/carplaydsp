@@ -1,4 +1,5 @@
 name: Build and publish Sileo repo
+# QA179 publish retrigger: run 41563094115 died on a transient curl (56) write failure in the index step after all QA blocks passed; no content change.
 # DuoDash-Airaw geometry sync: 6
 
 on:

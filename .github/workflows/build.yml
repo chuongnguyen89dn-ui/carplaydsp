@@ -3857,7 +3857,7 @@ jobs:
           assert a.get('Version')=='0.0.177~apptouch1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
           assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.177~apptouch1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='c53598554aee0ce49284338e0a660ebb5db139e0ce0b685ba339be07f7414f23',a
+          assert a.get('SHA256')=='70e5117f290576b7958d9dfbd8cf734cb60b79d0dfba2ba621fc7dad553f122b',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')

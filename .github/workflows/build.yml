@@ -493,9 +493,30 @@ jobs:
           mkdir -p packages
           CPA_FILE='com.chuong.carplayaudit_0.5.0_iphoneos-arm64.deb'
           CPA_SHA='b285673ca78e7906d58d4561768ac0b9261617c5f4a745ca3c5c7d2e0a7871a4'
-          CPA_URL="https://raw.githubusercontent.com/chuongnguyen89dn-ui/DuoDash-Diagnostic/0272eb7d997655307218817159d4f7ca68305d75/carplay-residual-audit/packages/$CPA_FILE"
+          # Preserve the exact public signed diagnostic when its historical source repository is unavailable.
+          CPA_URL="https://chuongnguyen89dn-ui.github.io/carplaydsp/debs/$CPA_FILE"
           CPA_DEB="packages/$CPA_FILE"
-          curl -fLsS --retry 3 "$CPA_URL" -o "$CPA_DEB"
+          curl -fLsS --retry 3 --max-time 40 "https://chuongnguyen89dn-ui.github.io/carplaydsp/Packages" -o "$RUNNER_TEMP/previous-cpa-Packages"
+          CPA_FILE="$CPA_FILE" CPA_SHA="$CPA_SHA" python3 - <<'PY'
+          from pathlib import Path
+          import os
+          rows=[]
+          for b in Path(os.environ['RUNNER_TEMP'],'previous-cpa-Packages').read_text().split('\n\n'):
+              d={}
+              for line in b.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1);d[k]=v
+              if d.get('Filename')=='debs/'+os.environ['CPA_FILE']:
+                  rows.append(d)
+          assert len(rows)==1,'CarPlay audit prior public entry missing or ambiguous'
+          a=rows[0]
+          assert a.get('SHA256')==os.environ['CPA_SHA']
+          assert a.get('Package')=='com.chuong.carplayaudit'
+          assert a.get('Version')=='0.5.0'
+          assert a.get('Architecture')=='iphoneos-arm64'
+          print('PREVIOUS_CARPLAY_AUDIT_SIGNED_PUBLIC_INDEX_MATCHED_PIN')
+          PY
+          curl -fLsS --retry 4 --max-time 120 "$CPA_URL" -o "$CPA_DEB"
           printf '%s  %s\n' "$CPA_SHA" "$CPA_DEB" | shasum -a 256 -c -
           test "$(dpkg-deb -f "$CPA_DEB" Package)" = 'com.chuong.carplayaudit'
           test "$(dpkg-deb -f "$CPA_DEB" Version)" = '0.5.0'

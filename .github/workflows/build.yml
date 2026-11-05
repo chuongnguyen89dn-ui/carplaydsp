@@ -547,10 +547,9 @@ jobs:
                   if ': ' in line and not line.startswith(' '):
                       k,v=line.split(': ',1);rec[k]=v
               if rec:records.append(rec)
-          pats=(
-              r'debs/DuoDash_[A-Za-z0-9.+~_-]+_iphoneos-arm64\.deb',
-              r'debs/com\.Axs\.airaw_[A-Za-z0-9.+~_-]+_iphoneos-arm64\.deb',
-          )
+          # The published artifact has one integrated DuoDash/Airaw DEB.
+          # A separate Airaw DEB is not indexed; do not fabricate one.
+          pats=(r'debs/DuoDash_[A-Za-z0-9.+~_-]+_iphoneos-arm64\.deb',)
           for pat in pats:
               hits=[r for r in records if re.fullmatch(pat,r.get('Filename',''))]
               assert len(hits)==1,(pat,len(hits),'expected exactly one published archive')

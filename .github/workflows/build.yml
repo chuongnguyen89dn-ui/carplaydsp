@@ -3823,7 +3823,7 @@ jobs:
           for i,block in enumerate(blocks):
               if block.startswith('Package: com.duoface.jb.embedded\n'):
                   lines=[line for line in block.splitlines() if not line.startswith('Description: ')]
-                   lines.append('Description: DuoFace 172 wakefix5 - native map opening for explicitly selected CarPlay maps, guarded scene adoption and bounded command acknowledgement; retains keyboard, touch, reconnect and restore repairs. Signed iOS 16 rootless update; real iPhone/CarPlay display and runtime not verified. Old versions remain downloadable for rollback.')
+                  lines.append('Description: DuoFace 172 wakefix5 - native map opening for explicitly selected CarPlay maps, guarded scene adoption and bounded command acknowledgement; retains keyboard, touch, reconnect and restore repairs. Signed iOS 16 rootless update; real iPhone/CarPlay display and runtime not verified. Old versions remain downloadable for rollback.')
                   blocks[i]='\n'.join(lines)
           # Explicit G1/G2 QA-only listing; device testing is pending.
           visual12qa=0

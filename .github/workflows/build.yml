@@ -30,11 +30,60 @@ jobs:
           echo "THEOS=$HOME/theos" >> "$GITHUB_ENV"
           test -n "$(find "$HOME/theos/sdks" -maxdepth 1 -type d -name '*.sdk' -print -quit)"
 
-      - name: Build corrected independent CarPlay Split
+      - name: Build corrected independent CarPlay Split without unavailable unrelated Showcase clone
+        shell: bash
         run: |
+          set -euo pipefail
           rm -f independent-split/packages/com.chuong.carplaysplit_*.deb packages/com.chuong.carplaysplit_*.deb
+          # The optional Showcase source is a separate inaccessible repository.
+          # Do not change that project; omit only its invocation in this ephemeral checkout.
+          # Preserve any previously public signed Showcase release byte-for-byte below.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('independent-split/build.sh')
+          src=p.read_text()
+          needle='    bash ../showcase/build.sh "${RUNNER_TEMP:-/tmp}/showcarplay" "$PWD/packages"'
+          assert src.count(needle)==1,'Unexpected independent-split build script'
+          p.write_text(src.replace(needle,'    echo "SHOWCASE_UPSTREAM_UNAVAILABLE_SKIP_BUILD_RESTORE_PUBLIC_SIGNED_BYTES"'))
+          PY
           bash independent-split/build.sh
           cp independent-split/packages/*.deb packages/
+          # Keep the previous published Showcase package if it exists. Never
+          # silently drop another package or substitute unsigned/prebuilt bytes.
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          curl -fLsS --retry 4 --max-time 40 "$SITE/Packages" -o "$RUNNER_TEMP/current-public-Packages"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,re
+          p=Path(os.environ['RUNNER_TEMP'],'current-public-Packages').read_text()
+          hits=[]
+          for block in p.split('\n\n'):
+              r={}
+              for line in block.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1); r[k]=v
+              if re.fullmatch(r'debs/showcase_[A-Za-z0-9.+~_-]+_iphoneos-arm64\.deb',r.get('Filename','')):
+                  hits.append(r)
+          assert len(hits)<=1,'Ambiguous prior Showcase listing; refuse silent package removal'
+          out=Path(os.environ['RUNNER_TEMP'],'showcase-restore-receipt.txt')
+          if hits:
+              r=hits[0]
+              assert re.fullmatch('[0-9a-f]{64}',r.get('SHA256',''))
+              assert r.get('Architecture')=='iphoneos-arm64'
+              out.write_text(r['Filename']+'\n'+r['SHA256']+'\n'+r['Version']+'\n')
+          print('SHOWCASE_PREVIOUS_PUBLIC_PACKAGE_FOUND',len(hits))
+          PY
+          if test -s "$RUNNER_TEMP/showcase-restore-receipt.txt"; then
+            SHOWCASE_PATH="$(sed -n '1p' "$RUNNER_TEMP/showcase-restore-receipt.txt")"
+            SHOWCASE_SHA="$(sed -n '2p' "$RUNNER_TEMP/showcase-restore-receipt.txt")"
+            SHOWCASE_VER="$(sed -n '3p' "$RUNNER_TEMP/showcase-restore-receipt.txt")"
+            SHOWCASE_NAME="${SHOWCASE_PATH##*/}"
+            curl -fLsS --retry 4 --max-time 100 "$SITE/$SHOWCASE_PATH" -o "packages/$SHOWCASE_NAME"
+            printf '%s  %s\n' "$SHOWCASE_SHA" "packages/$SHOWCASE_NAME" | shasum -a 256 -c -
+            test "$(dpkg-deb -f "packages/$SHOWCASE_NAME" Version)" = "$SHOWCASE_VER"
+            test "$(dpkg-deb -f "packages/$SHOWCASE_NAME" Architecture)" = iphoneos-arm64
+            echo "PRESERVED_PREVIOUS_SIGNED_SHOWCASE_PACKAGE_WITHOUT_REBUILD"
+          fi
 
       - name: Set unique package version
         run: |

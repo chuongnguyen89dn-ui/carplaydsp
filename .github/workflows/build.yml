@@ -92,92 +92,62 @@ jobs:
       - name: Build rootless package
         run: make clean package FINALPACKAGE=1
 
-      - name: Build combined DuoDash + Airaw package
+      - name: Preserve existing signed DuoDash and Airaw public Sileo packages
         shell: bash
         run: |
           set -euo pipefail
-          brew install dpkg || true
-          rm -rf /tmp/duo /tmp/aira /tmp/combined
-          curl -fL "https://raw.githubusercontent.com/chuongnguyen89dn-ui/DauDat-CarPlay/main/DuoDash_1.1.3_Fullscreen427_iphoneos-arm64.deb" -o /tmp/duo.deb
-          curl -fL "https://raw.githubusercontent.com/chuongnguyen89dn-ui/DauDat-CarPlay/main/com.Axs.airaw_1.6.7_iphoneos-arm64.deb" -o /tmp/aira.deb
-          dpkg-deb -R /tmp/duo.deb /tmp/duo
-          dpkg-deb -R /tmp/aira.deb /tmp/aira
-          mkdir -p /tmp/combined/DEBIAN
-          cp -a /tmp/duo/var /tmp/combined/
-          cp -a /tmp/aira/var /tmp/combined/
-          mkdir -p /tmp/combined/var/jb/Library/MobileSubstrate/DynamicLibraries
-          cp .theos/_/var/jb/Library/MobileSubstrate/DynamicLibraries/DuoDashAirawConflictProbe.dylib /tmp/combined/var/jb/Library/MobileSubstrate/DynamicLibraries/
-          cp .theos/_/var/jb/Library/MobileSubstrate/DynamicLibraries/DuoDashAirawConflictProbe.plist /tmp/combined/var/jb/Library/MobileSubstrate/DynamicLibraries/
-          cat > /tmp/combined/DEBIAN/control <<'EOF'
-          Package: com.chuong.duodash-airaw
-          Name: DuoDash + Airaw
-          Version: 1.0.3
-          Architecture: iphoneos-arm64
-          Maintainer: chuongnguyen89dn-ui
-          Author: SenseTechLab / Axs
-          Section: Tweaks
-          Depends: mobilesubstrate (>= 0.9.5000) | ellekit, firmware (>= 14.0), preferenceloader, ws.hbang.common, com.opa334.ccsupport
-          Conflicts: com.sensetechlab.duodash, com.axs.airaw, com.carnav.hud, com.carnav.core, com.carnav.bridge, com.carnav.hook, com.carnav.hud.prefs, com.carnav.prefs.refresh, com.carnav.hud.carplaydashboard, com.carnav.hud.appbridge, com.sensetechlab.carsleeper, com.sensetechlab.carplaytweak, com.sensetechlab.core, com.sensetechlab.bridge, com.sensetechlab.prefs.refresh, com.sensetechlab.duodash.prefs, com.sensetechlab.duodash.appbridge
-          Replaces: com.sensetechlab.duodash, com.axs.airaw, com.carnav.hud, com.carnav.core, com.carnav.bridge, com.carnav.hook, com.carnav.hud.prefs, com.carnav.prefs.refresh, com.carnav.hud.carplaydashboard, com.carnav.hud.appbridge, com.sensetechlab.carsleeper, com.sensetechlab.carplaytweak, com.sensetechlab.core, com.sensetechlab.bridge, com.sensetechlab.prefs.refresh, com.sensetechlab.duodash.prefs, com.sensetechlab.duodash.appbridge
-          Provides: com.sensetechlab.duodash, com.axs.airaw, com.carnav.hud, com.carnav.core, com.carnav.bridge, com.carnav.hud.prefs, com.carnav.prefs.refresh, com.sensetechlab.core, com.sensetechlab.bridge, com.sensetechlab.prefs.refresh, com.sensetechlab.duodash.prefs
-          Description: Combined rootless package containing DuoDash 1.1.3+fullscreen1 and Airaw 1.6.7 for CarPlay.
-          EOF
-          cat > /tmp/combined/DEBIAN/postinst <<'EOF'
-          #!/var/jb/bin/sh
-          set -e
-          JB=""; [ -d /var/jb ] && JB="/var/jb"
-          LOGDIR="/var/mobile/Documents/DuoDash-Airaw-Logs"
-          LOGFILE="$LOGDIR/Conflict.log"
-          mkdir -p "$LOGDIR"
-          touch "$LOGFILE"
-          chown -R mobile:mobile "$LOGDIR" 2>/dev/null || true
-          chmod 0775 "$LOGDIR" 2>/dev/null || true
-          chmod 0664 "$LOGFILE" 2>/dev/null || true
-          printf '\n%s | PACKAGE INSTALLED com.chuong.duodash-airaw 1.0.1\n' "$(date '+%Y-%m-%d %H:%M:%S')" >> "$LOGFILE"
-
-          for d in "$JB/Library/Airaw" "$JB/Library/Airaw/Preferences" "$JB/Library/Airaw/backup"; do [ -d "$d" ] && chown mobile:mobile "$d" 2>/dev/null || true; done
-          if [ -f "$JB/Library/LaunchDaemons/com.sensetechlab.autoinject.plist" ]; then
-            launchctl unload "$JB/Library/LaunchDaemons/com.sensetechlab.autoinject.plist" 2>/dev/null || true
-            launchctl load "$JB/Library/LaunchDaemons/com.sensetechlab.autoinject.plist" 2>/dev/null || true
-          fi
-          for r in bridge carsleep appbridge_cp prefsrefresh siriprobe; do rm -f "/var/mobile/Library/DuoDash/$r.arm" "/var/mobile/Library/DuoDash/$r.state" 2>/dev/null || true; done
-          touch /var/mobile/Library/DuoDash/respring_planned 2>/dev/null || true
-          killall -HUP SpringBoard 2>/dev/null || true
-          exit 0
-          EOF
-          cp /tmp/duo/DEBIAN/prerm /tmp/combined/DEBIAN/prerm
-          chmod 0755 /tmp/combined/DEBIAN /tmp/combined/DEBIAN/postinst /tmp/combined/DEBIAN/prerm
-          chmod 0644 /tmp/combined/DEBIAN/control
-          mkdir -p combined-package
-          dpkg-deb --build --root-owner-group /tmp/combined combined-package/DuoDash-Airaw_1.0.3_iphoneos-arm64.deb
-          dpkg-deb -c combined-package/DuoDash-Airaw_1.0.3_iphoneos-arm64.deb > /tmp/combined-contents.txt
-          grep -q 'DuoDash.dylib' /tmp/combined-contents.txt
-          grep -q 'Airaw.dylib' /tmp/combined-contents.txt
-          grep -q 'DuoDashAirawConflictProbe.dylib' /tmp/combined-contents.txt
-
-      - name: Restore complete original DuoDash payload for Sileo
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl -fL --retry 3 \
-            'https://raw.githubusercontent.com/chuongnguyen89dn-ui/DauDat-CarPlay/5f683ad16a2c4f2b37e333e891cfb8f7ba3e0d6b/DuoDash_1.1.3_Fullscreen427_iphoneos-arm64.deb' \
-            -o "$RUNNER_TEMP/duodash-base.deb"
-          python3 scripts/package-duodash-fullscreen.py \
-            "$RUNNER_TEMP/duodash-base.deb" \
-            packages/com.chuong.duodash-fullscreen-complete_1.1.3+adapter1~test4_iphoneos-arm64.deb
-          dpkg-deb -I packages/com.chuong.duodash-fullscreen-complete_*.deb
-          dpkg-deb -c packages/com.chuong.duodash-fullscreen-complete_*.deb
-
-      - name: Add byte-identical DuoDash source baseline
-        shell: bash
-        run: |
-          set -euo pipefail
-          BASE="packages/DuoDash-Source_1.1.3+fullscreen1_iphoneos-arm64.deb"
-          curl -fL --retry 3 \
-            'https://raw.githubusercontent.com/chuongnguyen89dn-ui/DauDat-CarPlay/5f683ad16a2c4f2b37e333e891cfb8f7ba3e0d6b/DuoDash_1.1.3_Fullscreen427_iphoneos-arm64.deb' \
-            -o "$BASE"
-          printf '%s  %s\n' 'ea0d3bb8c8b9da2b45c3f158f390a7966419e84899f820d06f45cd51401fa465' "$BASE" | shasum -a 256 -c -
-          dpkg-deb -I "$BASE"
+          # These are other projects' already-published packages. Their upstream
+          # source URL may be unavailable. Keep byte-identical public DEBs, do
+          # not attempt to rebuild, re-sign, or alter their metadata.
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          curl -fLsS --retry 4 --max-time 50 "$SITE/Packages" -o "$RUNNER_TEMP/retained-public-Packages"
+          python3 - <<'PY' > "$RUNNER_TEMP/retained-duodash-plan.tsv"
+          from pathlib import Path
+          import os,re
+          data=Path(os.environ['RUNNER_TEMP'],'retained-public-Packages').read_text()
+          records=[]
+          for block in data.split('\n\n'):
+              record={}
+              for line in block.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      key,value=line.split(': ',1)
+                      record[key]=value
+              if record:
+                  records.append(record)
+          names={
+              'debs/DuoDash-Airaw_1.0.3_iphoneos-arm64.deb':'combined-package/DuoDash-Airaw_1.0.3_iphoneos-arm64.deb',
+              'debs/com.chuong.duodash-fullscreen-complete_1.1.3+adapter1~test4_iphoneos-arm64.deb':'packages/com.chuong.duodash-fullscreen-complete_1.1.3+adapter1~test4_iphoneos-arm64.deb',
+              'debs/DuoDash-Source_1.1.3+fullscreen1_iphoneos-arm64.deb':'packages/DuoDash-Source_1.1.3+fullscreen1_iphoneos-arm64.deb',
+          }
+          for filename,out in names.items():
+              hits=[r for r in records if r.get('Filename')==filename]
+              assert len(hits)==1,(filename,'Expected one published signed package')
+              r=hits[0]
+              sha=r.get('SHA256','')
+              assert re.fullmatch('[0-9a-f]{64}',sha),(filename,'Invalid SHA')
+              assert r.get('Architecture')=='iphoneos-arm64',(filename,'Wrong arch')
+              assert re.fullmatch(r'[A-Za-z0-9.+~:_-]+',r.get('Version','')),(filename,'Unsafe version')
+              assert re.fullmatch(r'[A-Za-z0-9.+_-]+',r.get('Package','')),(filename,'Unsafe package id')
+              assert r.get('Size','').isdigit(),(filename,'Missing size')
+              if filename.startswith('debs/DuoDash-Source_'):
+                  assert sha=='ea0d3bb8c8b9da2b45c3f158f390a7966419e84899f820d06f45cd51401fa465','Frozen DuoDash source binary must match original SHA'
+              print('\t'.join((filename,out,sha,r['Size'],r['Version'],r['Package'])))
+          PY
+          test "$(wc -l < "$RUNNER_TEMP/retained-duodash-plan.tsv" | tr -d ' ')" = 3
+          while IFS=$'\t' read -r PUBLIC_PATH OUT SHA SIZE VER PACKAGE; do
+            mkdir -p "${OUT%/*}"
+            curl -fLsS --retry 4 --max-time 120 "$SITE/$PUBLIC_PATH" -o "$OUT"
+            printf '%s  %s\n' "$SHA" "$OUT" | shasum -a 256 -c -
+            test "$(stat -f %z "$OUT")" = "$SIZE"
+            test "$(dpkg-deb -f "$OUT" Package)" = "$PACKAGE"
+            test "$(dpkg-deb -f "$OUT" Version)" = "$VER"
+            test "$(dpkg-deb -f "$OUT" Architecture)" = iphoneos-arm64
+            dpkg-deb -I "$OUT" >/dev/null
+            echo "RETAINED_ORIGINAL_SIGNED_PUBLISHED_PACKAGE_SHA_VERIFIED: $PUBLIC_PATH"
+          done < "$RUNNER_TEMP/retained-duodash-plan.tsv"
+          test -s combined-package/DuoDash-Airaw_1.0.3_iphoneos-arm64.deb
+          test -s packages/com.chuong.duodash-fullscreen-complete_1.1.3+adapter1~test4_iphoneos-arm64.deb
+          test -s packages/DuoDash-Source_1.1.3+fullscreen1_iphoneos-arm64.deb
 
       - name: Pin verified independent CarPlay NativeBridge QA payload
         run: |

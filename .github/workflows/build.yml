@@ -991,7 +991,7 @@ jobs:
               assert (libs/(module+'.dylib')).is_file(),module
           for module in ('DFTouchOwnerProbe','DFCarPlayDockOwner'):
               binary=(libs/(module+'.dylib')).read_bytes()
-              assert b'qa182-b0' in binary,module
+              assert b'qa181-b0' in binary,module
           for module in ('DFTouchOwnerProbe','DFYouTubeOrientationRelay','DF155GeneralAppStateRelay'):
               binary=(libs/(module+'.dylib')).read_bytes()
               for name in (b'com.duoface.controls188.hidden',b'com.duoface.controls188.shown',

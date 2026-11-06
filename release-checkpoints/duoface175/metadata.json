@@ -1,0 +1,10 @@
+{
+  "version": "0.0.175~wakepick1",
+  "base_workflow_blob": "abd43043cbd889c7bac7843423aa7a9e9b734998",
+  "candidate_blob": "0fa0d13fed72516c367971be4f4bb35fc52f9030",
+  "candidate_sha256": "2ea75eaa6d8589047f144fd4bca92fc8415a4c13d727b8c8f000f6d5faef1fc9",
+  "run_id": "42169825655",
+  "deb_sha256": "e53451895bd991be072dfa1cfaf515ee5a1fee28ca992b6952c09c259bf6dbb1",
+  "checks_passed": true,
+  "deployed": false
+}

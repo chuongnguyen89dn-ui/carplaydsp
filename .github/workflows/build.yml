@@ -929,6 +929,41 @@ jobs:
               assert marker in host,marker
           print('QA180_SIGNED_H1_WAKE3_FINAL_STATIC_PACKAGE_PASS_DEVICE_UNTESTED')
           PY
+          # QA181 B0: diagnostic-only stock versus DuoFace scene-owner measurements.
+          # Source CI 42237345803, immutable byte-identical archive cab573cf7d42b53c8cddc11b0195c2e68b9f1ab4.
+          # QA180 is nearest rollback; all older QA DEBs remain staged and downloadable.
+          QA181_FILE='com.duoface.jb.embedded_0.0.181~b0probe1_iphoneos-arm64.deb'
+          QA181_SHA='85377a2bba3c572b2b26b783f72af54af6ab774119f6c45f8bf4a3b1f9058714'
+          QA181_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/duoface-debs-/cab573cf7d42b53c8cddc11b0195c2e68b9f1ab4/debs/com.duoface.jb.embedded_0.0.181~b0probe1_iphoneos-arm64.deb'
+          curl -fLsS --retry 4 --max-time 140 "$QA181_URL" -o "$QA_DIR/debs/$QA181_FILE"
+          printf '%s  %s\n' "$QA181_SHA" "$QA_DIR/debs/$QA181_FILE" | shasum -a 256 -c -
+          test "$(wc -c < "$QA_DIR/debs/$QA181_FILE" | tr -d ' ')" = '1250596'
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA181_FILE" Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA181_FILE" Version)" = '0.0.181~b0probe1'
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA181_FILE" Architecture)" = 'iphoneos-arm64'
+          test -s "$QA_DIR/debs/$QA180_FILE"
+          mkdir -p "$RUNNER_TEMP/qa181-release-verify"
+          dpkg-deb -x "$QA_DIR/debs/$QA181_FILE" "$RUNNER_TEMP/qa181-release-verify"
+          QA181_ROOT="$RUNNER_TEMP/qa181-release-verify/var/jb" python3 - <<'PY'
+          import os,plistlib
+          from pathlib import Path
+          root=Path(os.environ['QA181_ROOT'])
+          info=plistlib.loads((root/'Applications/DuoFaceNativeHost.app/Info.plist').read_bytes())
+          assert str(info['CFBundleVersion'])=='181',info
+          libs=root/'Library/MobileSubstrate/DynamicLibraries'
+          for module in ('DFTouchOwnerProbe','DFCarPlayDockOwner','DFNativeMapPaneCoordinator',
+                         'DFGofaMapResize141','DFYouTubeOrientationRelay','DF155GeneralAppStateRelay'):
+              assert (libs/(module+'.dylib')).is_file(),module
+          for module in ('DFTouchOwnerProbe','DFCarPlayDockOwner'):
+              binary=(libs/(module+'.dylib')).read_bytes()
+              assert b'qa181-b0' in binary,module
+          for module in ('DFTouchOwnerProbe','DFYouTubeOrientationRelay','DF155GeneralAppStateRelay'):
+              binary=(libs/(module+'.dylib')).read_bytes()
+              for name in (b'com.duoface.controls188.hidden',b'com.duoface.controls188.shown',
+                           b'com.duoface.controls188.query'):
+                  assert name in binary,(module,name)
+          print('QA181_SIGNED_B0PROBE1_STATIC_PACKAGE_PASS_DEVICE_UNTESTED')
+          PY
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
@@ -954,8 +989,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==4,hits
-          assert {x.get('Version') for x in hits}=={'0.0.177~a1wake1','0.0.178~h1wake1','0.0.179~h1wake2','0.0.180~h1wake3'},hits
+          assert len(hits)==5,hits
+          assert {x.get('Version') for x in hits}=={'0.0.177~a1wake1','0.0.178~h1wake1','0.0.179~h1wake2','0.0.180~h1wake3','0.0.181~b0probe1'},hits
           older=[x for x in hits if x.get('Version')=='0.0.177~a1wake1'][0]
           assert older.get('SHA256')=='9123cabba7f84bf676fd04f637e161a245de9e6bfbc88a1c406254fc32223027',older
           assert older.get('Filename')=='debs/com.duoface.jb.embedded_0.0.177~a1wake1_iphoneos-arm64.deb',older
@@ -965,9 +1000,15 @@ jobs:
           nearest=[x for x in hits if x.get('Version')=='0.0.179~h1wake2'][0]
           assert nearest.get('SHA256')=='6d952e817929bb216d2149de113970ae92e318bd4262f60c32ef77c7841b40fd',nearest
           assert nearest.get('Filename')=='debs/com.duoface.jb.embedded_0.0.179~h1wake2_iphoneos-arm64.deb',nearest
+          last180=[x for x in hits if x.get('Version')=='0.0.180~h1wake3'][0]
+          assert last180.get('SHA256')=='49faa7d61635f5339d6ff440bfb8438f1c5e80bba04f7cef59303be18bd81aa6',last180
+          assert last180.get('Filename')=='debs/com.duoface.jb.embedded_0.0.180~h1wake3_iphoneos-arm64.deb',last180
+          next181=[x for x in hits if x.get('Version')=='0.0.181~b0probe1'][0]
+          assert next181.get('SHA256')=='85377a2bba3c572b2b26b783f72af54af6ab774119f6c45f8bf4a3b1f9058714',next181
+          assert next181.get('Filename')=='debs/com.duoface.jb.embedded_0.0.181~b0probe1_iphoneos-arm64.deb',next181
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') != '0.0.180~h1wake3'
+              and fields(b).get('Version') != '0.0.181~b0probe1'
           )]
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.qa.duonaviobserver'
@@ -975,7 +1016,7 @@ jobs:
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
-          print('DUOFACE_QA180_SELECTED_ONE_INDEX_QA179_NEAREST_ROLLBACK_PASS')
+          print('DUOFACE_QA181_SELECTED_ONE_INDEX_QA180_NEAREST_ROLLBACK_PASS')
           PY
           # One and only one Sileo record for the newly integrated independent DuoFace package.
           python3 - <<'PY'
@@ -990,10 +1031,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.180~h1wake3',a
+          assert a.get('Version')=='0.0.181~b0probe1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.180~h1wake3_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='49faa7d61635f5339d6ff440bfb8438f1c5e80bba04f7cef59303be18bd81aa6',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.181~b0probe1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='85377a2bba3c572b2b26b783f72af54af6ab774119f6c45f8bf4a3b1f9058714',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1040,8 +1081,8 @@ jobs:
           assert item['SHA256']=='1e3ad076be86300fecac4dfdf868481dd6e5a2d7950d26ab36ba7dbea265888e',item
           assert not any(item.get(k) for k in ('Replaces','Conflicts','Breaks')),item
           live=[r for r in records if r.get('Package')=='com.duoface.jb.embedded']
-          assert len(live)==1 and live[0]['Version']=='0.0.180~h1wake3',live
-          print('DUONAVI_OBSERVER4_SINGLE_APT_ENTRY_AND_DUOFACE_QA180_SELECTED_PASS')
+          assert len(live)==1 and live[0]['Version']=='0.0.181~b0probe1',live
+          print('DUONAVI_OBSERVER4_SINGLE_APT_ENTRY_AND_DUOFACE_QA181_SELECTED_PASS')
           PY
           python3 ../scripts/label-duodash-baseline.py Packages
           # Sileo icon is APT metadata; iPhone app icons do not populate it.
@@ -1255,8 +1296,8 @@ jobs:
           assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.4~ownerflow1_iphoneos-arm64.deb',item
           assert item['Architecture']=='iphoneos-arm64',item
           others=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(others)==1 and others[0]['Version']=='0.0.180~h1wake3',others
-          print('DUONAVI_OBSERVER4_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA180_SELECTED')
+          assert len(others)==1 and others[0]['Version']=='0.0.181~b0probe1',others
+          print('DUONAVI_OBSERVER4_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA181_SELECTED')
           PY
           curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duonavi-observer-public.deb"
           printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duonavi-observer-public.deb" | sha256sum -c -
@@ -1286,9 +1327,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.180~h1wake3'
-          FILE='com.duoface.jb.embedded_0.0.180~h1wake3_iphoneos-arm64.deb'
-          SHA='49faa7d61635f5339d6ff440bfb8438f1c5e80bba04f7cef59303be18bd81aa6'
+          VER='0.0.181~b0probe1'
+          FILE='com.duoface.jb.embedded_0.0.181~b0probe1_iphoneos-arm64.deb'
+          SHA='85377a2bba3c572b2b26b783f72af54af6ab774119f6c45f8bf4a3b1f9058714'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&
@@ -1324,12 +1365,18 @@ jobs:
           curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duoface-public.deb"
           printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duoface-public.deb" | sha256sum -c -
           echo 'DUOFACE_PUBLIC_SILEO_DEB_DOWNLOAD_AND_CHECKSUM_VERIFIED'
-          # QA179 is the nearest previous signed version; verify actual public bytes.
+          # QA180 is the nearest previous signed version; verify actual public bytes.
+          OLD180='com.duoface.jb.embedded_0.0.180~h1wake3_iphoneos-arm64.deb'
+          curl -fLsS --retry 4 "$SITE/debs/$OLD180" -o "$RUNNER_TEMP/duoface-qa180-rollback.deb"
+          printf '%s  %s\n' '49faa7d61635f5339d6ff440bfb8438f1c5e80bba04f7cef59303be18bd81aa6' "$RUNNER_TEMP/duoface-qa180-rollback.deb" | sha256sum -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-qa180-rollback.deb" Version)" = '0.0.180~h1wake3'
+          echo 'DUOFACE_QA180_NEAREST_ROLLBACK_BYTES_PRESERVED'
+          # QA179 remains historic rollback, retain SHA verification.
           OLD179='com.duoface.jb.embedded_0.0.179~h1wake2_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$SITE/debs/$OLD179" -o "$RUNNER_TEMP/duoface-qa179-rollback.deb"
           printf '%s  %s\n' '6d952e817929bb216d2149de113970ae92e318bd4262f60c32ef77c7841b40fd' "$RUNNER_TEMP/duoface-qa179-rollback.deb" | sha256sum -c -
           test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-qa179-rollback.deb" Version)" = '0.0.179~h1wake2'
-          echo 'DUOFACE_QA179_NEAREST_ROLLBACK_BYTES_PRESERVED'
+          echo 'DUOFACE_QA179_HISTORIC_ROLLBACK_BYTES_PRESERVED'
           # QA178 stays available unchanged as older signed rollback.
           OLD178='com.duoface.jb.embedded_0.0.178~h1wake1_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$SITE/debs/$OLD178" -o "$RUNNER_TEMP/duoface-qa178-rollback.deb"

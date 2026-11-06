@@ -1,0 +1,81 @@
+name: Record verified DuoFace 175 publisher handoff
+on:
+  push:
+    branches: [release/duoface175-wakepick1-20261106]
+    paths: ['.github/workflows/duoface175-release-handoff.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /tiep tuc du an.md
+            /release-checkpoints/
+      - name: Verify public release and append canonical handoff preserving history
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = chuongnguyen89dn-ui/carplaydsp
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            git fetch --no-tags origin main
+            git checkout --detach FETCH_HEAD
+            python3 - <<'PY'
+          import hashlib,json,os,urllib.request
+          from pathlib import Path
+          from datetime import datetime,timezone
+          def get(url):
+              req=urllib.request.Request(url,headers={'User-Agent':'DuoFace175-publication-handoff'})
+              with urllib.request.urlopen(req,timeout=35) as response:return response.read()
+          run=json.loads(get('https://api.github.com/repos/chuongnguyen89dn-ui/carplaydsp/actions/runs/42169974458'))
+          assert run['status']=='completed' and run['conclusion']=='success'
+          assert run['head_sha']=='1f81f173834bf6c0d9afbb2ed72332cfbf7e7935'
+          site='https://chuongnguyen89dn-ui.github.io/carplaydsp/'
+          version='0.0.175~wakepick1'
+          filename='com.duoface.jb.embedded_'+version+'_iphoneos-arm64.deb'
+          sha='e53451895bd991be072dfa1cfaf515ee5a1fee28ca992b6952c09c259bf6dbb1'
+          package=get(site+'debs/'+filename)
+          assert hashlib.sha256(package).hexdigest()==sha
+          index=get(site+'Packages').decode()
+          hits=[]
+          for block in index.split('\n\n'):
+              d=dict(line.split(': ',1) for line in block.splitlines() if ': ' in line and not line.startswith(' '))
+              if d.get('Package')=='com.duoface.jb.embedded':hits.append(d)
+          assert len(hits)==1 and hits[0]['Version']==version and hits[0]['SHA256']==sha
+          marker='## 2026-11-06 - DuoFace 0.0.175 wakepick1 OFFICIAL SILEO PUBLIC VERIFIED'
+          note=(marker+'\n\n'
+              '- Existing official source '+site+' now advertises one `com.duoface.jb.embedded` version `'+version+'`. Exact public DEB '+filename+' SHA256 '+sha+', 1298716 bytes; downloaded and rehashed independently in this docs job.\n'
+              '- Publisher workflow commit1f81f173834bf6c0d9afbb2ed72332cfbf7e7935 changes only .github/workflows/build.yml to validated blob0fa0d13fed72516c367971be4f4bb35fc52f9030. Build/deploy and all public verifier jobs in run42169974458 SUCCESS; YAML validator42169974449 SUCCESS. QA174 rollback bytes retained and checked. No DuoFace rebuild or same-version byte replacement.\n'
+              '- Signed input: Duoface compiled fd7e428c250539b33cdd83b3c9df81336cbf5a30, signed run42168269030, immutable archive1688f4e92135b6b46d7fa3e8fa5cb94d850ea447 sideplay/jb-embedded-appbridge/evidence/runs/42168269030/.\n'
+              '- Preparation branch release/duoface175-wakepick1-20261106 stores read-only release-tools/prepare_duoface175.py, validation workflow and candidate receipt. Validation42169825655 PASS. Prior42169578183 rejected an Actions-token workflow write, then42169708357 rejected inherited archive whitespace; neither changed main. Authorized existing GitHub connector performed checked workflow commit/ref update; no permissions broadened or credentials extracted.\n'
+              '- This is DISTRIBUTION success only. Version175 contains hidden-first-contact wake capture and occupied-pane map replacement; physical CarPlay unverified. Google Maps standalone scene identity and independent Home icon publication remain OPEN. Preserve old174 forensic rollback; do not declare it device-stable.\n'
+              '- Canonical source work: chuongnguyen89dn-ui/Duoface branch fix/qa180-owned-wake-map-replace-20261106, sideplay/tiep tuc du an.md and sideplay/audit/qa180-owned-wake-map-replace-20261106/publication-receipt.json. User refreshes same source and upgrades exact175; no extra source or manual DEB needed.\n'
+              '- Receipt run '+os.environ['GITHUB_RUN_ID']+'; UTC '+datetime.now(timezone.utc).isoformat()+'. History below preserved.\n\n')
+          p=Path('tiep tuc du an.md');old=p.read_text()
+          if marker not in old:p.write_text(note+old)
+          assert marker in p.read_text() and p.read_text().endswith(old)
+          Path('release-checkpoints').mkdir(exist_ok=True)
+          Path('release-checkpoints/duoface175-public-verified.json').write_text(json.dumps({
+              'version':version,'sha256':sha,'publisher_run':42169974458,'publisher_commit':run['head_sha'],
+              'public_source':site,'public_deb':site+'debs/'+filename,'verified_utc':datetime.now(timezone.utc).isoformat(),
+              'receipt_run':os.environ['GITHUB_RUN_ID'],'device_tested':False},indent=2)+'\n')
+          PY
+            git add -- 'tiep tuc du an.md' release-checkpoints/duoface175-public-verified.json
+            if git diff --cached --quiet; then exit 0; fi
+            git diff --cached --check
+            git commit -m 'docs(sileo): DuoFace175 public package and checksum verified, device pending [skip ci]'
+            if git push origin HEAD:refs/heads/main; then
+              git rev-parse HEAD
+              exit 0
+            fi
+          done
+          exit 1

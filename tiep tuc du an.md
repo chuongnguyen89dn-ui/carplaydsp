@@ -1,3 +1,13 @@
+## 2026-11-06 - DuoFace 0.0.175 wakepick1 OFFICIAL SILEO PUBLIC VERIFIED
+
+- Existing official source https://chuongnguyen89dn-ui.github.io/carplaydsp/ now advertises one `com.duoface.jb.embedded` version `0.0.175~wakepick1`. Exact public DEB com.duoface.jb.embedded_0.0.175~wakepick1_iphoneos-arm64.deb SHA256 e53451895bd991be072dfa1cfaf515ee5a1fee28ca992b6952c09c259bf6dbb1, 1298716 bytes; downloaded and rehashed independently in this docs job.
+- Publisher workflow commit1f81f173834bf6c0d9afbb2ed72332cfbf7e7935 changes only .github/workflows/build.yml to validated blob0fa0d13fed72516c367971be4f4bb35fc52f9030. Build/deploy and all public verifier jobs in run42169974458 SUCCESS; YAML validator42169974449 SUCCESS. QA174 rollback bytes retained and checked. No DuoFace rebuild or same-version byte replacement.
+- Signed input: Duoface compiled fd7e428c250539b33cdd83b3c9df81336cbf5a30, signed run42168269030, immutable archive1688f4e92135b6b46d7fa3e8fa5cb94d850ea447 sideplay/jb-embedded-appbridge/evidence/runs/42168269030/.
+- Preparation branch release/duoface175-wakepick1-20261106 stores read-only release-tools/prepare_duoface175.py, validation workflow and candidate receipt. Validation42169825655 PASS. Prior42169578183 rejected an Actions-token workflow write, then42169708357 rejected inherited archive whitespace; neither changed main. Authorized existing GitHub connector performed checked workflow commit/ref update; no permissions broadened or credentials extracted.
+- This is DISTRIBUTION success only. Version175 contains hidden-first-contact wake capture and occupied-pane map replacement; physical CarPlay unverified. Google Maps standalone scene identity and independent Home icon publication remain OPEN. Preserve old174 forensic rollback; do not declare it device-stable.
+- Canonical source work: chuongnguyen89dn-ui/Duoface branch fix/qa180-owned-wake-map-replace-20261106, sideplay/tiep tuc du an.md and sideplay/audit/qa180-owned-wake-map-replace-20261106/publication-receipt.json. User refreshes same source and upgrades exact175; no extra source or manual DEB needed.
+- Receipt run 42170433050; UTC 2026-11-06T05:47:00.090313+00:00. History below preserved.
+
 ## 2026-11-06 — DuoFace 0.0.174 mapwake1 OFFICIAL SILEO PAGES PUBLIC VERIFIED
 
 - User specifically ordered official Sileo publication so genuine parked CarPlay testing can occur, superseding the previous staged-only status. No fake device PASS.

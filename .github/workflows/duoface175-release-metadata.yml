@@ -1,0 +1,94 @@
+name: Validate DuoFace 175 signed input and release metadata
+on:
+  push:
+    branches: [release/duoface175-wakepick1-20261106]
+    paths:
+      - 'release-tools/prepare_duoface175.py'
+      - '.github/workflows/duoface175-release-metadata.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: duoface175-metadata-validation
+  cancel-in-progress: false
+jobs:
+  validate-metadata:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify immutable first-party signed release without executing it
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = chuongnguyen89dn-ui/carplaydsp
+          test "$GITHUB_REF_NAME" = release/duoface175-wakepick1-20261106
+          SOURCE='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/1688f4e92135b6b46d7fa3e8fa5cb94d850ea447/sideplay/jb-embedded-appbridge/evidence/runs/42168269030'
+          FILE='com.duoface.jb.embedded_0.0.175~wakepick1_iphoneos-arm64.deb'
+          SHA='e53451895bd991be072dfa1cfaf515ee5a1fee28ca992b6952c09c259bf6dbb1'
+          mkdir -p "$RUNNER_TEMP/duoface175-evidence"
+          curl -fLsS --retry 3 --max-time 100 "$SOURCE/$FILE" -o "$RUNNER_TEMP/$FILE"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/$FILE" | sha256sum -c - | tee "$RUNNER_TEMP/duoface175-evidence/deb-checksum.txt"
+          test "$(dpkg-deb -f "$RUNNER_TEMP/$FILE" Package)" = com.duoface.jb.embedded
+          test "$(dpkg-deb -f "$RUNNER_TEMP/$FILE" Version)" = '0.0.175~wakepick1'
+          test "$(dpkg-deb -f "$RUNNER_TEMP/$FILE" Architecture)" = iphoneos-arm64
+          curl -fLsS --retry 3 "$SOURCE/audit-summary.json" -o "$RUNNER_TEMP/duoface175-evidence/audit-summary.json"
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          a=json.loads(Path(os.environ['RUNNER_TEMP'],'duoface175-evidence/audit-summary.json').read_text())
+          assert a['version']=='0.0.175~wakepick1'
+          assert a['deb_sha256']=='e53451895bd991be072dfa1cfaf515ee5a1fee28ca992b6952c09c259bf6dbb1'
+          assert a['source_sha']=='fd7e428c250539b33cdd83b3c9df81336cbf5a30'
+          assert a['signed'] and a['sha256_verified'] and a['whole_deb_static_audit_pass']
+          print('QA175_IMMUTABLE_SIGNED_INPUT_VERIFIED_DEVICE_UNTESTED')
+          PY
+      - name: Generate and validate release metadata diff only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile release-tools/prepare_duoface175.py
+          python3 release-tools/prepare_duoface175.py > "$RUNNER_TEMP/duoface175-evidence/publisher.patch"
+          git apply --check "$RUNNER_TEMP/duoface175-evidence/publisher.patch"
+          git apply "$RUNNER_TEMP/duoface175-evidence/publisher.patch"
+          test "$(git diff --name-only)" = .github/workflows/build.yml
+          git diff --check
+          python3 -m pip install --disable-pip-version-check pyyaml
+          python3 - <<'PY'
+          import subprocess,yaml
+          from pathlib import Path
+          old=yaml.safe_load(subprocess.check_output(['git','show','HEAD:.github/workflows/build.yml'],text=True))
+          new=yaml.safe_load(Path('.github/workflows/build.yml').read_text())
+          assert old['permissions']==new['permissions']
+          assert old['concurrency']==new['concurrency']
+          assert old['jobs'].keys()==new['jobs'].keys()
+          for key in old['jobs']:
+              for field in ('permissions','needs','runs-on','environment'):
+                  assert old['jobs'][key].get(field)==new['jobs'][key].get(field),(key,field)
+              assert len(old['jobs'][key].get('steps',[]))==len(new['jobs'][key].get('steps',[])),key
+          assert 'verify-duoface-integrated-pages' in new['jobs']
+          print('QA175_EXISTING_JOBS_PERMISSIONS_AND_ROLLBACK_PRESERVED')
+          PY
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          "$HOME/go/bin/actionlint" -shellcheck= .github/workflows/build.yml .github/workflows/duoface175-release-metadata.yml
+      - name: Save validated metadata on release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH=release/duoface175-wakepick1-20261106
+          git fetch --no-tags origin "$BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- .github/workflows/build.yml
+          git commit -m 'release: validated signed DuoFace 175 pin; retain all previous packages [skip ci]'
+          git push origin "HEAD:refs/heads/$BRANCH"
+          git rev-parse HEAD | tee "$RUNNER_TEMP/duoface175-evidence/validated-head.txt"
+          echo 'METADATA_BRANCH_READY_NOT_YET_DEPLOYED'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DuoFace175-release-metadata-verification
+          path: ${{ runner.temp }}/duoface175-evidence/
+          if-no-files-found: warn
+          retention-days: 14

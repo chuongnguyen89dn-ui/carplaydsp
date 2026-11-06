@@ -3834,7 +3834,7 @@ jobs:
           # Release exactly the original Muse/ldid-signed DEB bytes, never repack or resign.
           QA178_FILE='com.duoface.jb.embedded_0.0.178~h1wake1_iphoneos-arm64.deb'
           QA178_SHA='9ef27c0155aedf9eaef1a489bbe7f1191de8b987189cd4c554c3c79067a002c0'
-          QA178_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/Duoface/02f75ecabe3a6199416c5b4528d3a054b13a9029/sideplay/jb-embedded-appbridge/packages/com.duoface.jb.embedded_0.0.178~h1wake1_iphoneos-arm64.deb'
+          QA178_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/duoface-debs-/ecfff70c1998fafd50b073e347a7be2161611b1e/debs/com.duoface.jb.embedded_0.0.178~h1wake1_iphoneos-arm64.deb'
           curl -fLsS --retry 4 --max-time 140 "$QA178_URL" -o "$QA_DIR/debs/$QA178_FILE"
           printf '%s  %s\n' "$QA178_SHA" "$QA_DIR/debs/$QA178_FILE" | shasum -a 256 -c -
           test "$(wc -c < "$QA_DIR/debs/$QA178_FILE" | tr -d ' ')" = '1403428'

@@ -89,6 +89,7 @@ jobs:
                   'candidate_sha256':hashlib.sha256(b).hexdigest(),'run_id':os.environ['GITHUB_RUN_ID'],
                   'deb_sha256':'e53451895bd991be072dfa1cfaf515ee5a1fee28ca992b6952c09c259bf6dbb1',
                   'checks_passed':True,'deployed':False}
+          assert record['candidate_blob']=='0fa0d13fed72516c367971be4f4bb35fc52f9030'
           p.with_name('metadata.json').write_text(json.dumps(record,indent=2)+'\n')
           print(json.dumps(record))
           PY
@@ -99,7 +100,10 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -- "$TARGET/build.yml" "$TARGET/metadata.json"
-          git diff --cached --check
+          # The release DIFF was whitespace-checked above. The full archive
+          # preserves pre-existing historical whitespace byte-for-byte.
+          test "$(git hash-object "$TARGET/build.yml")" = 0fa0d13fed72516c367971be4f4bb35fc52f9030
+          git diff --cached --check -- "$TARGET/metadata.json"
           git commit -m 'audit: archive validated DuoFace 175 publisher candidate, not deployed [skip ci]'
           git push origin "HEAD:refs/heads/$BRANCH"
           git rev-parse HEAD | tee "$RUNNER_TEMP/duoface175-evidence/validated-head.txt"

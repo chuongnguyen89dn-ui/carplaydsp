@@ -71,20 +71,39 @@ jobs:
           PY
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
           "$HOME/go/bin/actionlint" -shellcheck= .github/workflows/build.yml .github/workflows/duoface175-release-metadata.yml
-      - name: Save validated metadata on release branch only
+      - name: Archive validated candidate without modifying any active workflow
         shell: bash
         run: |
           set -euo pipefail
           BRANCH=release/duoface175-wakepick1-20261106
+          TARGET=release-checkpoints/duoface175
+          mkdir -p "$TARGET"
+          cp .github/workflows/build.yml "$TARGET/build.yml"
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path('release-checkpoints/duoface175/build.yml')
+          b=p.read_bytes()
+          record={'version':'0.0.175~wakepick1','base_workflow_blob':'abd43043cbd889c7bac7843423aa7a9e9b734998',
+                  'candidate_blob':hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest(),
+                  'candidate_sha256':hashlib.sha256(b).hexdigest(),'run_id':os.environ['GITHUB_RUN_ID'],
+                  'deb_sha256':'e53451895bd991be072dfa1cfaf515ee5a1fee28ca992b6952c09c259bf6dbb1',
+                  'checks_passed':True,'deployed':False}
+          p.with_name('metadata.json').write_text(json.dumps(record,indent=2)+'\n')
+          print(json.dumps(record))
+          PY
+          git restore -- .github/workflows/build.yml
+          test -z "$(git diff --name-only)"
           git fetch --no-tags origin "$BRANCH"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- .github/workflows/build.yml
-          git commit -m 'release: validated signed DuoFace 175 pin; retain all previous packages [skip ci]'
+          git add -- "$TARGET/build.yml" "$TARGET/metadata.json"
+          git diff --cached --check
+          git commit -m 'audit: archive validated DuoFace 175 publisher candidate, not deployed [skip ci]'
           git push origin "HEAD:refs/heads/$BRANCH"
           git rev-parse HEAD | tee "$RUNNER_TEMP/duoface175-evidence/validated-head.txt"
-          echo 'METADATA_BRANCH_READY_NOT_YET_DEPLOYED'
+          echo 'CANDIDATE_READY_FOR_AUTHORIZED_WORKFLOW_WRITE_NOT_DEPLOYED'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

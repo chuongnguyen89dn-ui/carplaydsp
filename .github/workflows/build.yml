@@ -964,27 +964,27 @@ jobs:
                   assert name in binary,(module,name)
           print('QA181_SIGNED_B0PROBE1_STATIC_PACKAGE_PASS_DEVICE_UNTESTED')
           PY
-          # QA182 B1: one native Maps assignment; runtime/vehicle acceptance UNVERIFIED.
-          # Source CI 42314369824, immutable byte-identical archive 4a9eef05d9ffa6a6d110ddc6babaf2713a58703c.
-          # QA181 is nearest rollback; original QA180 and older bytes remain online.
-          QA182_FILE='com.duoface.jb.embedded_0.0.182~b1nativemaps1_iphoneos-arm64.deb'
-          QA182_SHA='a879bc6e617f72b51e2d763b216626f5240495d94a6c1da2abff30b60d0e9860'
-          QA182_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/duoface-debs-/4a9eef05d9ffa6a6d110ddc6babaf2713a58703c/debs/com.duoface.jb.embedded_0.0.182~b1nativemaps1_iphoneos-arm64.deb'
-          curl -fLsS --retry 4 --max-time 140 "$QA182_URL" -o "$QA_DIR/debs/$QA182_FILE"
-          printf '%s  %s\n' "$QA182_SHA" "$QA_DIR/debs/$QA182_FILE" | shasum -a 256 -c -
-          test "$(wc -c < "$QA_DIR/debs/$QA182_FILE" | tr -d ' ')" = '1274984'
-          test "$(dpkg-deb -f "$QA_DIR/debs/$QA182_FILE" Package)" = 'com.duoface.jb.embedded'
-          test "$(dpkg-deb -f "$QA_DIR/debs/$QA182_FILE" Version)" = '0.0.182~b1nativemaps1'
-          test "$(dpkg-deb -f "$QA_DIR/debs/$QA182_FILE" Architecture)" = 'iphoneos-arm64'
+          # QA185 admission1: launch-identity membership before rendering gates; runtime/vehicle acceptance UNVERIFIED.
+          # Signed CI 42343166133; source CI 42343003298, immutable byte-identical archive 67314801e8bf5f791927164ff01ed58284ea2214.
+          # QA182 is nearest public rollback; QA181/QA180 and older bytes remain online.
+          QA185_FILE='com.duoface.jb.embedded_0.0.185~admission1_iphoneos-arm64.deb'
+          QA185_SHA='4c4711ac9f048fa1dd63de6e7757a34c6abc59d30e76a5405d03393f96efde30'
+          QA185_URL='https://raw.githubusercontent.com/chuongnguyen89dn-ui/duoface-debs-/67314801e8bf5f791927164ff01ed58284ea2214/debs/com.duoface.jb.embedded_0.0.185~admission1_iphoneos-arm64.deb'
+          curl -fLsS --retry 4 --max-time 140 "$QA185_URL" -o "$QA_DIR/debs/$QA185_FILE"
+          printf '%s  %s\n' "$QA185_SHA" "$QA_DIR/debs/$QA185_FILE" | shasum -a 256 -c -
+          test "$(wc -c < "$QA_DIR/debs/$QA185_FILE" | tr -d ' ')" = '1291416'
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA185_FILE" Package)" = 'com.duoface.jb.embedded'
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA185_FILE" Version)" = '0.0.185~admission1'
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA185_FILE" Architecture)" = 'iphoneos-arm64'
           test -s "$QA_DIR/debs/$QA180_FILE"
-          mkdir -p "$RUNNER_TEMP/qa182-release-verify"
-          dpkg-deb -x "$QA_DIR/debs/$QA182_FILE" "$RUNNER_TEMP/qa182-release-verify"
-          QA182_ROOT="$RUNNER_TEMP/qa182-release-verify/var/jb" python3 - <<'PY'
+          mkdir -p "$RUNNER_TEMP/qa185-release-verify"
+          dpkg-deb -x "$QA_DIR/debs/$QA185_FILE" "$RUNNER_TEMP/qa185-release-verify"
+          QA185_ROOT="$RUNNER_TEMP/qa185-release-verify/var/jb" python3 - <<'PY'
           import os,plistlib
           from pathlib import Path
-          root=Path(os.environ['QA182_ROOT'])
+          root=Path(os.environ['QA185_ROOT'])
           info=plistlib.loads((root/'Applications/DuoFaceNativeHost.app/Info.plist').read_bytes())
-          assert str(info['CFBundleVersion'])=='182',info
+          assert str(info['CFBundleVersion'])=='185',info
           libs=root/'Library/MobileSubstrate/DynamicLibraries'
           for module in ('DFTouchOwnerProbe','DFCarPlayDockOwner','DFNativeMapPaneCoordinator',
                          'DFGofaMapResize141','DFYouTubeOrientationRelay','DF155GeneralAppStateRelay'):
@@ -1001,8 +1001,15 @@ jobs:
           for marker in (b'qa182-b1',b'frame-placed',b'background-completion-ABI-unverified'):
               assert marker in b1,marker
           assert b'phone-host-rejected' in (libs/'DFTouchOwnerProbe.dylib').read_bytes()
-          print('QA182_SIGNED_B1NATIVEMAPS1_STATIC_PACKAGE_PASS_DEVICE_UNTESTED')
+          for marker in (b'launch-identity-captured',b'identity-admitted',b'post-admission-visibility'):
+              assert marker in b1,marker
+          print('QA185_SIGNED_ADMISSION1_STATIC_PACKAGE_PASS_DEVICE_UNTESTED')
           PY
+          # Preserve the previous public QA182 exact signed bytes as nearest rollback.
+          QA182_ROLLBACK_FILE='com.duoface.jb.embedded_0.0.182~b1nativemaps1_iphoneos-arm64.deb'
+          curl -fLsS --retry 4 --max-time 140 'https://raw.githubusercontent.com/chuongnguyen89dn-ui/duoface-debs-/4a9eef05d9ffa6a6d110ddc6babaf2713a58703c/debs/com.duoface.jb.embedded_0.0.182~b1nativemaps1_iphoneos-arm64.deb' -o "$QA_DIR/debs/$QA182_ROLLBACK_FILE"
+          printf '%s  %s\n' 'a879bc6e617f72b51e2d763b216626f5240495d94a6c1da2abff30b60d0e9860' "$QA_DIR/debs/$QA182_ROLLBACK_FILE" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$QA_DIR/debs/$QA182_ROLLBACK_FILE" Version)" = '0.0.182~b1nativemaps1'
           cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
 
@@ -1028,8 +1035,8 @@ jobs:
               return result
           entries=[fields(b) for b in blocks]
           hits=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(hits)==6,hits
-          assert {x.get('Version') for x in hits}=={'0.0.177~a1wake1','0.0.178~h1wake1','0.0.179~h1wake2','0.0.180~h1wake3','0.0.181~b0probe1','0.0.182~b1nativemaps1'},hits
+          assert len(hits)==7,hits
+          assert {x.get('Version') for x in hits}=={'0.0.177~a1wake1','0.0.178~h1wake1','0.0.179~h1wake2','0.0.180~h1wake3','0.0.181~b0probe1','0.0.182~b1nativemaps1','0.0.185~admission1'},hits
           older=[x for x in hits if x.get('Version')=='0.0.177~a1wake1'][0]
           assert older.get('SHA256')=='9123cabba7f84bf676fd04f637e161a245de9e6bfbc88a1c406254fc32223027',older
           assert older.get('Filename')=='debs/com.duoface.jb.embedded_0.0.177~a1wake1_iphoneos-arm64.deb',older
@@ -1045,12 +1052,12 @@ jobs:
           next181=[x for x in hits if x.get('Version')=='0.0.181~b0probe1'][0]
           assert next181.get('SHA256')=='85377a2bba3c572b2b26b783f72af54af6ab774119f6c45f8bf4a3b1f9058714',next181
           assert next181.get('Filename')=='debs/com.duoface.jb.embedded_0.0.181~b0probe1_iphoneos-arm64.deb',next181
-          selected182=[x for x in hits if x.get('Version')=='0.0.182~b1nativemaps1'][0]
-          assert selected182.get('SHA256')=='a879bc6e617f72b51e2d763b216626f5240495d94a6c1da2abff30b60d0e9860',selected182
-          assert selected182.get('Filename')=='debs/com.duoface.jb.embedded_0.0.182~b1nativemaps1_iphoneos-arm64.deb',selected182
+          selected185=[x for x in hits if x.get('Version')=='0.0.185~admission1'][0]
+          assert selected185.get('SHA256')=='4c4711ac9f048fa1dd63de6e7757a34c6abc59d30e76a5405d03393f96efde30',selected185
+          assert selected185.get('Filename')=='debs/com.duoface.jb.embedded_0.0.185~admission1_iphoneos-arm64.deb',selected185
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.jb.embedded'
-              and fields(b).get('Version') != '0.0.182~b1nativemaps1'
+              and fields(b).get('Version') != '0.0.185~admission1'
           )]
           blocks=[b for b in blocks if not (
               fields(b).get('Package')=='com.duoface.qa.duonaviobserver'
@@ -1058,7 +1065,7 @@ jobs:
           )]
           source.write_text('\n\n'.join(blocks).rstrip()+'\n')
           assert sum(fields(x).get('Package')=='com.duoface.jb.embedded' for x in blocks)==1
-          print('DUOFACE_QA182_SELECTED_ONE_INDEX_QA181_NEAREST_ROLLBACK_PASS')
+          print('DUOFACE_QA185_SELECTED_ONE_INDEX_QA182_NEAREST_ROLLBACK_PASS')
           PY
           # One and only one Sileo record for the newly integrated independent DuoFace package.
           python3 - <<'PY'
@@ -1073,10 +1080,10 @@ jobs:
               if d.get('Package')=='com.duoface.jb.embedded':parsed.append(d)
           assert len(parsed)==1,parsed
           a=parsed[0]
-          assert a.get('Version')=='0.0.182~b1nativemaps1',a
+          assert a.get('Version')=='0.0.185~admission1',a
           assert a.get('Architecture')=='iphoneos-arm64',a
-          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.182~b1nativemaps1_iphoneos-arm64.deb',a
-          assert a.get('SHA256')=='a879bc6e617f72b51e2d763b216626f5240495d94a6c1da2abff30b60d0e9860',a
+          assert a.get('Filename')=='debs/com.duoface.jb.embedded_0.0.185~admission1_iphoneos-arm64.deb',a
+          assert a.get('SHA256')=='4c4711ac9f048fa1dd63de6e7757a34c6abc59d30e76a5405d03393f96efde30',a
           assert a.get('Name')=='DuoFace Independent (Integrated CarPlay Beta)',a
           assert 'carbridge' not in a.get('Depends','').lower(),a
           print('DUOFACE_INTEGRATED_SILEO_EXACTLY_ONE_APT_RECORD_PASS')
@@ -1123,8 +1130,8 @@ jobs:
           assert item['SHA256']=='1e3ad076be86300fecac4dfdf868481dd6e5a2d7950d26ab36ba7dbea265888e',item
           assert not any(item.get(k) for k in ('Replaces','Conflicts','Breaks')),item
           live=[r for r in records if r.get('Package')=='com.duoface.jb.embedded']
-          assert len(live)==1 and live[0]['Version']=='0.0.182~b1nativemaps1',live
-          print('DUONAVI_OBSERVER4_SINGLE_APT_ENTRY_AND_DUOFACE_QA182_SELECTED_PASS')
+          assert len(live)==1 and live[0]['Version']=='0.0.185~admission1',live
+          print('DUONAVI_OBSERVER4_SINGLE_APT_ENTRY_AND_DUOFACE_QA185_SELECTED_PASS')
           PY
           python3 ../scripts/label-duodash-baseline.py Packages
           # Sileo icon is APT metadata; iPhone app icons do not populate it.
@@ -1156,7 +1163,7 @@ jobs:
           for i,block in enumerate(blocks):
               if block.startswith('Package: com.duoface.jb.embedded\n'):
                   lines=[line for line in block.splitlines() if not line.startswith('Description: ')]
-                  lines.append('Description: DuoFace QA178 H1 wake - signed app-touch wake and native-map ownership candidate. Live vehicle input, keyboard and map pixels remain unverified; QA177 is the nearest rollback.')
+                  lines.append('Description: DuoFace QA185 admission1 - native Maps launch-identity membership before view visibility. Vehicle pane commit, sustained ownership and correct touch remain unverified; QA182 is the previous public rollback.')
                   blocks[i]='\n'.join(lines)
           # Explicit G1/G2 QA-only listing; device testing is pending.
           visual12qa=0
@@ -1338,8 +1345,8 @@ jobs:
           assert item['Filename']=='debs/com.duoface.qa.duonaviobserver_0.0.4~ownerflow1_iphoneos-arm64.deb',item
           assert item['Architecture']=='iphoneos-arm64',item
           others=[x for x in entries if x.get('Package')=='com.duoface.jb.embedded']
-          assert len(others)==1 and others[0]['Version']=='0.0.182~b1nativemaps1',others
-          print('DUONAVI_OBSERVER4_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA182_SELECTED')
+          assert len(others)==1 and others[0]['Version']=='0.0.185~admission1',others
+          print('DUONAVI_OBSERVER4_PUBLIC_SINGLE_INDEX_AND_DUOFACE_QA185_SELECTED')
           PY
           curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duonavi-observer-public.deb"
           printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duonavi-observer-public.deb" | sha256sum -c -
@@ -1369,9 +1376,9 @@ jobs:
           set -euo pipefail
           SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
           PKG='com.duoface.jb.embedded'
-          VER='0.0.182~b1nativemaps1'
-          FILE='com.duoface.jb.embedded_0.0.182~b1nativemaps1_iphoneos-arm64.deb'
-          SHA='a879bc6e617f72b51e2d763b216626f5240495d94a6c1da2abff30b60d0e9860'
+          VER='0.0.185~admission1'
+          FILE='com.duoface.jb.embedded_0.0.185~admission1_iphoneos-arm64.deb'
+          SHA='4c4711ac9f048fa1dd63de6e7757a34c6abc59d30e76a5405d03393f96efde30'
           for attempt in $(seq 1 20); do
             if curl -fLsS --max-time 25 "$SITE/Packages" -o "$RUNNER_TEMP/duoface-packages"; then
               if grep -Fqx "Version: $VER" "$RUNNER_TEMP/duoface-packages" &&
@@ -1407,7 +1414,13 @@ jobs:
           curl -fLsS --retry 4 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duoface-public.deb"
           printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duoface-public.deb" | sha256sum -c -
           echo 'DUOFACE_PUBLIC_SILEO_DEB_DOWNLOAD_AND_CHECKSUM_VERIFIED'
-          # QA181 is the nearest rollback: verify the original public bytes.
+          # QA182 is the nearest public rollback; preserve original signed bytes.
+          OLD182='com.duoface.jb.embedded_0.0.182~b1nativemaps1_iphoneos-arm64.deb'
+          curl -fLsS --retry 4 "$SITE/debs/$OLD182" -o "$RUNNER_TEMP/duoface-qa182-rollback.deb"
+          printf '%s  %s\n' 'a879bc6e617f72b51e2d763b216626f5240495d94a6c1da2abff30b60d0e9860' "$RUNNER_TEMP/duoface-qa182-rollback.deb" | sha256sum -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/duoface-qa182-rollback.deb" Version)" = '0.0.182~b1nativemaps1'
+          echo 'DUOFACE_QA182_NEAREST_PUBLIC_ROLLBACK_BYTES_PRESERVED'
+          # QA181 remains a historical rollback: verify its original public bytes.
           OLD181='com.duoface.jb.embedded_0.0.181~b0probe1_iphoneos-arm64.deb'
           curl -fLsS --retry 4 "$SITE/debs/$OLD181" -o "$RUNNER_TEMP/duoface-qa181-rollback.deb"
           printf '%s  %s\n' '85377a2bba3c572b2b26b783f72af54af6ab774119f6c45f8bf4a3b1f9058714' "$RUNNER_TEMP/duoface-qa181-rollback.deb" | sha256sum -c -
@@ -2039,4 +2052,5 @@ jobs:
           test "$(dpkg-deb -f "$RUNNER_TEMP/gate1-public.deb" Package)" = "$PKG"
           test "$(dpkg-deb -f "$RUNNER_TEMP/gate1-public.deb" Version)" = "$VER"
           echo 'GATE1_PUBLIC_SILEO_BINARY_SHA256_PASS_NO_DEVICE_CARPLAY_PROOF'
+
 

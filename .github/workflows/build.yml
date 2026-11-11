@@ -545,6 +545,49 @@ jobs:
           dpkg-deb -c "$CPA_DEB" | grep -F '/CarPlayRuntimeProbe.dylib'
           dpkg-deb -c "$CPA_DEB" | grep -F '/CarPlayAudit.app/CarPlayAudit'
           echo 'CARPLAY_AUDIT_READONLY_ROOTLESS_SHA_PASS'
+      - name: Pin fully rebranded DuoCar HL21 signed DEB from immutable GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          # New and separate package. No Conflicts/Replaces/Breaks with the old OmniCar package:
+          # the owner will uninstall it manually. Keep all existing Sileo packages intact.
+          FILE='com.chuong.duocar_1.0.3-hl21duocar_iphoneos-arm64.deb'
+          SHA='275ad8a211b13e51b234d491c627592d675e217ea5529fcb736df0782eb83022'
+          URL="https://github.com/chuongnguyen89dn-ui/Omnicar/releases/download/duocar-hl21-20261111/$FILE"
+          mkdir -p packages
+          OUT="packages/$FILE"
+          curl -fLsS --retry 4 --max-time 120 "$URL" -o "$OUT"
+          printf '%s  %s\n' "$SHA" "$OUT" | shasum -a 256 -c -
+          test "$(stat -f %z "$OUT")" = 1285052
+          test "$(dpkg-deb -f "$OUT" Package)" = 'com.chuong.duocar'
+          test "$(dpkg-deb -f "$OUT" Version)" = '1.0.3-hl21duocar'
+          test "$(dpkg-deb -f "$OUT" Architecture)" = iphoneos-arm64
+          test "$(dpkg-deb -f "$OUT" Name)" = DuoCar
+          ! dpkg-deb -f "$OUT" | grep -Eiq 'omnicar'
+          ! dpkg-deb -f "$OUT" | grep -Ei '^(Conflicts|Replaces|Breaks):.*com\.anlai\.omnicar'
+          mkdir -p "$RUNNER_TEMP/duocar-apt-check"
+          dpkg-deb -x "$OUT" "$RUNNER_TEMP/duocar-apt-check"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, plistlib
+          root=Path(os.environ['RUNNER_TEMP'])/'duocar-apt-check/var/jb'
+          app=plistlib.loads((root/'Applications/DuoCar.app/Info.plist').read_bytes())
+          prefs=plistlib.loads((root/'Library/PreferenceBundles/DuoCarPrefs.bundle/Info.plist').read_bytes())
+          assert app['CFBundleIdentifier']=='com.chuong.duocar.app', app
+          assert app['CFBundleExecutable']=='DuoCar', app
+          assert app['CFBundleDisplayName']=='DuoCar', app
+          assert prefs['CFBundleIdentifier']=='com.chuong.duocar.prefs', prefs
+          for module in ('DuoCarCore','DuoCarAppBridge','DuoCarCarProbe','DuoCarSpeedBubble','DuoCarSplitScreen','DuoCarStartupScreen'):
+              assert (root/f'Library/MobileSubstrate/DynamicLibraries/{module}.dylib').is_file(),module
+          for path in root.rglob('*'):
+              assert 'omnicar' not in path.name.lower(),path
+              if path.is_file():
+                  data=path.read_bytes()
+                  assert b'omnicar' not in data.lower(),path
+                  assert not any(s.encode('utf-16-le') in data for s in ('OmniCar','omnicar','OMNICAR')),path
+          print('DUOCAR_IMMUTABLE_SIGNED_REBRAND_SILEO_PIN_PASS_MANUAL_OLD_UNINSTALL')
+          PY
+
       - name: Build APT repository
         shell: bash
         run: |
@@ -1315,6 +1358,37 @@ jobs:
           </body></html>
           EOF
           touch .nojekyll
+
+      - name: Verify independent DuoCar package in Sileo APT index before deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          file='com.chuong.duocar_1.0.3-hl21duocar_iphoneos-arm64.deb'
+          sha='275ad8a211b13e51b234d491c627592d675e217ea5529fcb736df0782eb83022'
+          deb=Path('repo/debs')/file
+          assert deb.is_file() and deb.stat().st_size==1285052,deb
+          assert hashlib.sha256(deb.read_bytes()).hexdigest()==sha
+          records=[]
+          for stanza in Path('repo/Packages').read_text().split('\n\n'):
+              record={}
+              for line in stanza.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1);record[k]=v
+              if record.get('Package')=='com.chuong.duocar':
+                  records.append(record)
+          assert len(records)==1,records
+          record=records[0]
+          assert record['Version']=='1.0.3-hl21duocar',record
+          assert record['Architecture']=='iphoneos-arm64',record
+          assert record['Filename']=='debs/'+file,record
+          assert record['SHA256']==sha,record
+          assert record['Size']=='1285052',record
+          assert not any('com.anlai.omnicar' in record.get(k,'').lower() for k in ('Conflicts','Replaces','Breaks','Depends')),record
+          print('DUOCAR_INDEX_ONE_PACKAGE_SHA256_PASS_OLD_OMNICAR_NOT_AUTOREMOVED')
+          PY
 
       - name: Upload deb artifact
         uses: actions/upload-artifact@v4
@@ -2092,4 +2166,49 @@ jobs:
           test "$(dpkg-deb -f "$RUNNER_TEMP/gate1-public.deb" Version)" = "$VER"
           echo 'GATE1_PUBLIC_SILEO_BINARY_SHA256_PASS_NO_DEVICE_CARPLAY_PROOF'
 
+  verify-duocar-pages:
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Verify public Sileo DuoCar APT entry and exact immutable signed DEB
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE='https://chuongnguyen89dn-ui.github.io/carplaydsp'
+          FILE='com.chuong.duocar_1.0.3-hl21duocar_iphoneos-arm64.deb'
+          SHA='275ad8a211b13e51b234d491c627592d675e217ea5529fcb736df0782eb83022'
+          for attempt in $(seq 1 20); do
+            curl -fLsS --max-time 30 "$SITE/Packages" -o "$RUNNER_TEMP/duocar-Packages" || true
+            if grep -Fqx "SHA256: $SHA" "$RUNNER_TEMP/duocar-Packages" 2>/dev/null; then break; fi
+            echo "Checking DuoCar Sileo Pages CDN: $attempt/20"
+            sleep 7
+          done
+          FILE="$FILE" SHA="$SHA" python3 - <<'PY'
+          from pathlib import Path
+          import os
+          blocks=Path(os.environ['RUNNER_TEMP'],'duocar-Packages').read_text().split('\n\n')
+          found=[]
+          for b in blocks:
+              row={}
+              for line in b.splitlines():
+                  if ': ' in line and not line.startswith(' '):
+                      k,v=line.split(': ',1);row[k]=v
+              if row.get('Package')=='com.chuong.duocar':found.append(row)
+          assert len(found)==1,found
+          a=found[0]
+          assert a['Version']=='1.0.3-hl21duocar',a
+          assert a['Filename']=='debs/'+os.environ['FILE'],a
+          assert a['SHA256']==os.environ['SHA'],a
+          assert a['Size']=='1285052' and a['Architecture']=='iphoneos-arm64',a
+          assert not any('com.anlai.omnicar' in a.get(k,'').lower() for k in ('Conflicts','Replaces','Breaks','Depends')),a
+          print('DUOCAR_PUBLIC_SILEO_ONE_INDEX_ENTRY_VERIFIED_NO_OLD_PACKAGE_REMOVAL')
+          PY
+          curl -fLsS --retry 4 "$SITE/Release" -o "$RUNNER_TEMP/duocar-Release"
+          grep -Fq 'SHA256:' "$RUNNER_TEMP/duocar-Release"
+          curl -fLsS --retry 4 --max-time 120 "$SITE/debs/$FILE" -o "$RUNNER_TEMP/duocar-public.deb"
+          printf '%s  %s\n' "$SHA" "$RUNNER_TEMP/duocar-public.deb" | sha256sum -c -
+          test "$(dpkg-deb -f "$RUNNER_TEMP/duocar-public.deb" Package)" = com.chuong.duocar
+          test "$(dpkg-deb -f "$RUNNER_TEMP/duocar-public.deb" Version)" = 1.0.3-hl21duocar
+          echo 'DUOCAR_PUBLIC_SILEO_BINARY_SHA256_PASS__CAR_DEVICE_NOT_YET_TESTED'
 
